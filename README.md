@@ -105,6 +105,13 @@ The payment wrapper includes a comprehensive testing suite that validates its fu
   - Underlying operations throw errors
 - **Successful Operations:** Tests validate that operations complete successfully when all conditions are met.
 - **Charge Processing:** Tests ensure that charges are processed correctly after successful operations.
+- **Proxy Behavior Testing:** Tests verify that the proxy correctly forwards method calls, preserves property access, and maintains the prototype chain.
+- **Edge Case Testing:** Tests validate the system's behavior in exceptional situations:
+  - Input validation edge cases (missing or invalid inputs)
+  - Error propagation from the original server
+  - Recovery scenarios after failures
+  - Billing edge cases (zero balance, exact threshold)
+  - Debug mode functionality
 
 The test suite uses Jest and includes mocking of the console methods to capture and verify output for debugging purposes.
 
