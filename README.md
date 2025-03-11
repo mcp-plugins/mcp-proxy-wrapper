@@ -92,6 +92,22 @@ Each intercepted method:
 3. Processes a charge after a successful operation
 4. Returns the result to the caller
 
+### Testing Approach
+
+The payment wrapper includes a comprehensive testing suite that validates its functionality:
+
+- **Direct Method Testing:** Tests call methods directly on the wrapped server to ensure the proxy intercepts and processes them correctly.
+- **Billing Verification:** Tests verify that billing checks are performed before executing operations.
+- **Error Handling:** Tests confirm that appropriate errors are thrown when:
+  - API keys are missing or invalid
+  - User tokens are missing or invalid
+  - Users have insufficient funds
+  - Underlying operations throw errors
+- **Successful Operations:** Tests validate that operations complete successfully when all conditions are met.
+- **Charge Processing:** Tests ensure that charges are processed correctly after successful operations.
+
+The test suite uses Jest and includes mocking of the console methods to capture and verify output for debugging purposes.
+
 ### Future Enhancements
 
 - Integration with actual payment processors (e.g., Stripe)
