@@ -1,6 +1,103 @@
 # MCP Payment Wrapper
 
-A Model Context Protocol (MCP) wrapper for payment processing services.
+This project includes a payment wrapper for MCP servers that adds payment functionality. The wrapper uses a proxy-based approach to intercept calls to the underlying MCP server and add payment verification.
+
+### Features
+
+1. **Instance Wrapping:**  
+   - Accepts an instance of an existing MCP server.
+   - Uses JavaScript Proxy to intercept method calls without modifying the original server.
+  
+2. **Developer API Key Verification:**  
+   - Validates that a valid developer API key is provided as part of the options.
+
+3. **User JWT Verification:**  
+   - Validates the user's JWT token.
+
+4. **Simulated Billing Check:**  
+   - Before forwarding the MCP call, simulates a billing check.
+   - Returns an object with a boolean property `sufficientFunds` and a numerical `callCost`.
+
+5. **Call Forwarding:**  
+   - If the billing check passes, forwards the call to the underlying MCP server.
+  
+6. **Simulated Billing Transaction:**  
+   - After the MCP call succeeds, simulates processing a billing transaction.
+  
+7. **Error Handling and Logging:**  
+   - If any step fails (e.g., missing API key, invalid token, insufficient funds, or billing error), throws an error with an appropriate message.
+   - Logs errors or important events to the console for debugging.
+
+### Usage Example
+
+```typescript
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { wrapWithPayments } from './payment-wrapper.js';
+
+// Create or get your MCP server instance
+const demoServer = new McpServer({ 
+  name: "Demo Server",
+  version: "1.0.0",
+  description: "Demo server description"
+});
+
+// Register tools, resources, and prompts on the server
+demoServer.tool("example_tool", { /* schema */ }, async (args, extra) => {
+  // Tool implementation
+});
+
+// Wrap it with payment functionality
+const paymentsEnabledServer = wrapWithPayments(demoServer, { 
+  apiKey: 'YOUR_API_KEY', 
+  userToken: 'USER_JWT_TOKEN' 
+});
+
+// Use the wrapped server as you would a normal MCP server
+// All calls will now go through payment verification
+```
+
+### Installation and Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Build the project:
+   ```bash
+   npm run build
+   ```
+
+3. Run the example:
+   ```bash
+   npm run example
+   ```
+
+4. Run tests:
+   ```bash
+   npm test
+   ```
+
+### Implementation Details
+
+The payment wrapper uses a proxy-based approach to intercept calls to the MCP server's methods:
+
+- **Proxy Pattern:** Uses JavaScript's Proxy object to intercept method calls to the original server.
+- **Method Interception:** Intercepts calls to `tool`, `resource`, and `prompt` methods to add payment verification.
+- **Transparent Wrapping:** The proxy preserves the original server's interface and behavior, only adding payment functionality.
+
+Each intercepted method:
+1. Verifies the user's billing status
+2. If sufficient funds, forwards the call to the original method
+3. Processes a charge after a successful operation
+4. Returns the result to the caller
+
+### Future Enhancements
+
+- Integration with actual payment processors (e.g., Stripe)
+- More sophisticated billing models (subscription, tiered pricing, etc.)
+- Caching and rate limiting
+- Usage reporting and analytics
 
 ## Overview
 
