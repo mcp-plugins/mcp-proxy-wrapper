@@ -26,7 +26,7 @@ This project includes a payment wrapper for MCP servers that adds payment functi
   
 7. **Error Handling and Logging:**  
    - If any step fails (e.g., missing API key, invalid token, insufficient funds, or billing error), throws an error with an appropriate message.
-   - Logs errors or important events to the console for debugging.
+   - Logs errors or important events using a Winston-based logger for robust logging capabilities.
 
 ### Usage Example
 
@@ -92,6 +92,33 @@ Each intercepted method:
 3. Processes a charge after a successful operation
 4. Returns the result to the caller
 
+### Logging
+
+The payment wrapper uses Winston for robust, configurable logging:
+
+- **Environment-Aware Logging:** Automatically detects if the MCP server is using stdio transport and adjusts logging behavior to avoid corrupting the protocol.
+- **Configurable Log Levels:** Supports different log levels (debug, info, warn, error) configurable via options.
+- **File and Console Logging:** Logs can be directed to the console, file, or both depending on the environment.
+- **Structured Logging:** Logs include timestamps, levels, and formatted messages for easy parsing and analysis.
+- **Memory Transport for Testing:** Includes a custom memory transport implementation for capturing and verifying logs in tests.
+- **Debug Mode:** Extended logging can be enabled with the `debugMode` option for troubleshooting.
+
+Example of configuring a logger:
+
+```typescript
+import { wrapWithPayments } from './payment-wrapper.js';
+
+const paymentsEnabledServer = wrapWithPayments(demoServer, { 
+  apiKey: 'YOUR_API_KEY', 
+  userToken: 'USER_JWT_TOKEN',
+  debugMode: true,  // Enable detailed logging
+  loggerOptions: {
+    level: 'debug',  // Set log level
+    logFilePath: './my-logs/payments.log'  // Custom log file path
+  }
+});
+```
+
 ### Testing Approach
 
 The payment wrapper includes a comprehensive testing suite that validates its functionality:
@@ -112,6 +139,11 @@ The payment wrapper includes a comprehensive testing suite that validates its fu
   - Recovery scenarios after failures
   - Billing edge cases (zero balance, exact threshold)
   - Debug mode functionality
+- **Logger Testing:** Validates the logger's functionality including:
+  - Detection of stdio environments
+  - Memory transport for capturing logs in tests
+  - Log level filtering
+  - Message logging and retrieval
 
 The test suite uses Jest and includes mocking of the console methods to capture and verify output for debugging purposes.
 
@@ -121,6 +153,8 @@ The test suite uses Jest and includes mocking of the console methods to capture 
 - More sophisticated billing models (subscription, tiered pricing, etc.)
 - Caching and rate limiting
 - Usage reporting and analytics
+- Enhanced logging with remote log aggregation services
+- Telemetry support for operational monitoring
 
 ## Overview
 
@@ -233,7 +267,7 @@ For detailed documentation, see the following:
 - `src/providers/`: Payment provider implementations
 - `src/storage/`: Storage provider implementations
 - `src/types/`: TypeScript type definitions
-- `src/utils/`: Utility functions
+- `src/utils/`: Utility functions and logging
 - `src/config/`: Configuration handling
 
 ## Development
