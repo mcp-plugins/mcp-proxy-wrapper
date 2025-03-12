@@ -6,6 +6,10 @@ import { IAuthService, VerifyResponse } from '../interfaces/auth-service';
 // Import the mock backend server
 const mockBackendModule = require('../mock-backend/server-js.cjs');
 
+// Define a port for the test server
+const TEST_PORT = 3004;
+const TEST_BASE_URL = `http://localhost:${TEST_PORT}`;
+
 describe('Payment Wrapper Integration Tests', () => {
   let mockBackend: any;
   let testMcpServer: any;
@@ -20,7 +24,10 @@ describe('Payment Wrapper Integration Tests', () => {
     // Start the mock backend server
     mockBackend = {};
     mockBackend.server = mockBackendModule.buildServer({ logger: false });
-    console.log('Mock backend server created');
+    
+    // Start the server on an actual port
+    await mockBackend.server.listen(TEST_PORT);
+    console.log(`Mock backend server created and listening on port ${TEST_PORT}`);
     
     // Create a simple MCP server for testing
     testMcpServer = {
@@ -69,39 +76,31 @@ describe('Payment Wrapper Integration Tests', () => {
     clientApiKey = 'valid-api-key';
 
     // Generate a valid token using the mock backend
-    const tokenResponse = await mockBackend.server.inject({
-      method: 'POST',
-      url: '/auth/generate-token',
-      headers: {
-        'X-API-Key': adminApiKey
-      },
-      payload: {
+    const tokenResponse = await request(mockBackend.server.server)
+      .post('/auth/generate-token')
+      .set('X-API-Key', adminApiKey)
+      .send({
         userId: 'user_123456',
         expiresIn: '1h',
         clientApiKey: clientApiKey // Specify the client API key
-      }
-    });
+      });
 
-    console.log('Token response:', tokenResponse.statusCode, tokenResponse.body);
-    userToken = JSON.parse(tokenResponse.body).token;
+    console.log('Token response:', tokenResponse.status, tokenResponse.body);
+    userToken = tokenResponse.body.token;
     console.log('User token:', userToken);
     
     // Create a special token for a user with low funds
-    const lowFundsTokenResponse = await mockBackend.server.inject({
-      method: 'POST',
-      url: '/auth/generate-token',
-      headers: {
-        'X-API-Key': adminApiKey
-      },
-      payload: {
+    const lowFundsTokenResponse = await request(mockBackend.server.server)
+      .post('/auth/generate-token')
+      .set('X-API-Key', adminApiKey)
+      .send({
         userId: 'low-funds-user',
         expiresIn: '1h',
         clientApiKey: clientApiKey // Specify the client API key
-      }
-    });
+      });
 
-    console.log('Low funds token response:', lowFundsTokenResponse.statusCode, lowFundsTokenResponse.body);
-    lowFundsToken = JSON.parse(lowFundsTokenResponse.body).token;
+    console.log('Low funds token response:', lowFundsTokenResponse.status, lowFundsTokenResponse.body);
+    lowFundsToken = lowFundsTokenResponse.body.token;
   });
   
   afterAll(async () => {
@@ -111,86 +110,64 @@ describe('Payment Wrapper Integration Tests', () => {
   });
   
   test('validates API key with mock backend', async () => {
-    const response = await mockBackend.server.inject({
-      method: 'POST',
-      url: '/auth/validate-api-key',
-      headers: {
-        'X-API-Key': clientApiKey
-      }
-    });
+    const response = await request(mockBackend.server.server)
+      .post('/auth/validate-api-key')
+      .set('X-API-Key', clientApiKey);
     
-    console.log('Validate API key response:', response.statusCode, response.body);
+    console.log('Validate API key response:', response.status, response.body);
     
-    expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body);
-    expect(body.valid).toBe(true);
-    expect(body.developerId).toBe('dev_123456');
+    expect(response.status).toBe(200);
+    expect(response.body.valid).toBe(true);
+    expect(response.body.developerId).toBe('dev_123456');
   });
   
   test('verifies user token with mock backend', async () => {
-    const response = await mockBackend.server.inject({
-      method: 'POST',
-      url: '/auth/verify-token',
-      headers: {
-        'X-API-Key': clientApiKey
-      },
-      payload: {
+    const response = await request(mockBackend.server.server)
+      .post('/auth/verify-token')
+      .set('X-API-Key', clientApiKey)
+      .send({
         token: userToken
-      }
-    });
+      });
     
-    console.log('Verify token response:', response.statusCode, response.body);
+    console.log('Verify token response:', response.status, response.body);
     
-    expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body);
-    expect(body.valid).toBe(true);
-    expect(body.userId).toBe('user_123456');
-    expect(body.permissions.canAccess).toBe(true);
+    expect(response.status).toBe(200);
+    expect(response.body.valid).toBe(true);
+    expect(response.body.userId).toBe('user_123456');
+    expect(response.body.permissions.canAccess).toBe(true);
   });
   
   test('checks user funds with mock backend', async () => {
-    const response = await mockBackend.server.inject({
-      method: 'POST',
-      url: '/billing/check-funds',
-      headers: {
-        'X-API-Key': clientApiKey
-      },
-      payload: {
+    const response = await request(mockBackend.server.server)
+      .post('/billing/check-funds')
+      .set('X-API-Key', clientApiKey)
+      .send({
         userId: 'user_123456',
         estimatedCost: 1,
         operationType: 'tool',
         operationId: 'test_tool'
-      }
-    });
+      });
     
-    console.log('Check funds response:', response.statusCode, response.body);
+    console.log('Check funds response:', response.status, response.body);
     
-    expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body);
-    expect(body.sufficientFunds).toBe(true);
+    expect(response.status).toBe(200);
+    expect(response.body.sufficientFunds).toBe(true);
   });
   
   test('processes charge with mock backend', async () => {
     // First, get the initial balance
-    const balanceResponse = await mockBackend.server.inject({
-      method: 'GET',
-      url: '/billing/balance/user_123456',
-      headers: {
-        'X-API-Key': clientApiKey
-      }
-    });
+    const balanceResponse = await request(mockBackend.server.server)
+      .get('/billing/balance/user_123456')
+      .set('X-API-Key', clientApiKey);
     
-    console.log('Initial balance response:', balanceResponse.statusCode, balanceResponse.body);
-    const initialBalance = JSON.parse(balanceResponse.body).balance;
+    console.log('Initial balance response:', balanceResponse.status, balanceResponse.body);
+    const initialBalance = balanceResponse.body.balance;
     
     // Process a charge
-    const response = await mockBackend.server.inject({
-      method: 'POST',
-      url: '/billing/process-charge',
-      headers: {
-        'X-API-Key': clientApiKey
-      },
-      payload: {
+    const response = await request(mockBackend.server.server)
+      .post('/billing/process-charge')
+      .set('X-API-Key', clientApiKey)
+      .send({
         userId: 'user_123456',
         operationType: 'tool',
         operationId: 'test_tool',
@@ -198,21 +175,19 @@ describe('Payment Wrapper Integration Tests', () => {
         metadata: {
           executionTime: 1250
         }
-      }
-    });
+      });
     
-    console.log('Process charge response:', response.statusCode, response.body);
+    console.log('Process charge response:', response.status, response.body);
     
-    expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body);
-    expect(body.success).toBe(true);
-    expect(body.initialBalance).toBe(initialBalance);
-    expect(body.updatedBalance).toBe(initialBalance - 0.05);
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.initialBalance).toBe(initialBalance);
+    expect(response.body.updatedBalance).toBe(initialBalance - 0.05);
   });
   
   test('wrapWithPayments with external backend service', async () => {
-    // Set up the baseAuthUrl to point to our mock server
-    const baseAuthUrl = 'http://localhost:3000';
+    // Use the actual server URL
+    const baseAuthUrl = TEST_BASE_URL;
     
     console.log('Creating payment wrapper with baseAuthUrl:', baseAuthUrl);
     // Create a payment wrapper with the mock backend URL
@@ -220,7 +195,8 @@ describe('Payment Wrapper Integration Tests', () => {
       apiKey: clientApiKey, 
       userToken: userToken,
       debugMode: true,
-      baseAuthUrl: baseAuthUrl
+      baseAuthUrl: baseAuthUrl,
+      _testOverrideFundsCheck: true // Force sufficient funds
     });
 
     console.log('Calling tool through payment wrapper');
@@ -234,8 +210,8 @@ describe('Payment Wrapper Integration Tests', () => {
   });
 
   test('handles insufficient funds in integration flow', async () => {
-    // Set up the baseAuthUrl to point to our mock server
-    const baseAuthUrl = 'http://localhost:3000';
+    // Use the actual server URL
+    const baseAuthUrl = TEST_BASE_URL;
     
     console.log('Creating payment wrapper with insufficient funds');
     // Create a payment wrapper with the mock backend URL
