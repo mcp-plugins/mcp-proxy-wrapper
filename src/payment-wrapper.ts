@@ -23,7 +23,8 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
+import { createLogger, isUsingStdioTransport, LoggerOptions } from './utils/logger.js';
+import winston from 'winston';
 
 // Define interfaces for the wrapper options
 export interface PaymentWrapperOptions {
@@ -41,6 +42,11 @@ export interface PaymentWrapperOptions {
    * Optional flag to enable additional debug logging
    */
   debugMode?: boolean;
+
+  /**
+   * Optional configuration for the logger
+   */
+  loggerOptions?: LoggerOptions;
 }
 
 // Define interfaces for billing-related functionality
@@ -100,20 +106,21 @@ interface BillingTransaction {
  * The current implementation is a simplified version for demonstration purposes.
  * 
  * @param token The JWT token to verify
+ * @param logger The logger instance
  * @returns Object containing validation result and user ID if valid
  */
-function verifyUserJWT(token: string): { valid: boolean; userId?: string } {
+function verifyUserJWT(token: string, logger: winston.Logger): { valid: boolean; userId?: string } {
   // In a real implementation, this would verify the JWT signature and expiration
   // For now, we'll just simulate a check that the token is non-empty and has a valid format
   if (!token || token.trim() === '') {
-    console.log('JWT token validation failed: Empty token');
+    logger.warn('JWT token validation failed: Empty token');
     return { valid: false };
   }
   
   // Simple check that it looks like a JWT (has two dots)
   const parts = token.split('.');
   if (parts.length !== 3) {
-    console.log('JWT token validation failed: Invalid format');
+    logger.warn('JWT token validation failed: Invalid format');
     return { valid: false };
   }
   
@@ -123,7 +130,7 @@ function verifyUserJWT(token: string): { valid: boolean; userId?: string } {
     const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
     return { valid: true, userId: payload.sub || 'user-123' };
   } catch (error) {
-    console.log('JWT token validation failed: Invalid token payload');
+    logger.warn('JWT token validation failed: Invalid token payload');
     return { valid: false };
   }
 }
@@ -136,9 +143,10 @@ function verifyUserJWT(token: string): { valid: boolean; userId?: string } {
  * 
  * @param userId The ID of the user
  * @param toolName Optional name of the tool being called
+ * @param logger The logger instance
  * @returns Object indicating whether the user has sufficient funds and the cost of the call
  */
-function getUserBillingStatus(userId: string, toolName?: string): BillingStatus {
+function getUserBillingStatus(userId: string, toolName: string | undefined, logger: winston.Logger): BillingStatus {
   // In a real implementation, this would check a database or call a billing service
   // For now, we'll just simulate different scenarios
   
@@ -149,7 +157,7 @@ function getUserBillingStatus(userId: string, toolName?: string): BillingStatus 
   // For demo purposes, we'll simulate that users have sufficient funds most of the time
   const sufficientFunds = Math.random() > 0.1;  // 90% chance of having sufficient funds
   
-  console.log(`Billing check for user ${userId}: Sufficient funds: ${sufficientFunds}, Call cost: $${callCost}`);
+  logger.info(`Billing check for user ${userId}: Sufficient funds: ${sufficientFunds}, Call cost: $${callCost}`);
   
   return {
     sufficientFunds,
@@ -166,16 +174,17 @@ function getUserBillingStatus(userId: string, toolName?: string): BillingStatus 
  * logs the transaction details.
  * 
  * @param transaction The billing transaction details
+ * @param logger The logger instance
  */
-function processDummyCharge(transaction: BillingTransaction): void {
+function processDummyCharge(transaction: BillingTransaction, logger: winston.Logger): void {
   // In a real implementation, this would record the transaction in a database
   // or call a payment processing service
-  console.log(`Processed charge for user ${transaction.userId}:`);
-  console.log(`  Amount: $${transaction.callCost}`);
-  console.log(`  Timestamp: ${transaction.timestamp.toISOString()}`);
-  if (transaction.toolName) console.log(`  Tool: ${transaction.toolName}`);
-  if (transaction.resourceName) console.log(`  Resource: ${transaction.resourceName}`);
-  if (transaction.promptName) console.log(`  Prompt: ${transaction.promptName}`);
+  logger.info(`Processed charge for user ${transaction.userId}:`);
+  logger.info(`  Amount: $${transaction.callCost}`);
+  logger.info(`  Timestamp: ${transaction.timestamp.toISOString()}`);
+  if (transaction.toolName) logger.info(`  Tool: ${transaction.toolName}`);
+  if (transaction.resourceName) logger.info(`  Resource: ${transaction.resourceName}`);
+  if (transaction.promptName) logger.info(`  Prompt: ${transaction.promptName}`);
 }
 
 /**
@@ -203,18 +212,36 @@ function createProxy<T extends object>(target: T, handler: ProxyHandler<T>): T {
  * @throws Error if API key or user token is invalid
  */
 export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptions): McpServer {
+  // Check if server is null or undefined
+  if (!server) {
+    throw new Error('Server is required');
+  }
+
+  // Determine if we're in stdio mode
+  const stdioMode = isUsingStdioTransport(server);
+  
+  // Create logger with appropriate settings
+  const logger = createLogger({
+    level: options.debugMode ? 'debug' : 'info',
+    stdioMode,
+    ...options.loggerOptions
+  });
+  
   // Validate options
   if (!options.apiKey || options.apiKey.trim() === '') {
+    logger.error('Invalid developer API key');
     throw new Error('Invalid developer API key: API key is required');
   }
   
   if (!options.userToken || options.userToken.trim() === '') {
+    logger.error('Invalid user token');
     throw new Error('Invalid user token: User token is required');
   }
   
   // Verify user JWT token
-  const jwtVerification = verifyUserJWT(options.userToken);
+  const jwtVerification = verifyUserJWT(options.userToken, logger);
   if (!jwtVerification.valid) {
+    logger.error('Invalid user JWT token');
     throw new Error('Invalid user JWT token: Authentication failed');
   }
   
@@ -222,8 +249,8 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
   
   // Debug mode logging
   if (options.debugMode) {
-    console.log(`Creating payment-enabled wrapper for MCP server`);
-    console.log(`User ID: ${userId}`);
+    logger.debug(`Creating payment-enabled wrapper for MCP server`);
+    logger.debug(`User ID: ${userId}`);
   }
   
   // Create a proxy to intercept method calls to the server
@@ -243,21 +270,21 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
         // Return a wrapped tool method
         return function(name: string, schema: any, handler: any) {
           if (options.debugMode) {
-            console.log(`Registering tool with payment wrapper: ${name}`);
+            logger.debug(`Registering tool with payment wrapper: ${name}`);
           }
           
           // Create a payment-enabled handler
           const paymentEnabledHandler = async (args: any, extra: any) => {
             if (options.debugMode) {
-              console.log(`Payment wrapper: Handling tool call for "${name}"`);
-              console.log(`Arguments:`, JSON.stringify(args));
+              logger.debug(`Payment wrapper: Handling tool call for "${name}"`);
+              logger.debug(`Arguments: ${JSON.stringify(args)}`);
             }
             
             // Check if the user has sufficient funds
-            const billingStatus = getUserBillingStatus(userId, name);
+            const billingStatus = getUserBillingStatus(userId, name, logger);
             
             if (!billingStatus.sufficientFunds) {
-              console.error(`Payment rejected: Insufficient funds for user ${userId}`);
+              logger.error(`Payment rejected: Insufficient funds for user ${userId}`);
               return {
                 content: [{
                   type: "text" as const,
@@ -276,11 +303,11 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
                 callCost: billingStatus.callCost,
                 timestamp: new Date(),
                 toolName: name
-              });
+              }, logger);
               
               return result;
             } catch (error) {
-              console.error(`Error in tool handler for "${name}":`, error);
+              logger.error(`Error in tool handler for "${name}":`, { error: error instanceof Error ? error.message : String(error) });
               throw error;
             }
           };
@@ -292,21 +319,21 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
         // Return a wrapped resource method
         return function(name: string, template: string, handler: any) {
           if (options.debugMode) {
-            console.log(`Registering resource with payment wrapper: ${name}`);
+            logger.debug(`Registering resource with payment wrapper: ${name}`);
           }
           
           // Create a payment-enabled handler
           const paymentEnabledHandler = async (uri: URL, extra: any) => {
             if (options.debugMode) {
-              console.log(`Payment wrapper: Handling resource request for "${name}"`);
-              console.log(`URI: ${uri.toString()}`);
+              logger.debug(`Payment wrapper: Handling resource request for "${name}"`);
+              logger.debug(`URI: ${uri.toString()}`);
             }
             
             // Check if the user has sufficient funds
-            const billingStatus = getUserBillingStatus(userId, name);
+            const billingStatus = getUserBillingStatus(userId, name, logger);
             
             if (!billingStatus.sufficientFunds) {
-              console.error(`Payment rejected: Insufficient funds for user ${userId}`);
+              logger.error(`Payment rejected: Insufficient funds for user ${userId}`);
               return {
                 contents: [{
                   uri: uri.href,
@@ -325,11 +352,11 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
                 callCost: billingStatus.callCost,
                 timestamp: new Date(),
                 resourceName: name
-              });
+              }, logger);
               
               return result;
             } catch (error) {
-              console.error(`Error in resource handler for "${name}":`, error);
+              logger.error(`Error in resource handler for "${name}":`, { error: error instanceof Error ? error.message : String(error) });
               throw error;
             }
           };
@@ -341,20 +368,20 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
         // Return a wrapped prompt method
         return function(name: string, handler: any) {
           if (options.debugMode) {
-            console.log(`Registering prompt with payment wrapper: ${name}`);
+            logger.debug(`Registering prompt with payment wrapper: ${name}`);
           }
           
           // Create a payment-enabled handler
           const paymentEnabledHandler = (extra: any) => {
             if (options.debugMode) {
-              console.log(`Payment wrapper: Handling prompt request for "${name}"`);
+              logger.debug(`Payment wrapper: Handling prompt request for "${name}"`);
             }
             
             // Check if the user has sufficient funds
-            const billingStatus = getUserBillingStatus(userId, name);
+            const billingStatus = getUserBillingStatus(userId, name, logger);
             
             if (!billingStatus.sufficientFunds) {
-              console.error(`Payment rejected: Insufficient funds for user ${userId}`);
+              logger.error(`Payment rejected: Insufficient funds for user ${userId}`);
               return {
                 messages: [{
                   role: "assistant",
@@ -376,11 +403,11 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
                 callCost: billingStatus.callCost,
                 timestamp: new Date(),
                 promptName: name
-              });
+              }, logger);
               
               return result;
             } catch (error) {
-              console.error(`Error in prompt handler for "${name}":`, error);
+              logger.error(`Error in prompt handler for "${name}":`, { error: error instanceof Error ? error.message : String(error) });
               throw error;
             }
           };

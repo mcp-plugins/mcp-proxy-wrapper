@@ -11,6 +11,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { wrapWithPayments } from './payment-wrapper.js';
+import { MemoryTransport, createLogger } from './utils/logger.js';
+import winston from 'winston';
 
 // Valid JWT token for testing
 const VALID_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
@@ -18,11 +20,9 @@ const VALID_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIs
 // Invalid JWT token (missing parts)
 const INVALID_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0';
 
-// Mock console methods to capture output
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-let consoleOutput: string[] = [];
-let consoleErrors: string[] = [];
+// Memory transport for capturing logs
+let memoryTransport: MemoryTransport;
+let testLogger: winston.Logger;
 
 // Helper function to create a valid options object
 function createValidOptions(overrides: Record<string, any> = {}) {
@@ -30,6 +30,9 @@ function createValidOptions(overrides: Record<string, any> = {}) {
     apiKey: 'valid-api-key',
     userToken: VALID_JWT,
     debugMode: false,
+    loggerOptions: {
+      customLogger: testLogger
+    },
     ...overrides
   };
 }
@@ -44,24 +47,12 @@ function createTestServer() {
 }
 
 beforeEach(() => {
-  // Clear the captured console output
-  consoleOutput = [];
-  consoleErrors = [];
-  
-  // Mock console methods
-  console.log = (...args: any[]) => {
-    consoleOutput.push(args.join(' '));
-  };
-  
-  console.error = (...args: any[]) => {
-    consoleErrors.push(args.join(' '));
-  };
-});
-
-afterEach(() => {
-  // Restore original console methods
-  console.log = originalConsoleLog;
-  console.error = originalConsoleError;
+  // Set up memory transport and logger
+  memoryTransport = new MemoryTransport();
+  testLogger = winston.createLogger({
+    level: 'debug',
+    transports: [memoryTransport]
+  });
 });
 
 describe('Input Validation Edge Cases', () => {
@@ -199,7 +190,7 @@ describe('Error Propagation', () => {
     Math.random = originalRandom;
     
     // Verify that the error was logged
-    expect(consoleErrors.some(msg => msg.includes('Tool execution error'))).toBe(true);
+    expect(memoryTransport.contains('Tool execution error')).toBe(true);
   });
 });
 
@@ -298,6 +289,9 @@ describe('Billing Edge Cases', () => {
       
       // Verify that the result indicates insufficient funds
       expect(result).resolves.toHaveProperty('content.0.text', expect.stringContaining('Insufficient funds'));
+      
+      // Verify that the error was logged
+      expect(memoryTransport.contains('Payment rejected: Insufficient funds')).toBe(true);
     }
     
     // Restore Math.random
@@ -349,10 +343,13 @@ describe('Debug Mode', () => {
     });
     
     // Verify that debug information was logged
-    expect(consoleOutput.some(msg => msg.includes('payment-enabled wrapper'))).toBe(true);
+    expect(memoryTransport.contains('Creating payment-enabled wrapper')).toBe(true);
   });
   
   test('does not log debug information when debugMode is false', () => {
+    // Clear the memory transport
+    memoryTransport.clear();
+    
     const server = createTestServer();
     const wrappedServer = wrapWithPayments(server, createValidOptions({ debugMode: false }));
     
@@ -362,6 +359,9 @@ describe('Debug Mode', () => {
     });
     
     // Verify that no debug information was logged
-    expect(consoleOutput.some(msg => msg.includes('payment-enabled wrapper'))).toBe(false);
+    const debugLogs = memoryTransport.logs.filter(log => 
+      log.level === 'debug' && log.message.includes('payment-enabled wrapper')
+    );
+    expect(debugLogs.length).toBe(0);
   });
 }); 

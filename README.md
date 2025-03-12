@@ -100,7 +100,7 @@ The payment wrapper uses Winston for robust, configurable logging:
 - **Configurable Log Levels:** Supports different log levels (debug, info, warn, error) configurable via options.
 - **File and Console Logging:** Logs can be directed to the console, file, or both depending on the environment.
 - **Structured Logging:** Logs include timestamps, levels, and formatted messages for easy parsing and analysis.
-- **Memory Transport for Testing:** Includes a custom memory transport implementation for capturing and verifying logs in tests.
+- **Memory Transport for Testing:** Uses Winston's memory transport for capturing and verifying logs in tests, with a `TestLogger` helper class to simplify working with logs in tests.
 - **Debug Mode:** Extended logging can be enabled with the `debugMode` option for troubleshooting.
 
 Example of configuring a logger:
@@ -117,6 +117,28 @@ const paymentsEnabledServer = wrapWithPayments(demoServer, {
     logFilePath: './my-logs/payments.log'  // Custom log file path
   }
 });
+```
+
+Example of using the TestLogger for testing:
+
+```typescript
+import { TestLogger } from './utils/test-helpers.js';
+
+// Create a test logger
+const testLogger = new TestLogger();
+
+// Test your code that uses the logger
+myFunction(testLogger);
+
+// Check if specific logs were generated
+expect(testLogger.contains('Expected log message')).toBe(true);
+
+// Filter logs by level
+const errorLogs = testLogger.getLogs('error');
+expect(errorLogs.length).toBe(1);
+
+// Clear logs between tests
+testLogger.clear();
 ```
 
 ### Testing Approach
