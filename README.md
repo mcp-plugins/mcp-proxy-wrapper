@@ -98,6 +98,122 @@ await paymentsEnabledServer.connect(transport);
    npm test
    ```
 
+## Operational Flow
+
+The payment wrapper follows this operational flow when handling MCP server methods:
+
+1. **Initialization:**
+   - The wrapper is initialized with an MCP server instance and options.
+   - Options are validated, ensuring a valid API key is provided.
+   - A logger is created based on the provided options.
+
+2. **Method Registration Interception:**
+   - When methods like `tool`, `resource`, or `prompt` are registered on the wrapped server, the wrapper:
+     - Logs the registration attempt
+     - Passes the registration to the original server
+     - Wraps the callback function with payment verification logic
+
+3. **Method Execution Flow:**
+   - **Authentication Phase:**
+     - Extract the user ID from the JWT token
+     - Verify the token's validity with the authentication service
+     - Reject the request if authentication fails
+
+   - **Billing Verification Phase:**
+     - Check if the user has sufficient funds
+     - Calculate the cost of the operation
+     - Reject the request if funds are insufficient
+
+   - **Execution Phase:**
+     - Forward the call to the original method on the MCP server
+     - Capture the result or any errors
+
+   - **Billing Processing Phase:**
+     - Process the charge for the operation
+     - Log the successful billing transaction
+
+   - **Response Phase:**
+     - Return the result to the caller
+     - Or, if any step failed, return an appropriate error
+
+4. **Error Handling:**
+   - Each phase includes comprehensive error handling
+   - Errors are logged with appropriate context
+   - Error responses maintain the MCP protocol expectations
+
+## Testing Framework
+
+The payment wrapper includes a comprehensive testing suite with 6 test files containing 64 tests. Here's a breakdown of the test coverage:
+
+### 1. Core Payment Wrapper Tests (7 tests)
+- `src/payment-wrapper.test.ts`
+- Tests the basic functionality of the payment wrapper
+- Verifies proper wrapping of an MCP server instance
+- Tests API key validation
+- Tests tool, resource, and prompt registration and execution
+- Verifies funds checking for tool calls
+
+### 2. Comprehensive Method Tests (10 tests)
+- `src/payment-wrapper.comprehensive.test.ts`
+- In-depth testing of tool, resource, and prompt methods
+- Verifies method registration through the proxy
+- Tests successful execution with sufficient funds
+- Tests rejection with insufficient funds
+- Tests error handling during execution
+
+### 3. Edge Case Tests (12 tests)
+- `src/payment-wrapper.edge-cases.test.ts`
+- Tests input validation edge cases (missing/empty API key)
+- Tests handling of null/undefined server
+- Tests error propagation from original server methods
+- Tests recovery scenarios after failed operations
+- Tests billing edge cases
+- Tests debug mode functionality
+
+### 4. Authentication Flow Tests (5 tests)
+- `src/payment-wrapper.auth.test.ts`
+- Tests authentication requirements
+- Verifies behavior with missing/invalid/valid user tokens
+- Tests custom authentication URL configuration
+- Tests access denial due to insufficient funds
+
+### 5. Proxy Method Tests (25 tests)
+- `src/payment-wrapper.proxy.test.ts`
+- Tests proxy method forwarding
+- Tests context preservation
+- Tests handling of various argument types
+- Tests method chaining
+- Tests property access, changes, getters/setters
+- Tests prototype chain maintenance
+- Tests handling of special cases (Symbol properties, enumeration, deletion)
+- Tests method existence checks
+
+### 6. Logger Tests (13 tests)
+- `src/utils/logger.test.ts`
+- Tests logger creation with various options
+- Tests stdio transport detection
+- Tests memory transport for log capture
+- Tests log filtering by level
+- Tests log content verification
+
+### Test Utilities
+
+The test suite includes several utilities to facilitate effective testing:
+
+- **TestLogger**: A specialized logger that captures logs in memory
+- **MockAuthService**: A mock authentication service for testing JWT operations
+- **createTestServer**: Creates a simple MCP server for testing
+- **createExtendedTestServer**: Creates a more complex server with custom properties for proxy testing
+- **testPaymentWrapper**: A helper function to test payment wrapper functionality with various configurations
+
+### Testing Approach Highlights
+
+- **Deterministic Tests**: Uses `_testOverrideFundsCheck` option to ensure deterministic testing of funds checking
+- **Comprehensive Coverage**: Tests all aspects of the payment wrapper, from basic functionality to edge cases
+- **Proxy Behavior Testing**: Ensures the proxy correctly preserves the original server's behavior
+- **Error Handling**: Validates appropriate error responses in various scenarios
+- **Integration Testing**: Tests the interaction between components (auth, billing, logging)
+
 ## Implementation Details
 
 The payment wrapper uses a proxy-based approach to intercept calls to the MCP server's methods:
@@ -161,32 +277,6 @@ expect(errorLogs.length).toBe(1);
 testLogger.clear();
 ```
 
-## Testing Approach
-
-The payment wrapper includes a comprehensive testing suite that validates its functionality:
-
-- **Direct Method Testing:** Tests call methods directly on the wrapped server to ensure the proxy intercepts and processes them correctly.
-- **Billing Verification:** Tests verify that billing checks are performed before executing operations.
-- **Error Handling:** Tests confirm that appropriate errors are thrown when:
-  - API keys are missing or invalid
-  - User tokens are missing or invalid
-  - Users have insufficient funds
-  - Underlying operations throw errors
-- **Successful Operations:** Tests validate that operations complete successfully when all conditions are met.
-- **Charge Processing:** Tests ensure that charges are processed correctly after successful operations.
-- **Proxy Behavior Testing:** Tests verify that the proxy correctly forwards method calls, preserves property access, and maintains the prototype chain.
-- **Edge Case Testing:** Tests validate the system's behavior in exceptional situations:
-  - Input validation edge cases (missing or invalid inputs)
-  - Error propagation from the original server
-  - Recovery scenarios after failures
-  - Billing edge cases (zero balance, exact threshold)
-  - Debug mode functionality
-- **Logger Testing:** Validates the logger's functionality including:
-  - Detection of stdio environments
-  - Memory transport for capturing logs in tests
-  - Log level filtering
-  - Message logging and retrieval
-
 ## Future Enhancements
 
 - Integration with actual payment processors (e.g., Stripe)
@@ -199,9 +289,12 @@ The payment wrapper includes a comprehensive testing suite that validates its fu
 ## Project Structure
 
 - `src/payment-wrapper.ts`: Core payment wrapper implementation
+- `src/payment-wrapper.auth.ts`: Authentication service integration
 - `src/index.ts`: Public API exports
 - `src/utils/`: Utility functions and logging implementation
+- `src/services/`: Service implementations (e.g., MockAuthService)
 - `src/types/`: TypeScript type definitions
+- `test/`: Test fixtures and helpers
 
 ## Contributing
 
