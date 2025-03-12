@@ -12,20 +12,6 @@ logs/
 .vscode/
 .idea/
 
-# Server implementation (not part of the payment wrapper package)
-src/server.ts
-dist/server.js
-dist/server.d.ts
-dist/server.js.map
-src/tools/
-dist/tools/
-src/resources/
-dist/resources/
-src/prompts/
-dist/prompts/
-src/services/
-dist/services/
-
 # Test files
 **/*.test.ts
 **/*.test.js
