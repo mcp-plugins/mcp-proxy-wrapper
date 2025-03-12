@@ -143,7 +143,7 @@ The payment wrapper follows this operational flow when handling MCP server metho
 
 ## Testing Framework
 
-The payment wrapper includes a comprehensive testing suite with 6 test files containing 64 tests. Here's a breakdown of the test coverage:
+The payment wrapper includes a comprehensive testing suite with 7 test files containing 70 tests. Here's a breakdown of the test coverage:
 
 ### 1. Core Payment Wrapper Tests (7 tests)
 - `src/payment-wrapper.test.ts`
@@ -196,6 +196,16 @@ The payment wrapper includes a comprehensive testing suite with 6 test files con
 - Tests log filtering by level
 - Tests log content verification
 
+### 7. Integration Tests (6 tests)
+- `src/integration-tests/payment-wrapper.integration.test.ts`
+- Tests the payment wrapper's interaction with a mock backend server
+- Verifies API key validation with the backend
+- Tests user token verification
+- Tests funds checking and balance verification
+- Tests charge processing
+- Tests the complete integration flow with tool execution
+- Tests handling of insufficient funds scenarios
+
 ### Test Utilities
 
 The test suite includes several utilities to facilitate effective testing:
@@ -213,6 +223,7 @@ The test suite includes several utilities to facilitate effective testing:
 - **Proxy Behavior Testing**: Ensures the proxy correctly preserves the original server's behavior
 - **Error Handling**: Validates appropriate error responses in various scenarios
 - **Integration Testing**: Tests the interaction between components (auth, billing, logging)
+- **JWT Token Authentication**: Uses proper JWT tokens for authentication in integration tests
 
 ## Implementation Details
 
@@ -311,6 +322,17 @@ The project includes a well-structured proof-of-concept mock backend that facili
 - **Original Server**: The fully-featured mock backend
 - **Simple Server**: A single-file simplified version
 - **Improved Server**: The well-structured modular version
+- **CommonJS Server**: A CommonJS version for Jest integration tests
+
+### JWT Token Authentication
+
+The mock backend implements proper JWT token authentication:
+
+- Generates JWT tokens with the same secret key used by the payment wrapper's `MockAuthService`
+- Includes user ID and API key in the token payload
+- Verifies tokens during authentication checks
+- Ensures tokens are associated with the correct API key
+- Provides proper error messages for invalid tokens
 
 ### Integration Testing Options
 
@@ -318,6 +340,7 @@ The project includes a well-structured proof-of-concept mock backend that facili
 - `npm run test:integration:with-server`: Run with original server
 - `npm run test:integration:simple`: Run with simple server
 - `npm run test:integration:improved`: Run with improved modular server
+- `npm test -- src/integration-tests/payment-wrapper.integration.test.ts`: Run integration tests with the CommonJS server
 
 ### Design for Real Backend Development
 
@@ -326,6 +349,7 @@ The mock backend structure provides a solid foundation that can be adapted for r
 - Controllers can be extended with additional business logic
 - Routes can be enhanced with more comprehensive validation
 - Server setup can be expanded for production needs
+- JWT token handling can be extended with more sophisticated authentication mechanisms
 
 ## Future Enhancements
 
