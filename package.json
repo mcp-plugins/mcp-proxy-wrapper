@@ -11,6 +11,7 @@
     "test": "jest",
     "test:integration": "jest --config=jest.integration.config.js",
     "test:integration:with-server": "node --loader ts-node/esm scripts/run-integration-tests.js",
+    "test:integration:simple": "node --loader ts-node/esm scripts/simple-test-runner.js",
     "lint": "eslint src/**/*.ts",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
@@ -19,7 +20,8 @@
     "version:minor": "npm version minor",
     "version:major": "npm version major",
     "publish": "npm publish --access public",
-    "start:mock-backend": "node --loader ts-node/esm src/mock-backend/start.ts"
+    "start:mock-backend": "node --loader ts-node/esm src/mock-backend/start.ts",
+    "start:simple-backend": "node --loader ts-node/esm src/mock-backend/start-simple.ts"
   },
   "keywords": [
     "mcp",

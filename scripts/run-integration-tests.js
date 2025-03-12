@@ -4,95 +4,111 @@ import { spawn } from 'child_process';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
+// Get the directory paths
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
 
+// Server process reference
+let serverProcess = null;
+let serverErrors = [];
+
 // Start the mock backend server
 console.log('Starting mock backend server...');
-const server = spawn('node', ['--loader', 'ts-node/esm', 'src/mock-backend/start.ts'], {
+serverProcess = spawn('node', ['--loader', 'ts-node/esm', 'src/mock-backend/start.ts'], {
   cwd: rootDir,
   stdio: ['ignore', 'pipe', 'pipe'],
-  shell: true,
+  detached: false
 });
 
+// Collect server output
 let serverStarted = false;
-let serverError = null;
+const serverStartTimeout = 10000; // 10 seconds
+const startTime = Date.now();
 
-// Process server output
-server.stdout.on('data', (data) => {
+serverProcess.stdout.on('data', (data) => {
   const output = data.toString();
-  console.log(`[Server] ${output}`);
+  console.log(`[Server] ${output.trim()}`);
   
-  if (output.includes('Server listening on http://localhost:3000')) {
+  // Check if server has started
+  if (output.includes('Server listening')) {
     serverStarted = true;
     runTests();
   }
 });
 
-server.stderr.on('data', (data) => {
-  console.error(`[Server Error] ${data.toString()}`);
-  serverError = data.toString();
+serverProcess.stderr.on('data', (data) => {
+  const error = data.toString();
+  console.error(`[Server Error] ${error.trim()}`);
+  serverErrors.push(error);
 });
 
-server.on('error', (error) => {
+serverProcess.on('error', (error) => {
   console.error('Failed to start server process:', error);
   process.exit(1);
 });
 
-// Give the server 10 seconds to start
-const timeout = setTimeout(() => {
+// Check if server started within timeout
+const checkServerStarted = setTimeout(() => {
   if (!serverStarted) {
-    console.error('Server failed to start within timeout. Exiting...');
-    if (serverError) {
-      console.error('Last server error:', serverError);
+    console.error(`Server failed to start within timeout. Exiting...`);
+    if (serverErrors.length > 0) {
+      console.error(`Last server error: ${serverErrors[serverErrors.length - 1]}`);
     }
-    server.kill();
+    
+    // Kill the server process if it's still running
+    if (serverProcess) {
+      serverProcess.kill();
+    }
+    
     process.exit(1);
   }
-}, 10000);
+}, serverStartTimeout);
 
 // Function to run the tests
 function runTests() {
-  clearTimeout(timeout);
+  clearTimeout(checkServerStarted);
+  console.log('Server started successfully. Running integration tests...');
   
-  console.log('Server started. Running integration tests...');
-  
-  const jest = spawn('node', ['node_modules/.bin/jest', '--config=jest.integration.config.js'], {
+  // Run Jest with the integration config
+  const jestProcess = spawn('npx', ['jest', '--config=jest.integration.config.js'], {
     cwd: rootDir,
-    stdio: 'inherit',
-    shell: true,
+    stdio: 'inherit'
   });
   
-  jest.on('exit', (code) => {
-    console.log(`Jest process exited with code ${code}`);
+  jestProcess.on('close', (code) => {
+    console.log(`Integration tests completed with exit code ${code}`);
     
     // Kill the server process
-    console.log('Shutting down server...');
-    server.kill();
+    if (serverProcess) {
+      console.log('Shutting down mock backend server...');
+      serverProcess.kill();
+    }
     
-    // Exit with the same code as Jest
     process.exit(code);
-  });
-  
-  jest.on('error', (error) => {
-    console.error('Failed to start Jest process:', error);
-    server.kill();
-    process.exit(1);
   });
 }
 
 // Handle process exit
 process.on('exit', () => {
-  if (server && !server.killed) {
-    server.kill();
+  if (serverProcess) {
+    serverProcess.kill();
   }
 });
 
 // Handle Ctrl+C
 process.on('SIGINT', () => {
   console.log('Received SIGINT. Shutting down...');
-  if (server && !server.killed) {
-    server.kill();
+  if (serverProcess) {
+    serverProcess.kill();
+  }
+  process.exit(0);
+});
+
+// Handle termination
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM. Shutting down...');
+  if (serverProcess) {
+    serverProcess.kill();
   }
   process.exit(0);
 }); 
