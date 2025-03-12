@@ -7,8 +7,6 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
-    "dev": "ts-node-esm src/server.ts",
     "example": "ts-node-esm src/example-payment-wrapper-usage.ts",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
