@@ -2,7 +2,7 @@ import fastify, { FastifyInstance, FastifyServerOptions } from 'fastify';
 import cors from '@fastify/cors';
 import { authRoutes } from './routes/auth.js';
 import { billingRoutes } from './routes/billing.js';
-import { fileURLToPath } from 'url';
+import { DeveloperModel } from './models/developers.js';
 
 /**
  * Build a Fastify server instance with all routes configured
@@ -19,34 +19,36 @@ export function buildServer(options: FastifyServerOptions = {}): FastifyInstance
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
   });
   
-  // Global hook for handling API key authentication
+  // Add API key validation middleware for protected routes
   server.addHook('onRequest', async (request, reply) => {
-    // Skip API key validation for certain paths
-    const skipApiKeyValidation = [
+    // Skip API key validation for health check and docs
+    const publicPaths = [
       '/health',
       '/docs',
+      '/auth/url'
     ];
     
-    if (skipApiKeyValidation.some(path => request.url.startsWith(path))) {
+    // Skip validation for public paths
+    if (publicPaths.some(path => request.url.startsWith(path))) {
       return;
     }
     
+    // Get API key from headers
     const apiKey = request.headers['x-api-key'] as string;
-    
-    // For our mock implementation, we'll accept a few predefined API keys
-    const validApiKeys = [
-      'valid-api-key',
-      'test-api-key',
-      'admin-api-key'
-    ];
-    
-    if (!apiKey || !validApiKeys.includes(apiKey)) {
-      reply.code(401).send({
-        valid: false,
-        error: 'invalid_api_key',
-        message: 'The provided API key is invalid or has been revoked'
+    if (!apiKey) {
+      return reply.status(401).send({
+        error: 'missing_api_key',
+        message: 'API key is required'
       });
-      return;
+    }
+    
+    // Validate API key
+    const validation = DeveloperModel.validateApiKey(apiKey);
+    if (!validation.valid) {
+      return reply.status(401).send({
+        error: 'invalid_api_key',
+        message: 'Invalid API key'
+      });
     }
   });
   
@@ -56,7 +58,11 @@ export function buildServer(options: FastifyServerOptions = {}): FastifyInstance
   
   // Health check endpoint
   server.get('/health', async () => {
-    return { status: 'ok', timestamp: new Date().toISOString() };
+    return { 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      version: '1.0.0'
+    };
   });
   
   return server;
@@ -70,7 +76,14 @@ export function buildServer(options: FastifyServerOptions = {}): FastifyInstance
 export async function startServer(port: number = 3000): Promise<FastifyInstance> {
   const server = buildServer({
     logger: {
-      level: 'info'
+      level: 'info',
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          translateTime: 'HH:MM:ss Z',
+          ignore: 'pid,hostname'
+        }
+      }
     }
   });
   
@@ -82,15 +95,4 @@ export async function startServer(port: number = 3000): Promise<FastifyInstance>
     server.log.error(err);
     process.exit(1);
   }
-}
-
-// If this file is run directly, start the server
-// Check if this file is being run directly
-const isMainModule = process.argv.length > 1 && 
-  (process.argv[1] === fileURLToPath(import.meta.url) || 
-   process.argv[1].endsWith('server.js') || 
-   process.argv[1].endsWith('server.ts'));
-
-if (isMainModule) {
-  startServer();
 } 
