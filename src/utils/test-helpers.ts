@@ -7,6 +7,7 @@
  */
 
 import winston from 'winston';
+import Transport from 'winston-transport';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { MemoryTransport, createMemoryTransport } from './logger.js';
 import { PaymentWrapperOptions } from '../payment-wrapper.js';
@@ -28,7 +29,7 @@ export class TestLogger {
     this.transport = createMemoryTransport();
     this.logger = winston.createLogger({
       level: 'debug',
-      transports: [this.transport]
+      transports: [this.transport as unknown as Transport]
     });
   }
   
