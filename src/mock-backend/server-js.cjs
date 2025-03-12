@@ -1,6 +1,11 @@
 // CommonJS version of the server for Jest
 const fastify = require('fastify');
 const cors = require('@fastify/cors');
+const jwt = require('jsonwebtoken');
+
+// Use the same JWT secret as MockAuthService
+const JWT_SECRET = 'mock-secret-key-for-testing-only';
+const TOKEN_EXPIRATION_SECONDS = 3600; // 1 hour
 
 /**
  * Build a Fastify server instance with all routes configured
@@ -141,7 +146,7 @@ function buildServer(options = {}) {
       });
     }
     
-    const { userId, expiresIn } = request.body;
+    const { userId, expiresIn, clientApiKey } = request.body;
     
     if (!userId) {
       console.log('Missing user ID');
@@ -150,10 +155,6 @@ function buildServer(options = {}) {
         message: 'User ID is required'
       });
     }
-    
-    // Generate a mock token
-    const token = `mock_token_${userId}_${Date.now()}`;
-    console.log('Generated token:', token);
     
     // Parse expiry time
     let expirySeconds;
@@ -170,8 +171,24 @@ function buildServer(options = {}) {
         expirySeconds = parseInt(expiresIn, 10);
       }
     } else {
-      expirySeconds = 3600; // Default to 1 hour
+      expirySeconds = TOKEN_EXPIRATION_SECONDS; // Default to 1 hour
     }
+    
+    // Generate a proper JWT token
+    // Use the clientApiKey if provided, otherwise use 'valid-api-key' as default
+    // This ensures the token will be valid for the API key that will be used in the tests
+    const tokenApiKey = clientApiKey || 'valid-api-key';
+    
+    const payload = {
+      userId: userId,
+      apiKey: tokenApiKey,
+      // Add any other claims that MockAuthService expects
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + expirySeconds
+    };
+    
+    const token = jwt.sign(payload, JWT_SECRET);
+    console.log('Generated JWT token for user:', userId, 'with API key:', tokenApiKey);
     
     const expiresAt = new Date(Date.now() + expirySeconds * 1000).toISOString();
     
@@ -208,28 +225,42 @@ function buildServer(options = {}) {
     const { token } = request.body;
     console.log('Token to verify:', token);
     
-    // For this mock implementation, we'll consider any token that starts with "mock_token_" as valid
-    // Extract the user ID from the token
-    let userId = 'user_123456';
-    if (token && token.startsWith('mock_token_')) {
-      const parts = token.split('_');
-      if (parts.length >= 3) {
-        userId = parts[2];
+    try {
+      // Verify the JWT token
+      const decoded = jwt.verify(token, JWT_SECRET);
+      console.log('Token verified successfully, decoded payload:', decoded);
+      
+      // Extract user ID from the decoded token
+      const userId = decoded.userId;
+      
+      // Check if the token's API key matches the request API key
+      if (decoded.apiKey !== apiKey) {
+        console.log('Token API key does not match request API key:', decoded.apiKey, apiKey);
+        return {
+          valid: false,
+          error: 'invalid_token',
+          message: 'Token is not valid for this API key'
+        };
       }
-      console.log('Extracted user ID from token:', userId);
+      
+      const response = {
+        valid: true,
+        userId: userId,
+        permissions: {
+          canAccess: true,
+          reasonCodes: ['user_authenticated']
+        }
+      };
+      console.log('Returning verify token response:', response);
+      return response;
+    } catch (error) {
+      console.log('Token verification failed:', error.message);
+      return {
+        valid: false,
+        error: 'invalid_token',
+        message: 'Token is invalid or expired'
+      };
     }
-    
-    // For the integration test, always return user_123456
-    const response = {
-      valid: true,
-      userId: 'user_123456',
-      permissions: {
-        canAccess: true,
-        reasonCodes: ['user_authenticated']
-      }
-    };
-    console.log('Returning verify token response:', response);
-    return response;
   });
   
   // Billing endpoints

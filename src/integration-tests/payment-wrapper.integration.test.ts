@@ -1,77 +1,16 @@
-import { describe, test, expect, beforeAll, afterAll, jest } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
 import { wrapWithPayments, PaymentWrapperOptions } from '../payment-wrapper';
 import request from 'supertest';
 import { IAuthService, VerifyResponse } from '../interfaces/auth-service';
-import { MockAuthService } from '../services/mock-auth-service';
 
 // Import the mock backend server
 const mockBackendModule = require('../mock-backend/server-js.cjs');
-
-// Mock the MockAuthService to use our custom implementation
-jest.mock('../services/mock-auth-service', () => {
-  return {
-    MockAuthService: jest.fn().mockImplementation((config) => {
-      console.log('Creating mocked MockAuthService with config:', config);
-      
-      return {
-        apiKey: config.apiKey,
-        baseAuthUrl: config.baseAuthUrl || 'https://auth.mcp-api.com',
-        
-        generateAuthUrl: function() {
-          return `${this.baseAuthUrl}/authenticate/${require('uuid').v4()}`;
-        },
-        
-        verifyToken: async function(token, resourceType, resourceId) {
-          console.log(`Mocked verifyToken called with token: ${token}, resourceType: ${resourceType}, resourceId: ${resourceId}`);
-          
-          // For integration tests, we'll consider any token that starts with "mock_token_" as valid
-          if (token && token.startsWith('mock_token_')) {
-            // Extract user ID from token
-            const parts = token.split('_');
-            let userId = 'user_123456'; // Default user ID
-            
-            if (parts.length >= 3) {
-              // Handle the case where userId might contain hyphens (like 'low-funds-user')
-              if (parts[2] === 'low' && parts.length >= 4 && parts[3] === 'funds') {
-                userId = 'low-funds-user';
-              } else {
-                userId = parts[2];
-              }
-            }
-            
-            console.log(`Extracted userId from token: ${userId}`);
-            
-            return {
-              valid: true,
-              userId,
-              permissions: {
-                canAccess: true,
-                reasonCodes: ['user_authenticated']
-              }
-            };
-          }
-          
-          // If token doesn't match our expected format, return an error
-          console.log('Invalid token format');
-          return {
-            valid: false,
-            error: 'invalid_token',
-            message: 'Token is invalid or expired'
-          };
-        }
-      };
-    })
-  };
-});
-
-// Patch the Math.random function to always return 1 for successful funds check
-const originalRandom = Math.random;
-Math.random = jest.fn().mockReturnValue(1);
 
 describe('Payment Wrapper Integration Tests', () => {
   let mockBackend: any;
   let testMcpServer: any;
   let adminApiKey: string;
+  let clientApiKey: string;
   let userToken: string;
   let lowFundsToken: string;
   
@@ -125,8 +64,9 @@ describe('Payment Wrapper Integration Tests', () => {
       return result;
     };
 
-    // Get admin API key
+    // Set up API keys
     adminApiKey = 'admin-api-key';
+    clientApiKey = 'valid-api-key';
 
     // Generate a valid token using the mock backend
     const tokenResponse = await mockBackend.server.inject({
@@ -137,7 +77,8 @@ describe('Payment Wrapper Integration Tests', () => {
       },
       payload: {
         userId: 'user_123456',
-        expiresIn: '1h'
+        expiresIn: '1h',
+        clientApiKey: clientApiKey // Specify the client API key
       }
     });
 
@@ -154,7 +95,8 @@ describe('Payment Wrapper Integration Tests', () => {
       },
       payload: {
         userId: 'low-funds-user',
-        expiresIn: '1h'
+        expiresIn: '1h',
+        clientApiKey: clientApiKey // Specify the client API key
       }
     });
 
@@ -166,9 +108,6 @@ describe('Payment Wrapper Integration Tests', () => {
     // Close the mock backend server
     console.log('Closing mock backend server');
     await mockBackend.server.close();
-    
-    // Restore original Math.random
-    Math.random = originalRandom;
   });
   
   test('validates API key with mock backend', async () => {
@@ -176,7 +115,7 @@ describe('Payment Wrapper Integration Tests', () => {
       method: 'POST',
       url: '/auth/validate-api-key',
       headers: {
-        'X-API-Key': 'valid-api-key'
+        'X-API-Key': clientApiKey
       }
     });
     
@@ -193,7 +132,7 @@ describe('Payment Wrapper Integration Tests', () => {
       method: 'POST',
       url: '/auth/verify-token',
       headers: {
-        'X-API-Key': 'valid-api-key'
+        'X-API-Key': clientApiKey
       },
       payload: {
         token: userToken
@@ -214,7 +153,7 @@ describe('Payment Wrapper Integration Tests', () => {
       method: 'POST',
       url: '/billing/check-funds',
       headers: {
-        'X-API-Key': 'valid-api-key'
+        'X-API-Key': clientApiKey
       },
       payload: {
         userId: 'user_123456',
@@ -237,7 +176,7 @@ describe('Payment Wrapper Integration Tests', () => {
       method: 'GET',
       url: '/billing/balance/user_123456',
       headers: {
-        'X-API-Key': 'valid-api-key'
+        'X-API-Key': clientApiKey
       }
     });
     
@@ -249,7 +188,7 @@ describe('Payment Wrapper Integration Tests', () => {
       method: 'POST',
       url: '/billing/process-charge',
       headers: {
-        'X-API-Key': 'valid-api-key'
+        'X-API-Key': clientApiKey
       },
       payload: {
         userId: 'user_123456',
@@ -278,7 +217,7 @@ describe('Payment Wrapper Integration Tests', () => {
     console.log('Creating payment wrapper with baseAuthUrl:', baseAuthUrl);
     // Create a payment wrapper with the mock backend URL
     const wrappedServer = wrapWithPayments(testMcpServer, { 
-      apiKey: 'valid-api-key', 
+      apiKey: clientApiKey, 
       userToken: userToken,
       debugMode: true,
       baseAuthUrl: baseAuthUrl
@@ -295,19 +234,17 @@ describe('Payment Wrapper Integration Tests', () => {
   });
 
   test('handles insufficient funds in integration flow', async () => {
-    // Override Math.random to simulate insufficient funds
-    Math.random = jest.fn().mockReturnValue(0.1); // This will make checkFunds return false
-    
     // Set up the baseAuthUrl to point to our mock server
     const baseAuthUrl = 'http://localhost:3000';
     
     console.log('Creating payment wrapper with insufficient funds');
     // Create a payment wrapper with the mock backend URL
     const wrappedServer = wrapWithPayments(testMcpServer, { 
-      apiKey: 'valid-api-key', 
+      apiKey: clientApiKey, 
       userToken: lowFundsToken,
       debugMode: true,
-      baseAuthUrl: baseAuthUrl
+      baseAuthUrl: baseAuthUrl,
+      _testOverrideFundsCheck: false // Force insufficient funds
     });
 
     console.log('Calling tool through payment wrapper with insufficient funds');
@@ -319,8 +256,5 @@ describe('Payment Wrapper Integration Tests', () => {
     expect(result).toBeDefined();
     expect(result.error).toBe('insufficient_funds');
     expect(result.message).toBe('Insufficient funds to execute this operation');
-    
-    // Restore Math.random for other tests
-    Math.random = jest.fn().mockReturnValue(1);
   });
 }); 
