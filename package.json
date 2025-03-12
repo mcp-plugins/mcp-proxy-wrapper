@@ -21,9 +21,7 @@
     "version:minor": "npm version minor",
     "version:major": "npm version major",
     "publish": "npm publish --access public",
-    "start:mock-backend": "node --loader ts-node/esm src/mock-backend/start.ts",
-    "start:simple-backend": "node --loader ts-node/esm src/mock-backend/start-simple.ts",
-    "start:improved-backend": "node --loader ts-node/esm src/mock-backend/improved-start.ts"
+    "start:mock-backend": "node --loader ts-node/esm src/mock-backend/start.ts"
   },
   "keywords": [
     "mcp",

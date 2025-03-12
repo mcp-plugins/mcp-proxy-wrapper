@@ -1,10 +1,15 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import jwt from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { DeveloperModel } from '../models/developers.js';
 import { UserModel } from '../models/users.js';
 
-// Secret key for JWT signing
-const JWT_SECRET = 'mock-backend-secret-key';
+// Secret key for JWT signing (in a real app, this would be in environment variables)
+// Convert to Buffer to avoid type issues with jsonwebtoken
+const JWT_SECRET: Secret = Buffer.from('mock-backend-secret-key', 'utf-8');
+
+console.log('Auth controller loaded');
+console.log('JWT_SECRET type:', typeof JWT_SECRET);
+console.log('JWT_SECRET is Buffer:', Buffer.isBuffer(JWT_SECRET));
 
 /**
  * Authentication controller
@@ -62,6 +67,8 @@ export const AuthController = {
     }
     
     const { userId, expiresIn = '1h' } = request.body;
+    console.log('Generating token for user:', userId);
+    console.log('Token expiration:', expiresIn);
     
     // Check if user exists
     const user = UserModel.findById(userId);
@@ -72,30 +79,54 @@ export const AuthController = {
       });
     }
     
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
+    try {
+      console.log('Attempting to sign JWT with payload:', { sub: userId, name: user.name, email: user.email });
+      
+      // Create the payload
+      const payload = { 
         sub: userId,
         name: user.name,
         email: user.email
-      }, 
-      JWT_SECRET, 
-      { expiresIn }
-    );
-    
-    // Calculate expiration time
-    const expirySeconds = expiresIn.endsWith('h') 
-      ? parseInt(expiresIn.replace('h', '')) * 3600
-      : expiresIn.endsWith('m')
-        ? parseInt(expiresIn.replace('m', '')) * 60
-        : parseInt(expiresIn);
-    
-    const expiresAt = new Date(Date.now() + expirySeconds * 1000).toISOString();
-    
-    return {
-      token,
-      expiresAt
-    };
+      };
+      
+      // Create options with explicit typing for expiresIn
+      // The expiresIn can be a string like '1h' or a number in seconds
+      const options: SignOptions = { 
+        expiresIn: expiresIn as string | number
+      };
+      
+      // Sign the token with explicit typing
+      const token = jwt.sign(payload, JWT_SECRET, options);
+      
+      console.log('JWT token generated successfully');
+      
+      // Calculate expiration time
+      let expirySeconds: number;
+      if (typeof expiresIn === 'string') {
+        if (expiresIn.endsWith('h')) {
+          expirySeconds = parseInt(expiresIn.replace('h', '')) * 3600;
+        } else if (expiresIn.endsWith('m')) {
+          expirySeconds = parseInt(expiresIn.replace('m', '')) * 60;
+        } else {
+          expirySeconds = parseInt(expiresIn);
+        }
+      } else {
+        expirySeconds = 3600; // Default to 1 hour
+      }
+      
+      const expiresAt = new Date(Date.now() + expirySeconds * 1000).toISOString();
+      
+      return {
+        token,
+        expiresAt
+      };
+    } catch (error) {
+      console.error('Error signing JWT:', error);
+      return reply.status(500).send({
+        error: 'token_generation_failed',
+        message: 'Failed to generate authentication token'
+      });
+    }
   },
 
   /**

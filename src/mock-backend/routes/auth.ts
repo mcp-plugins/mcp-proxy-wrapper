@@ -1,10 +1,12 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
-import jwt from 'jsonwebtoken';
+import { Secret } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthController } from '../controllers/auth.js';
 
+console.log('Auth routes module loaded');
+
 // Secret key for JWT signing (in a real app, this would be in environment variables)
-const JWT_SECRET = 'mock-backend-secret-key';
+const JWT_SECRET: Secret = Buffer.from('mock-backend-secret-key', 'utf-8');
 
 // Mock user data
 const MOCK_USERS = {
@@ -46,21 +48,28 @@ const authRequests: Record<string, {
 /**
  * Authentication routes
  */
-export const authRoutes = (fastify: FastifyInstance, _options: FastifyPluginOptions, done: () => void) => {
+export const authRoutes = function(fastify: FastifyInstance, _options: FastifyPluginOptions, done: () => void) {
+  console.log('Registering auth routes');
+  
   // Validate API key
   fastify.post('/validate-api-key', AuthController.validateApiKey);
+  console.log('Registered POST /validate-api-key');
   
   // Generate authentication token (admin only)
   fastify.post('/generate-token', AuthController.generateToken);
+  console.log('Registered POST /generate-token');
   
   // Verify authentication token
   fastify.post('/verify-token', AuthController.verifyToken);
+  console.log('Registered POST /verify-token');
   
   // Generate authentication URL
   fastify.get('/url', AuthController.generateAuthUrl);
+  console.log('Registered GET /url');
   
-  // 5. Create Authentication Request (additional helper for our mock implementation)
-  fastify.post('/auth/create-request', async (request, reply) => {
+  // Create Authentication Request (additional helper for our mock implementation)
+  fastify.post('/create-request', async (request, reply) => {
+    console.log('Create request endpoint called');
     const apiKey = request.headers['x-api-key'] as string;
     
     // Generate a UUID for this authentication request
@@ -80,6 +89,11 @@ export const authRoutes = (fastify: FastifyInstance, _options: FastifyPluginOpti
       authUrl
     });
   });
+  console.log('Registered POST /create-request');
 
+  console.log('All auth routes registered');
   done();
-}; 
+};
+
+// Also export as default for ESM compatibility
+export default authRoutes; 
