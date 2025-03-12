@@ -1,0 +1,40 @@
+# Source files
+src/
+# Only include compiled files in dist/
+!dist/
+
+# Development and build files
+.git/
+.github/
+node_modules/
+coverage/
+logs/
+.vscode/
+.idea/
+
+# Test files
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+jest.config.js
+
+# Documentation
+instructions/
+MCP-Payment-Wrapper-Implementation-Plan.md
+MCP-Payment-Wrapper-PRD.md
+IMPLEMENTATION.md
+IMPLEMENTATION_SUMMARY.md
+MCP-docs.txt
+MCP-Typescript-readme.txt
+
+# Configuration files
+.eslintrc.cjs
+.gitignore
+tsconfig.json
+
+# Misc
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log* 

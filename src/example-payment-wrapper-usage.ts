@@ -9,6 +9,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+// When using the published package, import would be:
+// import { wrapWithPayments } from '@modelcontextprotocol/payment-wrapper';
+// For local development, we use:
 import { wrapWithPayments } from './payment-wrapper.js';
 
 async function main() {

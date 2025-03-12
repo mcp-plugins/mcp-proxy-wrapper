@@ -1,8 +1,14 @@
 # MCP Payment Wrapper
 
-This project includes a payment wrapper for MCP servers that adds payment functionality. The wrapper uses a proxy-based approach to intercept calls to the underlying MCP server and add payment verification.
+A payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality.
 
-### Features
+## Installation
+
+```bash
+npm install @modelcontextprotocol/payment-wrapper
+```
+
+## Features
 
 1. **Instance Wrapping:**  
    - Accepts an instance of an existing MCP server.
@@ -28,32 +34,46 @@ This project includes a payment wrapper for MCP servers that adds payment functi
    - If any step fails (e.g., missing API key, invalid token, insufficient funds, or billing error), throws an error with an appropriate message.
    - Logs errors or important events using a Winston-based logger for robust logging capabilities.
 
-### Usage Example
+## Usage Example
 
 ```typescript
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { wrapWithPayments } from './payment-wrapper.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { wrapWithPayments } from '@modelcontextprotocol/payment-wrapper';
+import { z } from 'zod';
 
-// Create or get your MCP server instance
-const demoServer = new McpServer({ 
-  name: "Demo Server",
+// Create your MCP server instance
+const server = new McpServer({ 
+  name: "My MCP Server",
   version: "1.0.0",
-  description: "Demo server description"
+  description: "MCP server with payment functionality"
 });
 
 // Register tools, resources, and prompts on the server
-demoServer.tool("example_tool", { /* schema */ }, async (args, extra) => {
-  // Tool implementation
+server.tool("example_tool", { 
+  param: z.string() 
+}, async (args, extra) => {
+  return {
+    content: [{ 
+      type: "text" as const, 
+      text: `Processed: ${args.param}` 
+    }]
+  };
 });
 
-// Wrap it with payment functionality
-const paymentsEnabledServer = wrapWithPayments(demoServer, { 
-  apiKey: 'YOUR_API_KEY', 
-  userToken: 'USER_JWT_TOKEN' 
+// Wrap the server with payment functionality
+const paymentsEnabledServer = wrapWithPayments(server, { 
+  apiKey: process.env.API_KEY || 'YOUR_API_KEY', 
+  userToken: process.env.USER_JWT || 'USER_JWT_TOKEN',
+  debugMode: true // optional
 });
 
 // Use the wrapped server as you would a normal MCP server
 // All calls will now go through payment verification
+
+// Connect to a transport
+const transport = new StdioServerTransport();
+await paymentsEnabledServer.connect(transport);
 ```
 
 ### Installation and Setup
@@ -211,7 +231,7 @@ The MCP Payment Wrapper extends the functionality of the Model Context Protocol 
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/mcp-payment-wrapper.git
+git clone https://github.com/crazyrabbitltc/mcp-payment-wrapper.git
 cd mcp-payment-wrapper
 ```
 

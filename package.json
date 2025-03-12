@@ -1,8 +1,9 @@
 {
-  "name": "mcp-calculator",
+  "name": "@modelcontextprotocol/payment-wrapper",
   "version": "1.0.0",
-  "description": "A calculator app built with MCP TypeScript SDK",
-  "main": "dist/server.js",
+  "description": "Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "tsc",
@@ -10,8 +11,35 @@
     "dev": "ts-node-esm src/server.ts",
     "example": "ts-node-esm src/example-payment-wrapper-usage.ts",
     "test": "jest",
-    "lint": "eslint src/**/*.ts"
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "prepublishOnly": "npm run test && npm run lint && npm run build",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major",
+    "publish": "npm publish --access public"
   },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "payment",
+    "llm",
+    "ai",
+    "billing"
+  ],
+  "author": "ModelContextProtocol",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crazyrabbitltc/mcp-payment-wrapper"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.1",
     "colors": "^1.4.0",
@@ -29,5 +57,8 @@
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0"
   }
 }
