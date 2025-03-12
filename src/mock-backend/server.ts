@@ -4,12 +4,32 @@ import cors from '@fastify/cors';
 // Use top-level await for imports
 console.log('Loading server.ts module');
 
-// Import routes and models
-let authRoutes, billingRoutes, DeveloperModel;
+// Import routes and models with proper type annotations
+// Define interfaces for the imported modules
+interface AuthRoutes {
+  authRoutes: any;
+}
+
+interface BillingRoutes {
+  billingRoutes: any;
+}
+
+interface DeveloperModelType {
+  DeveloperModel: {
+    validateApiKey: (apiKey: string) => any;
+  };
+}
+
+// Initialize with proper types
+let authRoutes: any;
+let billingRoutes: any;
+let DeveloperModel: {
+  validateApiKey: (apiKey: string) => any;
+};
 
 try {
   console.log('Importing auth routes...');
-  const authModule = await import('./routes/auth.js');
+  const authModule = await import('./routes/auth.js') as AuthRoutes;
   authRoutes = authModule.authRoutes;
   console.log('Auth routes imported successfully');
 } catch (error) {
@@ -19,7 +39,7 @@ try {
 
 try {
   console.log('Importing billing routes...');
-  const billingModule = await import('./routes/billing.js');
+  const billingModule = await import('./routes/billing.js') as BillingRoutes;
   billingRoutes = billingModule.billingRoutes;
   console.log('Billing routes imported successfully');
 } catch (error) {
@@ -29,7 +49,7 @@ try {
 
 try {
   console.log('Importing developer model...');
-  const developerModule = await import('./models/developers.js');
+  const developerModule = await import('./models/developers.js') as DeveloperModelType;
   DeveloperModel = developerModule.DeveloperModel;
   console.log('Developer model imported successfully');
 } catch (error) {

@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { DeveloperModel } from '../models/developers.js';
 import { UserModel } from '../models/users.js';
+import { StringValue } from 'ms';
 
 // Secret key for JWT signing (in a real app, this would be in environment variables)
 // Convert to Buffer to avoid type issues with jsonwebtoken
@@ -92,7 +93,7 @@ export const AuthController = {
       // Create options with explicit typing for expiresIn
       // The expiresIn can be a string like '1h' or a number in seconds
       const options: SignOptions = { 
-        expiresIn: expiresIn as string | number
+        expiresIn: expiresIn as StringValue
       };
       
       // Sign the token with explicit typing

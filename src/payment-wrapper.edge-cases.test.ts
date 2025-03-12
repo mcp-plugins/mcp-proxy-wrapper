@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { wrapWithPayments } from './payment-wrapper.js';
 import { MemoryTransport } from './utils/logger.js';
 import winston from 'winston';
+import Transport from 'winston-transport';
 import { createTestServer } from './utils/test-helpers.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { MockAuthService } from './services/mock-auth-service.js';
@@ -45,7 +46,7 @@ beforeEach(() => {
   memoryTransport = new MemoryTransport();
   testLogger = winston.createLogger({
     level: 'debug',
-    transports: [memoryTransport]
+    transports: [memoryTransport as unknown as Transport]
   });
   
   // Create mock auth service with the same API key that we'll use in tests
@@ -112,18 +113,12 @@ describe('Error Propagation', () => {
       throw new Error('Original server error');
     };
     
-    const wrappedServer = wrapWithPayments(server, createValidOptions());
-    
-    // Verify that the error is propagated
+    // Verify that the error is propagated during initialization
     expect(() => {
-      wrappedServer.tool('test_tool', { param: z.string() }, async () => {
-        return {
-          content: [{ type: 'text' as const, text: 'Success' }]
-        };
-      });
+      wrapWithPayments(server, createValidOptions());
     }).toThrow('Original server error');
     
-    // Restore the original method
+    // Restore the original method for cleanup
     server.tool = originalTool;
   });
   

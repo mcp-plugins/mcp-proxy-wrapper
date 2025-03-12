@@ -18,11 +18,12 @@
  * - Structured logging with levels
  */
 
-import winston from 'winston';
+import * as winston from 'winston';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import path from 'path';
-import fs from 'fs';
-import Transport from 'winston-transport';
+import * as path from 'path';
+import * as fs from 'fs';
+// Use require instead of import for CommonJS compatibility
+const Transport = require('winston-transport');
 
 /**
  * Options for configuring the logger
@@ -148,7 +149,7 @@ export class MemoryTransport extends Transport {
   logs: Record<string, any>[] = [];
   name: string;
   
-  constructor(opts?: Transport.TransportStreamOptions) {
+  constructor(opts?: any) {
     super(opts);
     this.name = 'memory';
   }

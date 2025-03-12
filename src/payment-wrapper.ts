@@ -24,10 +24,11 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { createLogger, isUsingStdioTransport, LoggerOptions } from './utils/logger.js';
-import winston from 'winston';
+import * as winston from 'winston';
 import { v4 as uuidv4 } from 'uuid';
 import { IAuthService } from './interfaces/auth-service.js';
 import { MockAuthService } from './services/mock-auth-service.js';
+import { z } from 'zod';
 
 // Define interfaces for the wrapper options
 export interface PaymentWrapperOptions {
@@ -265,5 +266,269 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
     }
   });
 
+  // Register payment tools
+  registerPaymentTools(proxy, authService, options, logger);
+
   return proxy as McpServer;
+}
+
+/**
+ * Register payment-related tools on the wrapped MCP server.
+ * These tools extend the server with authentication and balance functionality.
+ */
+function registerPaymentTools(
+  server: McpServer, 
+  authService: IAuthService, 
+  options: PaymentWrapperOptions, 
+  logger: winston.Logger
+): void {
+  logger.info('Registering payment tools on wrapped MCP server');
+
+  // Check if the auth service supports extended functionality
+  const supportsSessionManagement = typeof authService.createSession === 'function' && 
+                                   typeof authService.checkSessionStatus === 'function';
+  const supportsUserData = typeof authService.validateJWT === 'function';
+
+  if (!supportsSessionManagement) {
+    logger.warn('Auth service does not support session management - some payment tools will have limited functionality');
+  }
+
+  if (!supportsUserData) {
+    logger.warn('Auth service does not support user data retrieval - some payment tools will have limited functionality');
+  }
+
+  // Tool 1: Authentication
+  server.tool("payment_authenticate", 
+    // Parameter schema using direct properties
+    { 
+      return_url: z.string().url().optional(), 
+      user_hint: z.string().optional() 
+    }, 
+    // Handler function
+    async (args, extra) => {
+      try {
+        const sessionId = uuidv4();
+        
+        // Check if session management is supported
+        if (supportsSessionManagement && authService.createSession) {
+          await authService.createSession(sessionId, {
+            return_url: args.return_url,
+            user_hint: args.user_hint,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 1800 * 1000).toISOString() // 30 minutes
+          });
+        } else {
+          logger.debug('Session management not supported by auth service, using basic functionality');
+        }
+        
+        // Build the authentication URL
+        let authUrl = `${options.baseAuthUrl || 'https://auth.mcp-api.com'}/auth?session=${sessionId}`;
+        if (args.user_hint) authUrl += `&hint=${encodeURIComponent(args.user_hint)}`;
+        if (args.return_url) authUrl += `&return_url=${encodeURIComponent(args.return_url)}`;
+        
+        logger.debug('Created authentication session', { sessionId });
+        
+        // Return in the format expected by MCP server
+        return {
+          content: [
+            { 
+              type: "text", 
+              text: "Authentication initiated. Please use the following link to authenticate:" 
+            },
+            {
+              type: "text",
+              text: authUrl
+            }
+          ],
+          _meta: {
+            session_id: sessionId,
+            expires_in: 1800, // 30 minutes in seconds
+            status: "pending"
+          }
+        };
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.error('Error in payment_authenticate', { error: errorMessage });
+        return {
+          error: true,
+          content: [
+            {
+              type: "text",
+              text: "Failed to initialize authentication session. " + 
+                    (options.debugMode ? errorMessage : "Please try again later.")
+            }
+          ]
+        };
+      }
+    }
+  );
+
+  // Tool 2: Check Authentication Status
+  server.tool("payment_check_auth_status", 
+    { 
+      session_id: z.string().uuid() 
+    }, 
+    async (args, extra) => {
+      try {
+        // Check if session management is supported
+        if (!supportsSessionManagement || !authService.checkSessionStatus) {
+          logger.warn('Session status checking not supported by auth service');
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Authentication status checking is not supported by the current configuration."
+              }
+            ]
+          };
+        }
+        
+        // Check the status of the authentication session
+        const sessionStatus = await authService.checkSessionStatus(args.session_id);
+        
+        if (!sessionStatus) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Authentication session has expired or is invalid."
+              }
+            ]
+          };
+        }
+        
+        if (sessionStatus.status === "authenticated") {
+          // Store the JWT in the wrapper options for future use
+          if (sessionStatus.jwt) {
+            options.userToken = sessionStatus.jwt;
+            logger.debug('Updated user token from authenticated session');
+          }
+          
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Authentication successful! You are now logged in."
+              }
+            ],
+            _meta: {
+              status: "authenticated",
+              user_id: sessionStatus.user_id,
+              name: sessionStatus.name,
+              email: sessionStatus.email,
+              jwt: sessionStatus.jwt,
+              authenticated_at: sessionStatus.authenticated_at
+            }
+          };
+        }
+        
+        return {
+          content: [
+            {
+              type: "text", 
+              text: "Authentication not yet completed. Please complete the authentication process using the link provided earlier."
+            }
+          ],
+          _meta: {
+            status: sessionStatus.status || "pending",
+            expires_in: sessionStatus.expires_in
+          }
+        };
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.error('Error in payment_check_auth_status', { error: errorMessage });
+        return {
+          error: true,
+          content: [
+            {
+              type: "text",
+              text: "Failed to check authentication status. " + 
+                    (options.debugMode ? errorMessage : "Please try again later.")
+            }
+          ]
+        };
+      }
+    }
+  );
+
+  // Tool 3: Get Balance
+  server.tool("payment_get_balance", 
+    { 
+      jwt: z.string().min(20) 
+    }, 
+    async (args, extra) => {
+      try {
+        // Check if user data retrieval is supported
+        if (!supportsUserData || !authService.validateJWT) {
+          logger.warn('User data retrieval not supported by auth service');
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Balance checking is not supported by the current configuration."
+              }
+            ]
+          };
+        }
+        
+        // Validate JWT and get user data
+        const userData = await authService.validateJWT(args.jwt);
+        
+        if (!userData) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Your authentication is invalid or has expired. Please authenticate again."
+              }
+            ]
+          };
+        }
+        
+        // Check if JWT was refreshed
+        const refreshedJwt = userData.refreshedJwt || args.jwt;
+        
+        if (refreshedJwt !== args.jwt) {
+          options.userToken = refreshedJwt;
+          logger.debug('Updated user token with refreshed JWT');
+        }
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Current balance: ${userData.balance} ${userData.currency}`
+            }
+          ],
+          _meta: {
+            user_id: userData.user_id,
+            balance: userData.balance,
+            currency: userData.currency,
+            available_credit: userData.available_credit,
+            last_updated: new Date().toISOString(),
+            jwt: refreshedJwt !== args.jwt ? refreshedJwt : undefined
+          }
+        };
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.error('Error in payment_get_balance', { 
+          error: errorMessage,
+          jwtProvided: !!args.jwt 
+        });
+        
+        return {
+          error: true,
+          content: [
+            {
+              type: "text",
+              text: "Failed to retrieve balance information. " + 
+                    (options.debugMode ? errorMessage : "Please try again later.")
+            }
+          ]
+        };
+      }
+    }
+  );
+
+  logger.info('Payment tools registered successfully');
 } 

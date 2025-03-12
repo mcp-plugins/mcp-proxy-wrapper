@@ -40,10 +40,112 @@ npm install @modelcontextprotocol/payment-wrapper
    - ✅ If any step fails, returns an appropriate error response.
    - ✅ Logs errors and important events using a Winston-based logger.
 
+8. **Payment Authentication Tools:**  
+   - ✅ Provides tools for user authentication and balance management.
+   - ✅ Supports a user-friendly authentication flow.
+   - ⚠️ Currently uses a mock authentication service for testing.
+   - 🔄 Real implementation would connect to an authentication server.
+
 Legend:
 - ✅ Fully implemented
 - ⚠️ Simulated/mock implementation
 - 🔄 Planned for future implementation
+
+## Payment Tools
+
+The wrapper adds the following payment-related tools:
+
+### 1. `payment_authenticate`
+
+Initiates the authentication process and returns a URL for the user to complete authentication.
+
+**Parameters:**
+- `return_url` (optional): URL to redirect after authentication
+- `user_hint` (optional): Email or username to pre-fill in the auth form
+
+**Returns:**
+- `session_id`: Unique identifier for this authentication session
+- `auth_url`: URL for the user to complete authentication
+- `expires_in`: Seconds until this authentication session expires
+- `status`: Current status of the authentication session
+
+**Example:**
+```typescript
+const authResult = await mcpServer.callTool('payment_authenticate', {
+  return_url: 'https://example.com/return'
+});
+
+// Provide the auth URL to the user
+console.log('Please authenticate:', authResult.content[1].json.auth_url);
+```
+
+### 2. `payment_check_auth_status`
+
+Checks the status of an ongoing authentication session.
+
+**Parameters:**
+- `session_id`: The session ID from the payment_authenticate call
+
+**Returns:**
+- `status`: "pending", "authenticated", or "error"
+- `user_info`: User information if authenticated
+- `jwt`: JWT token if authenticated
+- `authenticated_at`: Timestamp of authentication
+
+**Example:**
+```typescript
+const statusResult = await mcpServer.callTool('payment_check_auth_status', {
+  session_id: 'session-id-from-authenticate'
+});
+
+if (statusResult.content[1].json.status === 'authenticated') {
+  // Save the JWT token for future API calls
+  const jwt = statusResult.content[1].json.jwt;
+}
+```
+
+### 3. `payment_get_balance`
+
+Gets the current balance for an authenticated user.
+
+**Parameters:**
+- `jwt`: JWT token from the authentication process
+
+**Returns:**
+- `user_id`: User identifier
+- `balance`: Current balance amount
+- `currency`: Currency code (e.g., USD)
+- `available_credit`: Available credit (if applicable)
+- `jwt`: Updated JWT token (only if token was refreshed)
+
+**Example:**
+```typescript
+const balanceResult = await mcpServer.callTool('payment_get_balance', {
+  jwt: 'jwt-token-from-authentication'
+});
+
+console.log(`Balance: ${balanceResult.content[1].json.balance} ${balanceResult.content[1].json.currency}`);
+```
+
+## Authentication Flow
+
+The payment wrapper implements a user-friendly authentication flow:
+
+1. **Initiate Authentication**:
+   - LLM calls `payment_authenticate`
+   - Returns a session ID and authentication URL
+   - User clicks the URL to authenticate in the browser
+
+2. **Check Authentication Status**:
+   - LLM periodically calls `payment_check_auth_status`
+   - Once authenticated, returns a JWT token
+   - No need for the user to copy/paste anything
+
+3. **Use the JWT Token**:
+   - JWT is used for subsequent API calls
+   - Token is refreshed automatically when needed
+
+This flow provides a seamless experience for end users while maintaining security.
 
 ## Usage Example
 
