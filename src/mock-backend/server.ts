@@ -1,16 +1,22 @@
-import Fastify, { FastifyInstance, FastifyServerOptions } from 'fastify';
+import fastify, { FastifyInstance, FastifyServerOptions } from 'fastify';
 import cors from '@fastify/cors';
-import { registerAuthRoutes } from './routes/auth.js';
-import { registerBillingRoutes } from './routes/billing.js';
+import { authRoutes } from './routes/auth.js';
+import { billingRoutes } from './routes/billing.js';
+import { fileURLToPath } from 'url';
 
+/**
+ * Build a Fastify server instance with all routes configured
+ * @param options Fastify server options
+ * @returns Configured Fastify instance
+ */
 export function buildServer(options: FastifyServerOptions = {}): FastifyInstance {
-  const server = Fastify(options);
+  const server = fastify(options);
   
-  // Register CORS
+  // Register CORS plugin
   server.register(cors, {
-    origin: true, // Allow all origins for testing
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'X-API-Key'],
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
   });
   
   // Global hook for handling API key authentication
@@ -44,29 +50,47 @@ export function buildServer(options: FastifyServerOptions = {}): FastifyInstance
     }
   });
   
+  // Register routes
+  server.register(authRoutes, { prefix: '/auth' });
+  server.register(billingRoutes, { prefix: '/billing' });
+  
   // Health check endpoint
   server.get('/health', async () => {
-    return { status: 'ok' };
+    return { status: 'ok', timestamp: new Date().toISOString() };
   });
-  
-  // Register route handlers
-  registerAuthRoutes(server);
-  registerBillingRoutes(server);
   
   return server;
 }
 
-// Function to start the server if this file is executed directly
-if (process.argv[1] === import.meta.url) {
+/**
+ * Start the server on the specified port
+ * @param port Port to listen on (default: 3000)
+ * @returns The started server instance
+ */
+export async function startServer(port: number = 3000): Promise<FastifyInstance> {
   const server = buildServer({
-    logger: true,
+    logger: {
+      level: 'info'
+    }
   });
   
-  server.listen({ port: 3000, host: '0.0.0.0' }, (err, address) => {
-    if (err) {
-      console.error(err);
-      process.exit(1);
-    }
-    console.log(`Server listening at ${address}`);
-  });
+  try {
+    await server.listen({ port, host: '0.0.0.0' });
+    console.log(`Server listening on http://localhost:${port}`);
+    return server;
+  } catch (err) {
+    server.log.error(err);
+    process.exit(1);
+  }
+}
+
+// If this file is run directly, start the server
+// Check if this file is being run directly
+const isMainModule = process.argv.length > 1 && 
+  (process.argv[1] === fileURLToPath(import.meta.url) || 
+   process.argv[1].endsWith('server.js') || 
+   process.argv[1].endsWith('server.ts'));
+
+if (isMainModule) {
+  startServer();
 } 

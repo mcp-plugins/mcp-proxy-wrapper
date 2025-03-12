@@ -1,34 +1,38 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
-// Secret key for JWT signing - in a real implementation, this would be secured
-const JWT_SECRET = 'mcp-mock-backend-secret-key';
+// Secret key for JWT signing (in a real app, this would be in environment variables)
+const JWT_SECRET = 'mock-backend-secret-key';
 
-// Mock users database
-const users: Record<string, { 
-  userId: string;
-  username: string;
-  email: string;
-  permissions: string[];
-}> = {
-  'test-user': {
-    userId: 'user_123456',
-    username: 'test_user',
+// Mock user data
+const MOCK_USERS = {
+  'user_123456': {
+    id: 'user_123456',
+    name: 'Test User',
     email: 'test@example.com',
-    permissions: ['use_tools', 'use_resources', 'use_prompts']
+    permissions: ['basic_access']
   },
-  'premium-user': {
-    userId: 'user_789012',
-    username: 'premium_user',
-    email: 'premium@example.com',
-    permissions: ['use_tools', 'use_resources', 'use_prompts', 'premium_features']
+  'low-funds-user': {
+    id: 'low-funds-user',
+    name: 'Low Funds User',
+    email: 'lowfunds@example.com',
+    permissions: ['basic_access']
+  }
+};
+
+// Mock developer data
+const MOCK_DEVELOPERS = {
+  'valid-api-key': {
+    id: 'dev_123456',
+    name: 'Test Developer',
+    email: 'dev@example.com'
   },
-  'basic-user': {
-    userId: 'user_345678',
-    username: 'basic_user',
-    email: 'basic@example.com',
-    permissions: ['use_tools', 'use_resources']
+  'admin-api-key': {
+    id: 'admin_123456',
+    name: 'Admin Developer',
+    email: 'admin@example.com',
+    isAdmin: true
   }
 };
 
@@ -38,221 +42,274 @@ const authRequests: Record<string, {
   apiKey: string;
 }> = {};
 
-export function registerAuthRoutes(server: FastifyInstance) {
-  // 1. Authentication endpoint
-  server.get('/auth/authenticate/:uuid', async (request, reply) => {
-    const { uuid } = request.params as { uuid: string };
-    
-    // Check if this is a valid auth request
-    const authRequest = authRequests[uuid];
-    if (!authRequest) {
-      return reply.code(400).send({
-        error: 'invalid_request',
-        message: 'Invalid or expired authentication request'
+/**
+ * Auth routes plugin for Fastify
+ */
+export const authRoutes = (fastify: FastifyInstance, _options: FastifyPluginOptions, done: () => void) => {
+  /**
+   * Validate API key
+   * POST /auth/validate-api-key
+   */
+  fastify.post('/validate-api-key', {
+    schema: {
+      headers: {
+        type: 'object',
+        required: ['x-api-key'],
+        properties: {
+          'x-api-key': { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            valid: { type: 'boolean' },
+            developerId: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const apiKey = request.headers['x-api-key'] as string;
+    const developer = MOCK_DEVELOPERS[apiKey];
+
+    if (!developer) {
+      return reply.status(401).send({
+        error: 'invalid_api_key',
+        message: 'Invalid API key'
       });
     }
-    
-    // Check if the request has expired (15 minutes)
-    const currentTime = Date.now();
-    if (currentTime - authRequest.timestamp > 15 * 60 * 1000) {
-      delete authRequests[uuid];
-      return reply.code(400).send({
-        error: 'expired_request',
-        message: 'Authentication request has expired'
-      });
-    }
-    
-    // For our mock implementation, we'll just use a fixed user
-    const user = users['test-user'];
-    const expirationTime = Math.floor(Date.now() / 1000) + (60 * 60); // 1 hour
-    
-    // Create JWT token
-    const token = jwt.sign({
-      sub: user.userId,
-      iss: 'mcp-auth-service',
-      iat: Math.floor(Date.now() / 1000),
-      exp: expirationTime,
-      apiKey: authRequest.apiKey,
-      mcpServerId: 'mock-server-123'
-    }, JWT_SECRET);
-    
-    // Remove the auth request
-    delete authRequests[uuid];
-    
-    return reply.code(200).send({
-      token,
-      expiresAt: new Date(expirationTime * 1000).toISOString(),
-      userId: user.userId
-    });
+
+    return {
+      valid: true,
+      developerId: developer.id
+    };
   });
 
-  // 2. Token Verification endpoint
-  server.post('/auth/verify-token', async (request, reply) => {
-    const { token } = request.body as { token: string };
-    
-    if (!token) {
-      return reply.code(400).send({
-        valid: false,
-        error: 'invalid_request',
-        message: 'Token is required'
+  /**
+   * Generate token for testing
+   * POST /auth/generate-token
+   * Admin API key required
+   */
+  fastify.post('/generate-token', {
+    schema: {
+      headers: {
+        type: 'object',
+        required: ['x-api-key'],
+        properties: {
+          'x-api-key': { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['userId'],
+        properties: {
+          userId: { type: 'string' },
+          expiresIn: { type: 'string', default: '1h' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            token: { type: 'string' },
+            expiresAt: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const apiKey = request.headers['x-api-key'] as string;
+    const developer = MOCK_DEVELOPERS[apiKey];
+
+    // Only admin API keys can generate tokens
+    if (!developer || !developer.isAdmin) {
+      return reply.status(401).send({
+        error: 'unauthorized',
+        message: 'Admin API key required'
       });
     }
+
+    const { userId, expiresIn = '1h' } = request.body as { userId: string, expiresIn?: string };
     
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as {
-        sub: string;
-        iss: string;
-        exp: number;
-        apiKey: string;
-      };
-      
-      // Check expiration (this should be handled by jwt.verify, but let's be explicit)
-      if (decoded.exp * 1000 < Date.now()) {
-        return reply.code(401).send({
-          valid: false,
-          error: 'expired_token',
-          message: 'Token has expired'
-        });
-      }
-      
-      // In a real implementation, we would look up the user
-      const userId = decoded.sub;
-      let userInfo;
-      
-      for (const user of Object.values(users)) {
-        if (user.userId === userId) {
-          userInfo = user;
-          break;
-        }
-      }
-      
-      if (!userInfo) {
-        return reply.code(401).send({
-          valid: false,
-          error: 'invalid_token',
-          message: 'User not found'
-        });
-      }
-      
-      return reply.code(200).send({
-        valid: true,
-        userId: userInfo.userId,
-        permissions: userInfo.permissions,
-        metadata: {
-          username: userInfo.username,
-          email: userInfo.email
-        }
+    // Check if user exists
+    if (!MOCK_USERS[userId]) {
+      return reply.status(400).send({
+        error: 'invalid_user',
+        message: 'User not found'
       });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        sub: userId,
+        name: MOCK_USERS[userId].name,
+        email: MOCK_USERS[userId].email
+      }, 
+      JWT_SECRET, 
+      { expiresIn }
+    );
+
+    // Calculate expiration time
+    const expirySeconds = expiresIn.endsWith('h') 
+      ? parseInt(expiresIn.replace('h', '')) * 3600
+      : expiresIn.endsWith('m')
+        ? parseInt(expiresIn.replace('m', '')) * 60
+        : parseInt(expiresIn);
+    
+    const expiresAt = new Date(Date.now() + expirySeconds * 1000).toISOString();
+
+    return {
+      token,
+      expiresAt
+    };
+  });
+
+  /**
+   * Verify token
+   * POST /auth/verify-token
+   */
+  fastify.post('/verify-token', {
+    schema: {
+      headers: {
+        type: 'object',
+        required: ['x-api-key'],
+        properties: {
+          'x-api-key': { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['token'],
+        properties: {
+          token: { type: 'string' },
+          resourceType: { type: 'string', enum: ['tool', 'prompt', 'resource'] },
+          resourceId: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            valid: { type: 'boolean' },
+            userId: { type: 'string' },
+            permissions: {
+              type: 'object',
+              properties: {
+                canAccess: { type: 'boolean' },
+                reasonCodes: { type: 'array', items: { type: 'string' } }
+              }
+            }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const apiKey = request.headers['x-api-key'] as string;
+    const developer = MOCK_DEVELOPERS[apiKey];
+
+    if (!developer) {
+      return reply.status(401).send({
+        error: 'invalid_api_key',
+        message: 'Invalid API key'
+      });
+    }
+
+    const { token, resourceType, resourceId } = request.body as { 
+      token: string, 
+      resourceType?: 'tool' | 'prompt' | 'resource', 
+      resourceId?: string 
+    };
+
+    try {
+      // Verify JWT token
+      const decoded = jwt.verify(token, JWT_SECRET) as { sub: string };
+      const userId = decoded.sub;
+      const user = MOCK_USERS[userId];
+
+      if (!user) {
+        return {
+          valid: false,
+          error: 'invalid_user',
+          message: 'User not found'
+        };
+      }
+
+      // For this mock, all users have access to all resources
+      return {
+        valid: true,
+        userId,
+        permissions: {
+          canAccess: true,
+          reasonCodes: ['user_authenticated']
+        }
+      };
     } catch (error) {
-      return reply.code(401).send({
+      return {
         valid: false,
         error: 'invalid_token',
-        message: 'Token is invalid or expired'
-      });
+        message: 'Invalid or expired token'
+      };
     }
   });
 
-  // 3. Developer API Key Validation
-  server.post('/auth/validate-api-key', async (request, reply) => {
-    const apiKey = request.headers['x-api-key'] as string;
-    
-    // For our mock implementation, we'll have some predefined API keys
-    const apiKeyInfo: Record<string, {
-      developerId: string;
-      permissions: string[];
-    }> = {
-      'valid-api-key': {
-        developerId: 'dev_123456',
-        permissions: ['payment_processing', 'user_validation']
+  /**
+   * Generate auth URL
+   * GET /auth/url
+   */
+  fastify.get('/auth/url', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          redirectUrl: { type: 'string' },
+          apiKey: { type: 'string' }
+        }
       },
-      'test-api-key': {
-        developerId: 'dev_test123',
-        permissions: ['user_validation']
-      },
-      'admin-api-key': {
-        developerId: 'dev_admin789',
-        permissions: ['payment_processing', 'user_validation', 'admin']
-      }
-    };
-    
-    const info = apiKeyInfo[apiKey];
-    if (!info) {
-      return reply.code(401).send({
-        valid: false,
-        error: 'invalid_api_key',
-        message: 'The provided API key is invalid or has been revoked'
-      });
-    }
-    
-    return reply.code(200).send({
-      valid: true,
-      developerId: info.developerId,
-      permissions: info.permissions
-    });
-  });
-
-  // 4. Generate Token (for admin/testing)
-  server.post('/auth/generate-token', async (request, reply) => {
-    const apiKey = request.headers['x-api-key'] as string;
-    const body = request.body as {
-      userId: string;
-      expiresIn?: string;
-      permissions?: string[];
-    };
-    
-    // Check if API key has admin permission
-    if (apiKey !== 'admin-api-key') {
-      return reply.code(403).send({
-        error: 'insufficient_permissions',
-        message: 'Your API key does not have permission to generate tokens'
-      });
-    }
-    
-    if (!body.userId) {
-      return reply.code(400).send({
-        error: 'invalid_request',
-        message: 'User ID is required'
-      });
-    }
-    
-    // Parse expiresIn (default to 24h)
-    let expiresInSeconds = 24 * 60 * 60; // 24 hours
-    if (body.expiresIn) {
-      const match = body.expiresIn.match(/^(\d+)([smhdw])$/);
-      if (match) {
-        const value = parseInt(match[1], 10);
-        const unit = match[2];
-        switch (unit) {
-          case 's': expiresInSeconds = value; break;
-          case 'm': expiresInSeconds = value * 60; break;
-          case 'h': expiresInSeconds = value * 60 * 60; break;
-          case 'd': expiresInSeconds = value * 60 * 60 * 24; break;
-          case 'w': expiresInSeconds = value * 60 * 60 * 24 * 7; break;
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            url: { type: 'string' }
+          }
         }
       }
     }
+  }, async (request) => {
+    const { redirectUrl, apiKey } = request.query as { redirectUrl?: string, apiKey?: string };
     
-    const expirationTime = Math.floor(Date.now() / 1000) + expiresInSeconds;
+    // In a real implementation, this would generate a URL to the auth service
+    const authUrl = `http://localhost:3000/auth/login?redirect=${encodeURIComponent(redirectUrl || '')}&apiKey=${apiKey || ''}`;
     
-    // Create JWT token
-    const token = jwt.sign({
-      sub: body.userId,
-      iss: 'mcp-auth-service',
-      iat: Math.floor(Date.now() / 1000),
-      exp: expirationTime,
-      apiKey,
-      mcpServerId: 'mock-server-123',
-      permissions: body.permissions || []
-    }, JWT_SECRET);
-    
-    return reply.code(200).send({
-      token,
-      expiresAt: new Date(expirationTime * 1000).toISOString()
-    });
+    return {
+      url: authUrl
+    };
   });
 
   // 5. Create Authentication Request (additional helper for our mock implementation)
-  server.post('/auth/create-request', async (request, reply) => {
+  fastify.post('/auth/create-request', async (request, reply) => {
     const apiKey = request.headers['x-api-key'] as string;
     
     // Generate a UUID for this authentication request
@@ -272,4 +329,6 @@ export function registerAuthRoutes(server: FastifyInstance) {
       authUrl
     });
   });
-} 
+
+  done();
+}; 

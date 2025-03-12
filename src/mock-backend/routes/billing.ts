@@ -1,508 +1,467 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 
 // Mock user balances
-const userBalances: Record<string, {
-  balance: number;
-  currency: string;
-  lastUpdated: string;
-}> = {
-  'user_123456': {
-    balance: 10.00,
-    currency: 'USD',
-    lastUpdated: new Date().toISOString()
-  },
-  'user_789012': {
-    balance: 25.75,
-    currency: 'USD',
-    lastUpdated: new Date().toISOString()
-  },
-  'user_345678': {
-    balance: 0.50,
-    currency: 'USD',
-    lastUpdated: new Date().toISOString()
-  },
-  'low-funds-user': {
-    balance: 0.02,
-    currency: 'USD',
-    lastUpdated: new Date().toISOString()
-  }
+const USER_BALANCES: Record<string, number> = {
+  'user_123456': 100.00,  // Regular user with $100
+  'low-funds-user': 0.05, // User with low funds
 };
 
-// Mock operation costs
-const operationCosts: Record<string, Record<string, number>> = {
-  'tool': {
-    'default': 0.05,
-    'expensive_tool': 0.10,
-    'premium_tool': 0.20
-  },
-  'resource': {
-    'default': 0.02,
-    'large_resource': 0.05
-  },
-  'prompt': {
-    'default': 0.10,
-    'complex_prompt': 0.15
-  }
-};
-
-// Mock usage history
-const usageHistory: Record<string, Array<{
-  transactionId: string;
-  timestamp: string;
+// Mock transaction history
+const TRANSACTIONS: Array<{
+  id: string;
+  userId: string;
   operationType: string;
   operationId: string;
   cost: number;
+  timestamp: string;
   metadata?: Record<string, any>;
-}>> = {};
+}> = [];
 
-// Transaction counter for generating transaction IDs
-let transactionCounter = 1000;
+/**
+ * Billing routes plugin for Fastify
+ */
+export const billingRoutes = (fastify: FastifyInstance, _options: FastifyPluginOptions, done: () => void) => {
+  /**
+   * Check if user has sufficient funds
+   * POST /billing/check-funds
+   */
+  fastify.post('/check-funds', {
+    schema: {
+      headers: {
+        type: 'object',
+        required: ['x-api-key'],
+        properties: {
+          'x-api-key': { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['userId', 'operationType', 'operationId'],
+        properties: {
+          userId: { type: 'string' },
+          operationType: { type: 'string', enum: ['tool', 'prompt', 'resource'] },
+          operationId: { type: 'string' },
+          estimatedCost: { type: 'number' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            sufficientFunds: { type: 'boolean' },
+            balance: { type: 'number' },
+            estimatedCost: { type: 'number' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const apiKey = request.headers['x-api-key'] as string;
+    
+    // Validate API key (simplified for mock)
+    if (apiKey !== 'valid-api-key' && apiKey !== 'admin-api-key') {
+      return reply.status(401).send({
+        error: 'invalid_api_key',
+        message: 'Invalid API key'
+      });
+    }
 
-export function registerBillingRoutes(server: FastifyInstance) {
-  // 1. Check User Funds
-  server.post('/billing/check-funds', async (request, reply) => {
-    const body = request.body as {
+    const { userId, operationType, operationId, estimatedCost = 0.01 } = request.body as {
       userId: string;
-      operationType: 'tool' | 'resource' | 'prompt';
+      operationType: 'tool' | 'prompt' | 'resource';
       operationId: string;
       estimatedCost?: number;
     };
+
+    // Get user balance
+    const balance = USER_BALANCES[userId] || 0;
     
-    if (!body.userId || !body.operationType || !body.operationId) {
-      return reply.code(400).send({
-        error: 'invalid_request',
-        message: 'UserId, operationType, and operationId are required'
-      });
-    }
-    
-    // Check if user exists
-    const userBalance = userBalances[body.userId];
-    if (!userBalance) {
-      return reply.code(404).send({
-        error: 'user_not_found',
-        message: 'User with the provided ID could not be found'
-      });
-    }
-    
-    // Calculate operation cost
-    const operationCost = body.estimatedCost || 
-      operationCosts[body.operationType][body.operationId] ||
-      operationCosts[body.operationType].default;
-    
-    // Check if user has sufficient funds
-    const sufficientFunds = userBalance.balance >= operationCost;
-    
-    if (sufficientFunds) {
-      return reply.code(200).send({
-        sufficientFunds: true,
-        balance: userBalance.balance,
-        operationCost,
-        estimatedRemainingOperations: Math.floor(userBalance.balance / operationCost)
-      });
-    } else {
-      return reply.code(402).send({
+    // Special case for low-funds-user
+    if (userId === 'low-funds-user') {
+      return {
         sufficientFunds: false,
-        balance: userBalance.balance,
-        operationCost,
-        error: 'insufficient_funds',
-        message: 'User has insufficient funds for this operation'
-      });
+        balance,
+        estimatedCost
+      };
     }
+
+    // Check if balance is sufficient
+    const sufficientFunds = balance >= estimatedCost;
+
+    return {
+      sufficientFunds,
+      balance,
+      estimatedCost
+    };
   });
 
-  // 2. Process Charge
-  server.post('/billing/process-charge', async (request, reply) => {
-    const body = request.body as {
+  /**
+   * Process a charge
+   * POST /billing/process-charge
+   */
+  fastify.post('/process-charge', {
+    schema: {
+      headers: {
+        type: 'object',
+        required: ['x-api-key'],
+        properties: {
+          'x-api-key': { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['userId', 'operationType', 'operationId', 'cost'],
+        properties: {
+          userId: { type: 'string' },
+          operationType: { type: 'string', enum: ['tool', 'prompt', 'resource'] },
+          operationId: { type: 'string' },
+          cost: { type: 'number' },
+          metadata: { type: 'object' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            transactionId: { type: 'string' },
+            updatedBalance: { type: 'number' }
+          }
+        },
+        400: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const apiKey = request.headers['x-api-key'] as string;
+    
+    // Validate API key (simplified for mock)
+    if (apiKey !== 'valid-api-key' && apiKey !== 'admin-api-key') {
+      return reply.status(401).send({
+        error: 'invalid_api_key',
+        message: 'Invalid API key'
+      });
+    }
+
+    const { userId, operationType, operationId, cost, metadata } = request.body as {
       userId: string;
-      operationType: 'tool' | 'resource' | 'prompt';
+      operationType: 'tool' | 'prompt' | 'resource';
       operationId: string;
       cost: number;
       metadata?: Record<string, any>;
     };
+
+    // Get user balance
+    let balance = USER_BALANCES[userId] || 0;
     
-    if (!body.userId || !body.operationType || !body.operationId) {
-      return reply.code(400).send({
-        success: false,
-        error: 'invalid_request',
-        message: 'UserId, operationType, and operationId are required'
-      });
-    }
-    
-    if (body.cost <= 0) {
-      return reply.code(400).send({
-        success: false,
-        error: 'invalid_cost',
-        message: 'Cost must be greater than zero'
-      });
-    }
-    
-    // Check if user exists
-    const userBalance = userBalances[body.userId];
-    if (!userBalance) {
-      return reply.code(404).send({
-        success: false,
-        error: 'user_not_found',
-        message: 'User with the provided ID could not be found'
-      });
-    }
-    
-    // Check if user has sufficient funds
-    if (userBalance.balance < body.cost) {
-      return reply.code(402).send({
-        success: false,
+    // Check if balance is sufficient
+    if (balance < cost) {
+      return reply.status(400).send({
         error: 'insufficient_funds',
-        message: 'User has insufficient funds to process this charge'
+        message: 'User has insufficient funds'
       });
     }
-    
+
     // Process the charge
-    userBalance.balance -= body.cost;
-    userBalance.lastUpdated = new Date().toISOString();
+    balance -= cost;
+    USER_BALANCES[userId] = balance;
     
-    // Create transaction record
-    const transactionId = `txn_${transactionCounter++}`;
-    const timestamp = new Date().toISOString();
-    
+    // Record the transaction
+    const transactionId = `txn_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const transaction = {
-      transactionId,
-      timestamp,
-      operationType: body.operationType,
-      operationId: body.operationId,
-      cost: body.cost,
-      metadata: body.metadata
+      id: transactionId,
+      userId,
+      operationType,
+      operationId,
+      cost,
+      timestamp: new Date().toISOString(),
+      metadata
     };
     
-    // Add to user's usage history
-    if (!usageHistory[body.userId]) {
-      usageHistory[body.userId] = [];
-    }
-    usageHistory[body.userId].push(transaction);
-    
-    return reply.code(200).send({
+    TRANSACTIONS.push(transaction);
+
+    return {
       success: true,
       transactionId,
-      updatedBalance: userBalance.balance,
-      receipt: {
-        timestamp,
-        amount: body.cost,
-        description: `Charge for ${body.operationType}: ${body.operationId}`
-      }
-    });
-  });
-
-  // 3. Get User Balance
-  server.get('/billing/balance/:userId', async (request, reply) => {
-    const { userId } = request.params as { userId: string };
-    
-    // Check if user exists
-    const userBalance = userBalances[userId];
-    if (!userBalance) {
-      return reply.code(404).send({
-        error: 'user_not_found',
-        message: 'User with the provided ID could not be found'
-      });
-    }
-    
-    return reply.code(200).send({
-      userId,
-      balance: userBalance.balance,
-      currency: userBalance.currency,
-      lastUpdated: userBalance.lastUpdated
-    });
-  });
-
-  // 4. Get Usage History
-  server.get('/billing/usage/:userId', async (request, reply) => {
-    const { userId } = request.params as { userId: string };
-    const query = request.query as {
-      startDate?: string;
-      endDate?: string;
-      limit?: string;
-      offset?: string;
+      updatedBalance: balance
     };
+  });
+
+  /**
+   * Get user balance
+   * GET /billing/balance/:userId
+   */
+  fastify.get('/balance/:userId', {
+    schema: {
+      headers: {
+        type: 'object',
+        required: ['x-api-key'],
+        properties: {
+          'x-api-key': { type: 'string' }
+        }
+      },
+      params: {
+        type: 'object',
+        required: ['userId'],
+        properties: {
+          userId: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string' },
+            balance: { type: 'number' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const apiKey = request.headers['x-api-key'] as string;
     
-    // Check if user exists
-    if (!userBalances[userId]) {
-      return reply.code(404).send({
-        error: 'user_not_found',
-        message: 'User with the provided ID could not be found'
+    // Validate API key (simplified for mock)
+    if (apiKey !== 'valid-api-key' && apiKey !== 'admin-api-key') {
+      return reply.status(401).send({
+        error: 'invalid_api_key',
+        message: 'Invalid API key'
       });
     }
+
+    const { userId } = request.params as { userId: string };
+    const balance = USER_BALANCES[userId] || 0;
+
+    return {
+      userId,
+      balance
+    };
+  });
+
+  /**
+   * Get user transaction history
+   * GET /billing/transactions/:userId
+   */
+  fastify.get('/transactions/:userId', {
+    schema: {
+      headers: {
+        type: 'object',
+        required: ['x-api-key'],
+        properties: {
+          'x-api-key': { type: 'string' }
+        }
+      },
+      params: {
+        type: 'object',
+        required: ['userId'],
+        properties: {
+          userId: { type: 'string' }
+        }
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          limit: { type: 'integer', default: 10 },
+          offset: { type: 'integer', default: 0 }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            transactions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  operationType: { type: 'string' },
+                  operationId: { type: 'string' },
+                  cost: { type: 'number' },
+                  timestamp: { type: 'string' }
+                }
+              }
+            },
+            total: { type: 'integer' }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const apiKey = request.headers['x-api-key'] as string;
     
-    // Default values for pagination
-    const limit = query.limit ? parseInt(query.limit, 10) : 50;
-    const offset = query.offset ? parseInt(query.offset, 10) : 0;
-    
-    // Get user's usage history
-    const userUsage = usageHistory[userId] || [];
-    
-    // Filter by date if provided
-    let filteredUsage = userUsage;
-    if (query.startDate || query.endDate) {
-      const startDate = query.startDate ? new Date(query.startDate).getTime() : 0;
-      const endDate = query.endDate ? new Date(query.endDate).getTime() : Date.now();
-      
-      filteredUsage = userUsage.filter(item => {
-        const itemDate = new Date(item.timestamp).getTime();
-        return itemDate >= startDate && itemDate <= endDate;
+    // Validate API key (simplified for mock)
+    if (apiKey !== 'valid-api-key' && apiKey !== 'admin-api-key') {
+      return reply.status(401).send({
+        error: 'invalid_api_key',
+        message: 'Invalid API key'
       });
     }
+
+    const { userId } = request.params as { userId: string };
+    const { limit = 10, offset = 0 } = request.query as { limit?: number, offset?: number };
+    
+    // Filter transactions for this user
+    const userTransactions = TRANSACTIONS.filter(txn => txn.userId === userId);
     
     // Apply pagination
-    const paginatedUsage = filteredUsage.slice(offset, offset + limit);
-    
-    return reply.code(200).send({
-      userId,
-      totalRecords: filteredUsage.length,
-      returnedRecords: paginatedUsage.length,
-      usage: paginatedUsage
-    });
+    const paginatedTransactions = userTransactions
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(offset, offset + limit);
+
+    return {
+      transactions: paginatedTransactions,
+      total: userTransactions.length
+    };
   });
 
-  // 5. Get Developer Analytics (for admin only)
-  server.get('/developer/analytics', async (request, reply) => {
+  /**
+   * Get developer analytics
+   * GET /billing/developer/analytics
+   */
+  fastify.get('/developer/analytics', {
+    schema: {
+      headers: {
+        type: 'object',
+        required: ['x-api-key'],
+        properties: {
+          'x-api-key': { type: 'string' }
+        }
+      },
+      querystring: {
+        type: 'object',
+        properties: {
+          startDate: { type: 'string', format: 'date' },
+          endDate: { type: 'string', format: 'date' }
+        }
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            totalRevenue: { type: 'number' },
+            totalTransactions: { type: 'integer' },
+            activeUsers: { type: 'integer' },
+            topTools: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  operationId: { type: 'string' },
+                  operationType: { type: 'string' },
+                  count: { type: 'integer' },
+                  revenue: { type: 'number' }
+                }
+              }
+            }
+          }
+        },
+        401: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
     const apiKey = request.headers['x-api-key'] as string;
     
-    // Only admin API key can access analytics
-    if (apiKey !== 'admin-api-key') {
-      return reply.code(403).send({
-        error: 'insufficient_permissions',
-        message: 'Your API key does not have permission to access analytics'
+    // Validate API key (simplified for mock)
+    if (apiKey !== 'valid-api-key' && apiKey !== 'admin-api-key') {
+      return reply.status(401).send({
+        error: 'invalid_api_key',
+        message: 'Invalid API key'
       });
     }
+
+    const { startDate, endDate } = request.query as { startDate?: string, endDate?: string };
     
-    // Calculate totals
-    const totalUsers = Object.keys(userBalances).length;
-    let totalOperations = 0;
-    let totalRevenue = 0;
+    // Filter transactions by date if provided
+    let filteredTransactions = [...TRANSACTIONS];
+    if (startDate) {
+      const start = new Date(startDate);
+      filteredTransactions = filteredTransactions.filter(txn => 
+        new Date(txn.timestamp) >= start
+      );
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // End of day
+      filteredTransactions = filteredTransactions.filter(txn => 
+        new Date(txn.timestamp) <= end
+      );
+    }
     
-    Object.values(usageHistory).forEach(userHistory => {
-      totalOperations += userHistory.length;
-      userHistory.forEach(transaction => {
-        totalRevenue += transaction.cost;
-      });
+    // Calculate analytics
+    const totalRevenue = filteredTransactions.reduce((sum, txn) => sum + txn.cost, 0);
+    const uniqueUsers = new Set(filteredTransactions.map(txn => txn.userId));
+    
+    // Group by operation
+    const operationStats: Record<string, { count: number, revenue: number, type: string }> = {};
+    filteredTransactions.forEach(txn => {
+      const key = `${txn.operationType}:${txn.operationId}`;
+      if (!operationStats[key]) {
+        operationStats[key] = { count: 0, revenue: 0, type: txn.operationType };
+      }
+      operationStats[key].count++;
+      operationStats[key].revenue += txn.cost;
     });
     
-    // Mock analytics data by day
-    const analytics = [
-      {
-        period: '2023-12-15',
-        operations: {
-          total: 1250,
-          byType: {
-            tool: 850,
-            resource: 300,
-            prompt: 100
-          }
-        },
-        revenue: 62.50,
-        activeUsers: 120
-      },
-      {
-        period: '2023-12-16',
-        operations: {
-          total: 1500,
-          byType: {
-            tool: 900,
-            resource: 400,
-            prompt: 200
-          }
-        },
-        revenue: 75.00,
-        activeUsers: 150
-      }
-    ];
-    
-    return reply.code(200).send({
-      totalUsers,
-      totalOperations,
+    // Convert to array and sort by count
+    const topTools = Object.entries(operationStats)
+      .map(([key, stats]) => {
+        const [_, operationId] = key.split(':');
+        return {
+          operationId,
+          operationType: stats.type,
+          count: stats.count,
+          revenue: stats.revenue
+        };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
       totalRevenue,
-      analytics
-    });
+      totalTransactions: filteredTransactions.length,
+      activeUsers: uniqueUsers.size,
+      topTools
+    };
   });
 
-  // 6. Get Developer Settings
-  server.get('/developer/settings', async (request, reply) => {
-    const apiKey = request.headers['x-api-key'] as string;
-    
-    // Mock developer settings based on API key
-    const developerSettings: Record<string, any> = {
-      'valid-api-key': {
-        developerId: 'dev_123456',
-        pricing: {
-          tool: 0.05,
-          resource: 0.02,
-          prompt: 0.10
-        },
-        webhooks: {
-          lowBalanceAlert: 'https://example.com/webhooks/low-balance',
-          chargeProcessed: 'https://example.com/webhooks/charge'
-        },
-        notificationSettings: {
-          lowBalanceThreshold: 5.00,
-          dailyUsageSummary: true,
-          notifyOnError: true
-        }
-      },
-      'test-api-key': {
-        developerId: 'dev_test123',
-        pricing: {
-          tool: 0.03,
-          resource: 0.01,
-          prompt: 0.05
-        },
-        webhooks: {},
-        notificationSettings: {
-          lowBalanceThreshold: 1.00,
-          dailyUsageSummary: false,
-          notifyOnError: false
-        }
-      },
-      'admin-api-key': {
-        developerId: 'dev_admin789',
-        pricing: {
-          tool: 0.10,
-          resource: 0.05,
-          prompt: 0.20
-        },
-        webhooks: {
-          lowBalanceAlert: 'https://admin.example.com/webhooks/low-balance',
-          chargeProcessed: 'https://admin.example.com/webhooks/charge'
-        },
-        notificationSettings: {
-          lowBalanceThreshold: 10.00,
-          dailyUsageSummary: true,
-          notifyOnError: true
-        }
-      }
-    };
-    
-    const settings = developerSettings[apiKey];
-    if (!settings) {
-      return reply.code(404).send({
-        error: 'developer_not_found',
-        message: 'Developer with the provided API key could not be found'
-      });
-    }
-    
-    return reply.code(200).send(settings);
-  });
-
-  // 7. Update Developer Settings
-  server.put('/developer/settings', async (request, reply) => {
-    const apiKey = request.headers['x-api-key'] as string;
-    const body = request.body as {
-      pricing?: {
-        tool?: number;
-        resource?: number;
-        prompt?: number;
-      };
-      webhooks?: Record<string, string>;
-      notificationSettings?: {
-        lowBalanceThreshold?: number;
-        dailyUsageSummary?: boolean;
-        notifyOnError?: boolean;
-      };
-    };
-    
-    // Mock developer settings based on API key
-    const developerSettings: Record<string, any> = {
-      'valid-api-key': {
-        developerId: 'dev_123456',
-        pricing: {
-          tool: 0.05,
-          resource: 0.02,
-          prompt: 0.10
-        },
-        webhooks: {
-          lowBalanceAlert: 'https://example.com/webhooks/low-balance',
-          chargeProcessed: 'https://example.com/webhooks/charge'
-        },
-        notificationSettings: {
-          lowBalanceThreshold: 5.00,
-          dailyUsageSummary: true,
-          notifyOnError: true
-        }
-      },
-      'test-api-key': {
-        developerId: 'dev_test123',
-        pricing: {
-          tool: 0.03,
-          resource: 0.01,
-          prompt: 0.05
-        },
-        webhooks: {},
-        notificationSettings: {
-          lowBalanceThreshold: 1.00,
-          dailyUsageSummary: false,
-          notifyOnError: false
-        }
-      },
-      'admin-api-key': {
-        developerId: 'dev_admin789',
-        pricing: {
-          tool: 0.10,
-          resource: 0.05,
-          prompt: 0.20
-        },
-        webhooks: {
-          lowBalanceAlert: 'https://admin.example.com/webhooks/low-balance',
-          chargeProcessed: 'https://admin.example.com/webhooks/charge'
-        },
-        notificationSettings: {
-          lowBalanceThreshold: 10.00,
-          dailyUsageSummary: true,
-          notifyOnError: true
-        }
-      }
-    };
-    
-    const settings = developerSettings[apiKey];
-    if (!settings) {
-      return reply.code(404).send({
-        error: 'developer_not_found',
-        message: 'Developer with the provided API key could not be found'
-      });
-    }
-    
-    // Validate pricing values
-    if (body.pricing) {
-      for (const [key, value] of Object.entries(body.pricing)) {
-        if (value !== undefined && value <= 0) {
-          return reply.code(400).send({
-            error: 'invalid_pricing',
-            message: 'Pricing values must be greater than zero'
-          });
-        }
-      }
-      
-      // Update pricing
-      settings.pricing = {
-        ...settings.pricing,
-        ...body.pricing
-      };
-    }
-    
-    // Update webhooks
-    if (body.webhooks) {
-      settings.webhooks = {
-        ...settings.webhooks,
-        ...body.webhooks
-      };
-    }
-    
-    // Update notification settings
-    if (body.notificationSettings) {
-      settings.notificationSettings = {
-        ...settings.notificationSettings,
-        ...body.notificationSettings
-      };
-    }
-    
-    return reply.code(200).send({
-      success: true,
-      message: 'Settings updated successfully',
-      updatedSettings: settings
-    });
-  });
-} 
+  done();
+}; 

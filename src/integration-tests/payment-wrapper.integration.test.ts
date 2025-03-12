@@ -129,54 +129,12 @@ describe('Payment Wrapper Integration Tests', () => {
   });
 
   test('wrapWithPayments with external backend service', async () => {
-    // Create a real HTTP client for our AuthService
-    class HttpAuthService {
-      private baseUrl: string;
-      private apiKey: string;
-      
-      constructor(options: { baseUrl: string; apiKey: string }) {
-        this.baseUrl = options.baseUrl;
-        this.apiKey = options.apiKey;
-      }
-      
-      async verifyToken(token: string): Promise<{ 
-        valid: boolean; 
-        userId?: string; 
-        permissions?: string[];
-        error?: string;
-        message?: string;
-      }> {
-        try {
-          const response = await fetch(`${this.baseUrl}/auth/verify-token`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-API-Key': this.apiKey
-            },
-            body: JSON.stringify({ token })
-          });
-          
-          return await response.json();
-        } catch (error) {
-          console.error('Error verifying token:', error);
-          return {
-            valid: false,
-            error: 'service_unavailable',
-            message: 'Authentication service is unavailable'
-          };
-        }
-      }
-    }
-
-    // Create a payment wrapper with a real HTTP auth service
+    // Create a payment wrapper with the mock backend URL
     const wrappedServer = wrapWithPayments(testMcpServer, { 
       apiKey: 'valid-api-key', 
       userToken,
       debugMode: true,
-      authService: new HttpAuthService({
-        baseUrl: 'http://localhost:3000',
-        apiKey: 'valid-api-key'
-      })
+      baseAuthUrl: 'http://localhost:3000'
     });
 
     // Call the tool
@@ -199,78 +157,21 @@ describe('Payment Wrapper Integration Tests', () => {
 
     const lowFundsToken = lowFundsTokenResponse.body.token;
 
-    // Create a custom AuthService that uses our mock backend
-    class CustomAuthService {
-      private baseUrl: string;
-      private apiKey: string;
-      
-      constructor(options: { baseUrl: string; apiKey: string }) {
-        this.baseUrl = options.baseUrl;
-        this.apiKey = options.apiKey;
-      }
-      
-      async verifyToken(token: string): Promise<{ 
-        valid: boolean; 
-        userId?: string; 
-        permissions?: string[];
-        error?: string;
-        message?: string;
-      }> {
-        try {
-          const response = await fetch(`${this.baseUrl}/auth/verify-token`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-API-Key': this.apiKey
-            },
-            body: JSON.stringify({ token })
-          });
-          
-          return await response.json();
-        } catch (error) {
-          console.error('Error verifying token:', error);
-          return {
-            valid: false,
-            error: 'service_unavailable',
-            message: 'Authentication service is unavailable'
-          };
-        }
-      }
-    }
-
-    // Override the checkFunds function to test insufficient funds
-    const originalCheckFunds = require('../payment-wrapper.js').checkFunds;
-    jest.spyOn(require('../payment-wrapper.js'), 'checkFunds').mockImplementation(async () => {
-      return {
-        sufficientFunds: false,
-        error: 'insufficient_funds',
-        message: 'Insufficient funds to execute this operation'
-      };
-    });
-
-    // Create a payment wrapper with a real HTTP auth service but mocked funds check
+    // Create a payment wrapper with the mock backend URL and test override for funds check
     const wrappedServer = wrapWithPayments(testMcpServer, { 
       apiKey: 'valid-api-key', 
       userToken: lowFundsToken,
       debugMode: true,
-      authService: new CustomAuthService({
-        baseUrl: 'http://localhost:3000',
-        apiKey: 'valid-api-key'
-      })
+      baseAuthUrl: 'http://localhost:3000',
+      _testOverrideFundsCheck: false // Force insufficient funds
     });
 
-    try {
-      // Call the tool - should fail due to insufficient funds
-      await (wrappedServer as any).callTool('test_tool', { param: 'should fail' });
-      // If we get here, the test should fail
-      expect(true).toBe(false); // This should not be reached
-    } catch (error: any) {
-      // Verify the error
-      expect(error).toBeDefined();
-      expect(error.message).toContain('insufficient_funds');
-    }
-
-    // Restore the original checkFunds function
-    jest.spyOn(require('../payment-wrapper.js'), 'checkFunds').mockRestore();
+    // Call the tool
+    const result = await (wrappedServer as any).callTool('test_tool', { param: 'integration test' });
+    
+    // Verify the result indicates insufficient funds
+    expect(result).toBeDefined();
+    expect(result.error).toBe('insufficient_funds');
+    expect(result.message).toBe('Insufficient funds to execute this operation');
   });
 }); 

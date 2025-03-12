@@ -19,7 +19,7 @@
     "version:minor": "npm version minor",
     "version:major": "npm version major",
     "publish": "npm publish --access public",
-    "start:mock-backend": "ts-node-esm src/mock-backend/start.ts"
+    "start:mock-backend": "node --loader ts-node/esm src/mock-backend/start.ts"
   },
   "keywords": [
     "mcp",
