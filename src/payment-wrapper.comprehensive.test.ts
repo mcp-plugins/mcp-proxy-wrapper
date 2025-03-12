@@ -45,7 +45,7 @@ async function testPaymentWrapper(
   const originalRandom = Math.random;
   Math.random = jest.fn().mockReturnValue(sufficientFunds ? 0.9 : 0.05);
   
-  console.log(`Testing ${type} with sufficientFunds=${sufficientFunds}, shouldThrow=${shouldThrow}`);
+  testLogger.logger.debug(`Testing ${type} with sufficientFunds=${sufficientFunds}, shouldThrow=${shouldThrow}`);
   
   try {
     // Register and test different types of methods
@@ -143,7 +143,7 @@ async function testPaymentWrapper(
       }
     }
   } catch (error) {
-    console.log(`Error calling ${type}:`, error);
+    testLogger.logger.debug(`Error calling ${type}:`, { error: error instanceof Error ? error.message : String(error) });
     return { name: `wrapped_${type}`, type, error };
   } finally {
     // Restore Math.random

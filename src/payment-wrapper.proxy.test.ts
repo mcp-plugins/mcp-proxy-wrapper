@@ -10,15 +10,20 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { wrapWithPayments } from './payment-wrapper.js';
+import { TestLogger, createTestOptions } from './utils/test-helpers.js';
 
-// Valid JWT token for testing
-const VALID_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+// Setup test logger for capturing logs
+let testLogger: TestLogger;
 
-// Mock console methods to reduce noise
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-let consoleOutput: string[] = [];
-let consoleErrors: string[] = [];
+beforeEach(() => {
+  // Create a fresh logger instance for each test
+  testLogger = new TestLogger();
+});
+
+afterEach(() => {
+  // Clear logs between tests
+  testLogger.clear();
+});
 
 // Define a type for our extended server
 interface ExtendedMcpServer extends McpServer {
@@ -47,15 +52,6 @@ interface ExtendedMcpServer extends McpServer {
   deletableProp?: string;
   [key: string]: any;
   [key: symbol]: any;
-}
-
-// Helper function to create a valid options object
-function createValidOptions() {
-  return {
-    apiKey: 'valid-api-key',
-    userToken: VALID_JWT,
-    debugMode: false
-  };
 }
 
 // Helper function to create a test server with some methods and properties
@@ -94,31 +90,10 @@ function createTestServer(): ExtendedMcpServer {
   return server;
 }
 
-beforeEach(() => {
-  // Clear the captured console output
-  consoleOutput = [];
-  consoleErrors = [];
-  
-  // Mock console methods
-  console.log = (...args: any[]) => {
-    consoleOutput.push(args.join(' '));
-  };
-  
-  console.error = (...args: any[]) => {
-    consoleErrors.push(args.join(' '));
-  };
-});
-
-afterEach(() => {
-  // Restore original console methods
-  console.log = originalConsoleLog;
-  console.error = originalConsoleError;
-});
-
 describe('Proxy Method Forwarding', () => {
   test('forwards custom methods', () => {
     const server = createTestServer();
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Call a custom method on the wrapped server
     const result = wrappedServer.customMethod!("test");
@@ -131,7 +106,7 @@ describe('Proxy Method Forwarding', () => {
     const server = createTestServer();
     server.name = "Test Server"; // Ensure name is set
     
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Call a method that uses 'this'
     const result = wrappedServer.contextMethod!();
@@ -162,7 +137,7 @@ describe('Proxy Method Forwarding', () => {
       };
     };
     
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Call the method with various argument types
     const result = wrappedServer.complexArgMethod!(
@@ -201,7 +176,7 @@ describe('Proxy Method Forwarding', () => {
       return "result";
     };
     
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Test method chaining
     const result = wrappedServer.methodA!().methodB!().methodC!();
@@ -214,7 +189,7 @@ describe('Proxy Method Forwarding', () => {
 describe('Proxy Property Access', () => {
   test('allows access to custom properties', () => {
     const server = createTestServer();
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Access a custom property
     expect(wrappedServer.customProperty).toBe("custom value");
@@ -222,7 +197,7 @@ describe('Proxy Property Access', () => {
   
   test('handles property changes', () => {
     const server = createTestServer();
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Change a property on the wrapped server
     wrappedServer.customProperty = "new value";
@@ -236,7 +211,7 @@ describe('Proxy Property Access', () => {
   
   test('handles getters and setters', () => {
     const server = createTestServer();
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Test the default value
     expect(wrappedServer.dynamicProperty).toBe("default");
@@ -262,7 +237,7 @@ describe('Proxy Property Access', () => {
       configurable: false
     });
     
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Verify the property is accessible
     expect(wrappedServer.readonlyProp).toBe("readonly value");
@@ -277,7 +252,7 @@ describe('Proxy Property Access', () => {
 describe('Proxy Prototype Chain', () => {
   test('maintains instanceof relationship with McpServer', () => {
     const server = createTestServer();
-    const wrappedServer = wrapWithPayments(server, createValidOptions());
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger));
     
     // Verify the wrapped server is still an instance of McpServer
     expect(wrappedServer).toBeInstanceOf(McpServer);
@@ -298,7 +273,7 @@ describe('Proxy Prototype Chain', () => {
       description: "Extended server for testing"
     });
     
-    const wrappedServer = wrapWithPayments(extendedServer, createValidOptions());
+    const wrappedServer = wrapWithPayments(extendedServer, createTestOptions(testLogger));
     
     // Verify the wrapped server is an instance of ExtendedServer
     expect(wrappedServer).toBeInstanceOf(ExtendedServer);
@@ -319,7 +294,7 @@ describe('Proxy Special Cases', () => {
     const testSymbol = Symbol('test');
     server[testSymbol] = "symbol value";
     
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Access the Symbol property
     expect(wrappedServer[testSymbol]).toBe("symbol value");
@@ -336,7 +311,7 @@ describe('Proxy Special Cases', () => {
       configurable: false
     });
     
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Verify the property is accessible
     expect(wrappedServer.nonConfigurableProp).toBe("non-configurable value");
@@ -363,7 +338,7 @@ describe('Proxy Special Cases', () => {
       enumerable: false
     });
     
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Get all enumerable properties
     const props = Object.keys(wrappedServer);
@@ -384,7 +359,7 @@ describe('Proxy Special Cases', () => {
     // Add a property that can be deleted
     server.deletableProp = "deletable value";
     
-    const wrappedServer = wrapWithPayments(server, createValidOptions()) as ExtendedMcpServer;
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger)) as ExtendedMcpServer;
     
     // Verify the property exists
     expect(wrappedServer.deletableProp).toBe("deletable value");
@@ -401,7 +376,7 @@ describe('Proxy Special Cases', () => {
 describe('Proxy Method Existence', () => {
   test('has tool method', () => {
     const server = createTestServer();
-    const wrappedServer = wrapWithPayments(server, createValidOptions());
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger));
     
     // Verify the tool method exists
     expect(typeof wrappedServer.tool).toBe('function');
@@ -409,7 +384,7 @@ describe('Proxy Method Existence', () => {
   
   test('has resource method', () => {
     const server = createTestServer();
-    const wrappedServer = wrapWithPayments(server, createValidOptions());
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger));
     
     // Verify the resource method exists
     expect(typeof wrappedServer.resource).toBe('function');
@@ -417,7 +392,7 @@ describe('Proxy Method Existence', () => {
   
   test('has prompt method', () => {
     const server = createTestServer();
-    const wrappedServer = wrapWithPayments(server, createValidOptions());
+    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger));
     
     // Verify the prompt method exists
     expect(typeof wrappedServer.prompt).toBe('function');
