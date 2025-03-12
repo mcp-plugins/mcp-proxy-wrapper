@@ -11,28 +11,39 @@ npm install @modelcontextprotocol/payment-wrapper
 ## Features
 
 1. **Instance Wrapping:**  
-   - Accepts an instance of an existing MCP server.
-   - Uses JavaScript Proxy to intercept method calls without modifying the original server.
+   - ✅ Accepts an instance of an existing MCP server.
+   - ✅ Uses JavaScript Proxy to intercept method calls without modifying the original server.
   
 2. **Developer API Key Verification:**  
-   - Validates that a valid developer API key is provided as part of the options.
+   - ✅ Validates that a valid developer API key is provided as part of the options.
+   - ⚠️ Currently uses a mock implementation for verification.
 
 3. **User JWT Verification:**  
-   - Validates the user's JWT token.
+   - ✅ Accepts user JWT tokens for authentication.
+   - ⚠️ Currently uses a mock service that simulates JWT verification.
+   - 🔄 Real JWT verification would require integration with an authentication backend.
 
-4. **Simulated Billing Check:**  
-   - Before forwarding the MCP call, simulates a billing check.
-   - Returns an object with a boolean property `sufficientFunds` and a numerical `callCost`.
+4. **Billing Check:**  
+   - ✅ Before forwarding the MCP call, performs a billing check.
+   - ⚠️ Currently simulates the check using random success/failure or test overrides.
+   - 🔄 Real implementation would require integration with a billing service.
 
 5. **Call Forwarding:**  
-   - If the billing check passes, forwards the call to the underlying MCP server.
+   - ✅ If the billing check passes, forwards the call to the underlying MCP server.
   
-6. **Simulated Billing Transaction:**  
-   - After the MCP call succeeds, simulates processing a billing transaction.
+6. **Billing Transaction:**  
+   - ✅ After the MCP call succeeds, logs a billing transaction.
+   - ⚠️ Currently simulates processing a transaction without actual payment processing.
+   - 🔄 Real implementation would require integration with payment providers.
   
 7. **Error Handling and Logging:**  
-   - If any step fails (e.g., missing API key, invalid token, insufficient funds, or billing error), throws an error with an appropriate message.
-   - Logs errors or important events using a Winston-based logger for robust logging capabilities.
+   - ✅ If any step fails, returns an appropriate error response.
+   - ✅ Logs errors and important events using a Winston-based logger.
+
+Legend:
+- ✅ Fully implemented
+- ⚠️ Simulated/mock implementation
+- 🔄 Planned for future implementation
 
 ## Usage Example
 
@@ -388,12 +399,16 @@ The mock backend structure provides a solid foundation that can be adapted for r
 
 ## Future Enhancements
 
-- Integration with actual payment processors (e.g., Stripe)
-- More sophisticated billing models (subscription, tiered pricing, etc.)
-- Caching and rate limiting
-- Usage reporting and analytics
-- Enhanced logging with remote log aggregation services
-- Telemetry support for operational monitoring
+The following enhancements are planned for future versions:
+
+- **Real Authentication Integration**: Replace the mock authentication service with integration to a real authentication backend.
+- **Payment Provider Integration**: Implement real payment provider integrations (e.g., Stripe, PayPal).
+- **Payment-Specific Tools**: Add tools for balance queries, transaction history, and payment management.
+- **Advanced Billing Models**: Support for subscription, tiered pricing, and usage-based billing.
+- **Caching and Rate Limiting**: Optimize performance and control usage.
+- **Usage Reporting and Analytics**: Track and analyze payment and usage patterns.
+- **Enhanced Logging**: Integration with remote log aggregation services.
+- **Telemetry Support**: Operational monitoring for production deployments.
 
 ## Project Structure
 
@@ -524,3 +539,34 @@ In future versions, we plan to add payment-specific tools that would allow the L
 - `estimate_cost`: Estimate the cost of an operation before running it
 - `add_funds`: Generate a URL for adding funds to the account
 - `set_spending_limit`: Set a maximum spending limit for the session 
+
+## Implementation Status
+
+The MCP Payment Wrapper is currently in a functional prototype state with the following implementation status:
+
+### Core Components
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Proxy Wrapper | ✅ Complete | JavaScript Proxy implementation for intercepting MCP server methods |
+| Authentication | ⚠️ Simulated | Uses MockAuthService with JWT tokens but no real backend integration |
+| Funds Checking | ⚠️ Simulated | Uses random success rate or test overrides |
+| Billing Processing | ⚠️ Simulated | Logs transactions but doesn't process real payments |
+| Error Handling | ✅ Complete | Comprehensive error handling for various scenarios |
+| Logging | ✅ Complete | Winston-based logging with configurable options |
+
+### Integration Points
+
+| Integration | Status | Notes |
+|-------------|--------|-------|
+| Authentication Backend | 🔄 Planned | Interface defined but requires implementation |
+| Payment Providers | 🔄 Planned | Interface defined but only mock implementation available |
+| MCP Server | ✅ Complete | Fully integrated with MCP server via proxy |
+
+### Testing
+
+| Test Category | Status | Notes |
+|---------------|--------|-------|
+| Unit Tests | ✅ Complete | Comprehensive test coverage for core functionality |
+| Integration Tests | ✅ Complete | Tests with mock backend server |
+| Real Provider Tests | 🔄 Planned | Would require real provider integrations |
