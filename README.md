@@ -342,6 +342,41 @@ The mock backend implements proper JWT token authentication:
 - `npm run test:integration:improved`: Run with improved modular server
 - `npm test -- src/integration-tests/payment-wrapper.integration.test.ts`: Run integration tests with the CommonJS server
 
+### Real Port Integration Testing
+
+The integration tests can also be configured to use a real network port for testing, which provides several benefits:
+
+1. **More Realistic Testing**: Tests the actual HTTP communication that would happen in production.
+2. **Easier Debugging**: You can use tools like Postman or curl to interact with the server during tests.
+3. **Simpler Integration**: Makes it easier to integrate with external tools that expect a real HTTP server.
+
+The integration tests use port 3004 by default:
+
+```typescript
+// Define a port for the test server
+const TEST_PORT = 3004;
+const TEST_BASE_URL = `http://localhost:${TEST_PORT}`;
+
+// In the test setup
+await mockBackend.server.listen(TEST_PORT);
+console.log(`Mock backend server created and listening on port ${TEST_PORT}`);
+
+// When creating the payment wrapper
+const wrappedServer = wrapWithPayments(testMcpServer, { 
+  apiKey: clientApiKey, 
+  userToken: userToken,
+  debugMode: true,
+  baseAuthUrl: TEST_BASE_URL,
+  _testOverrideFundsCheck: true // Force sufficient funds for testing
+});
+```
+
+You can also run the minimal server directly for manual testing:
+
+```bash
+node src/mock-backend/minimal-server.js
+```
+
 ### Design for Real Backend Development
 
 The mock backend structure provides a solid foundation that can be adapted for real backend implementation:
@@ -377,3 +412,115 @@ Contributions are welcome! Please feel free to submit a Pull Request to [GitHub 
 ## License
 
 MIT 
+
+## System Architecture
+
+The MCP Payment Wrapper uses a proxy-based architecture to intercept calls to the MCP server and add payment verification functionality without modifying the original server code.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│                        MCP Payment Wrapper System                       │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐     ┌───────────────────────────────────────────────────┐
+│                 │     │                                                   │
+│                 │     │            Wrapped MCP Server                     │
+│                 │     │  ┌─────────────────────────────────────────────┐  │
+│                 │     │  │                                             │  │
+│     Client      │     │  │           JavaScript Proxy                  │  │
+│     (LLM)       │─────┼─▶│                                             │  │
+│                 │     │  │  ┌─────────────────┐    ┌────────────────┐  │  │
+│                 │     │  │  │ Authentication  │───▶│  Funds Check   │  │  │
+│                 │     │  │  └─────────────────┘    └────────────────┘  │  │
+│                 │     │  │            │                    │           │  │
+└─────────────────┘     │  │            │                    │           │  │
+                        │  │            ▼                    ▼           │  │
+                        │  │  ┌─────────────────────────────────────────┐  │  ┌────────────────────┐
+                        │  │  │                                         │  │  │                    │
+                        │  │  │            Original MCP Server          │◀─┼──┼─▶  Auth Service    │
+                        │  │  │                                         │  │  │                    │
+                        │  │  │  ┌───────────┐  ┌────────┐  ┌────────┐  │  │  └────────────────────┘
+                        │  │  │  │   Tools   │  │Prompts │  │Resources│  │  │
+                        │  │  │  └───────────┘  └────────┘  └────────┘  │  │  ┌────────────────────┐
+                        │  │  │                                         │  │  │                    │
+                        │  │  └─────────────────────────────────────────┘  │  │  Billing Service   │
+                        │  │                      │                        │  │                    │
+                        │  └──────────────────────┼────────────────────────┘  └────────────────────┘
+                        │                         │                            
+                        └─────────────────────────┼────────────────────────────
+                                                  │
+                                                  ▼
+                                        ┌─────────────────────┐
+                                        │                     │
+                                        │     Result or       │
+                                        │   Error Response    │
+                                        │                     │
+                                        └─────────────────────┘
+```
+
+### How the System Works
+
+#### 1. Client Request Flow
+
+1. **Client (LLM) Initiates Request**:
+   - The LLM calls a method on the wrapped MCP server (e.g., `callTool`, `getResource`, `callPrompt`)
+   - Example: `mcpServer.callTool("generate_image", { prompt: "sunset over mountains" })`
+
+2. **JavaScript Proxy Intercepts**:
+   - The proxy intercepts the method call before it reaches the original MCP server
+   - It identifies which method is being called and prepares for authentication and billing checks
+
+#### 2. Authentication Process
+
+3. **Authentication Check**:
+   - The proxy extracts the user token from the options
+   - It calls the Auth Service to verify the token
+   - If authentication fails, it returns an error response with an auth URL
+   - If successful, it extracts the user ID for billing
+
+4. **Funds Verification**:
+   - The proxy checks if the user has sufficient funds
+   - It may call the Billing Service to verify balance
+   - If funds are insufficient, it returns an "insufficient_funds" error
+
+#### 3. Tool Execution
+
+5. **Original Method Execution**:
+   - If authentication and funds checks pass, the proxy calls the original method on the MCP server
+   - The original server processes the request (e.g., executes the tool)
+   - The result is captured by the proxy
+
+6. **Billing Processing**:
+   - After successful execution, the proxy processes a billing transaction
+   - It records the charge for the operation
+   - The user's balance is updated
+
+7. **Response Delivery**:
+   - The proxy returns the result to the client
+   - Or, if any step failed, it returns an appropriate error response
+
+#### 4. External Services
+
+- **Auth Service**: Handles JWT token verification and generation
+- **Billing Service**: Manages user balances, funds checking, and transaction processing
+- Both services are accessed via HTTP endpoints (e.g., `/auth/verify-token`, `/billing/check-funds`)
+
+### Key Components
+
+1. **JavaScript Proxy**: The core mechanism that intercepts method calls without modifying the original server
+2. **Authentication Logic**: Verifies user identity through JWT tokens
+3. **Funds Checking**: Ensures users have sufficient funds before executing operations
+4. **Billing Processing**: Handles the financial transaction after successful operations
+5. **Error Handling**: Returns appropriate error responses for various failure scenarios
+
+### Future Enhancements
+
+In future versions, we plan to add payment-specific tools that would allow the LLM to directly query and manage payment information, such as:
+
+- `query_balance`: Get the current user's balance
+- `view_transaction_history`: View recent transactions
+- `estimate_cost`: Estimate the cost of an operation before running it
+- `add_funds`: Generate a URL for adding funds to the account
+- `set_spending_limit`: Set a maximum spending limit for the session 
