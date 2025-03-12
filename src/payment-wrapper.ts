@@ -206,10 +206,10 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
         return originalValue;
       }
 
-      // Special handling for registerTool, registerPrompt, registerResource
-      if (prop === 'registerTool' || prop === 'registerPrompt' || prop === 'registerResource') {
+      // Special handling for tool, prompt, and resource registration methods
+      if (prop === 'tool' || prop === 'prompt' || prop === 'resource') {
         return function(this: any, ...args: any[]) {
-          logger.debug(`Registering ${prop.toString().replace('register', '')}`, { args: args[0] });
+          logger.debug(`Registering ${prop.toString()}`, { args: args[0] });
           return Reflect.apply(originalValue, this, args);
         };
       }

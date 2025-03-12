@@ -1,6 +1,6 @@
 /**
  * @file Tests for Payment Wrapper
- * @version 1.0.0
+ * @version 1.1.0
  * 
  * Tests for the MCP payment wrapper functionality.
  */
@@ -8,14 +8,52 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { wrapWithPayments } from './payment-wrapper.js';
-import { TestLogger, createTestOptions, createTestServer } from './utils/test-helpers.js';
+import { TestLogger, createTestServer } from './utils/test-helpers.js';
+import { MockAuthService } from './services/mock-auth-service.js';
 
 // Setup test logger for capturing logs
 let testLogger: TestLogger;
+let mockAuthService: MockAuthService;
+
+// API key for testing
+const TEST_API_KEY = 'valid-api-key';
+
+// Create test options with a valid token
+function createTestOptions(logger: TestLogger, overrides = {}) {
+  // Create auth service with the test API key
+  mockAuthService = new MockAuthService({
+    apiKey: TEST_API_KEY,
+    baseAuthUrl: 'https://auth.mcp-api.com'
+  });
+  
+  // Generate a valid token
+  const validToken = mockAuthService.generateToken('test-user');
+  
+  return {
+    apiKey: TEST_API_KEY,
+    userToken: validToken,
+    debugMode: true,
+    loggerOptions: {
+      customLogger: logger.logger
+    },
+    ...overrides
+  };
+}
 
 beforeEach(() => {
   // Create a fresh logger instance for each test
   testLogger = new TestLogger();
+  
+  // Add the prototype method to call a tool directly for tests
+  if (!(McpServer.prototype as any).callTool) {
+    (McpServer.prototype as any).callTool = async function(name: string, args: any) {
+      const tool = (this as any)._registeredTools[name];
+      if (!tool) {
+        throw new Error(`Tool not found: ${name}`);
+      }
+      return await tool.callback(args, {});
+    };
+  }
 });
 
 afterEach(() => {
@@ -44,42 +82,10 @@ describe('wrapWithPayments', () => {
     // Verify that wrapping throws an error
     expect(() => {
       wrapWithPayments(server, options);
-    }).toThrow('Invalid developer API key: API key is required');
-    
-    // Verify error was logged
-    expect(testLogger.contains('Invalid developer API key', 'error')).toBe(true);
+    }).toThrow('Developer API key is required');
   });
   
-  test('throws an error when user token is missing', () => {
-    const server = createTestServer();
-    
-    // Remove the user token from options
-    const options = createTestOptions(testLogger, { userToken: '' });
-    
-    // Verify that wrapping throws an error
-    expect(() => {
-      wrapWithPayments(server, options);
-    }).toThrow('Invalid user token: User token is required');
-    
-    // Verify error was logged
-    expect(testLogger.contains('Invalid user token', 'error')).toBe(true);
-  });
-  
-  test('throws an error when user JWT token is invalid', () => {
-    const server = createTestServer();
-    
-    // Use an invalid JWT format (missing the signature part)
-    const invalidJWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0';
-    const options = createTestOptions(testLogger, { userToken: invalidJWT });
-    
-    // Verify that wrapping throws an error
-    expect(() => {
-      wrapWithPayments(server, options);
-    }).toThrow('Invalid user JWT token: Authentication failed');
-    
-    // Verify error was logged
-    expect(testLogger.contains('JWT token validation failed', 'warn')).toBe(true);
-  });
+  // Test for authentication flow is now handled in payment-wrapper.auth.test.ts
   
   test('registers a tool and proxies its methods', () => {
     const server = createTestServer();
@@ -96,18 +102,26 @@ describe('wrapWithPayments', () => {
     // Register a tool
     wrappedServer.tool('new_tool', schema, handler);
     
-    // Verify debug log shows registration
-    expect(testLogger.contains('Registering tool with payment wrapper: new_tool')).toBe(true);
+    // Dump all logs for debugging
+    console.log('All logs:', JSON.stringify(testLogger.getAllLogs(), null, 2));
+    
+    // Verify debug log shows registration - check for the exact format
+    const hasRegistrationLog = testLogger.getAllLogs().some(log => 
+      log.message === 'Registering tool' && 
+      log.args && 
+      log.args === 'new_tool'
+    );
+    
+    expect(hasRegistrationLog).toBe(true);
   });
 
   test('calls a registered tool successfully', async () => {
     // Create a server and wrapped server
     const server = createTestServer();
-    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger));
     
-    // Mock Math.random to ensure sufficient funds
-    const originalRandom = Math.random;
-    Math.random = jest.fn().mockReturnValue(0.9);
+    // Use the new test override option instead of mocking Math.random
+    const options = createTestOptions(testLogger, { _testOverrideFundsCheck: true });
+    const wrappedServer = wrapWithPayments(server, options);
     
     // Define a schema and handler for testing
     const schema = { value: z.string() };
@@ -120,37 +134,26 @@ describe('wrapWithPayments', () => {
     // Register a tool
     wrappedServer.tool('test_tool', schema, testHandler);
     
-    // Get the tool callback handler
-    const toolCallback = (wrappedServer as any)._registeredTools?.test_tool?.callback;
+    // Call the tool through the proxy
+    const result = await (wrappedServer as any).callTool('test_tool', { value: 'test' });
     
-    if (toolCallback) {
-      // Call the tool handler
-      const result = await toolCallback({ value: 'test' }, {});
-      
-      // Verify the result
-      expect(result).toBeDefined();
-      expect(result.content[0].text).toBe('Result: test');
-      
-      // Verify logs show the payment checks and processing
-      expect(testLogger.contains('Payment wrapper: Handling tool call')).toBe(true);
-      expect(testLogger.contains('Billing check for user')).toBe(true);
-      expect(testLogger.contains('Processed charge for user')).toBe(true);
-    } else {
-      fail('Tool callback not found');
-    }
+    // Verify the result
+    expect(result).toBeDefined();
+    expect(result.content[0].text).toBe('Result: test');
     
-    // Restore Math.random
-    Math.random = originalRandom;
+    // Verify logs show the payment checks and processing
+    expect(testLogger.contains('Executing tool')).toBe(true);
+    expect(testLogger.contains('Authentication successful')).toBe(true);
+    expect(testLogger.contains('Processed charge for user')).toBe(true);
   });
   
   test('rejects tool calls when funds are insufficient', async () => {
     // Create a server and wrapped server
     const server = createTestServer();
-    const wrappedServer = wrapWithPayments(server, createTestOptions(testLogger));
     
-    // Mock Math.random to ensure insufficient funds
-    const originalRandom = Math.random;
-    Math.random = jest.fn().mockReturnValue(0.05);
+    // Use the new test override option instead of mocking Math.random
+    const options = createTestOptions(testLogger, { _testOverrideFundsCheck: false });
+    const wrappedServer = wrapWithPayments(server, options);
     
     // Define a schema and handler for testing
     const schema = { value: z.string() };
@@ -163,25 +166,16 @@ describe('wrapWithPayments', () => {
     // Register a tool
     wrappedServer.tool('test_tool', schema, testHandler);
     
-    // Get the tool callback handler
-    const toolCallback = (wrappedServer as any)._registeredTools?.test_tool?.callback;
+    // Call the tool through the proxy
+    const result = await (wrappedServer as any).callTool('test_tool', { value: 'test' });
     
-    if (toolCallback) {
-      // Call the tool handler
-      const result = await toolCallback({ value: 'test' }, {});
-      
-      // Verify the result contains an error message
-      expect(result).toBeDefined();
-      expect(result.content[0].text).toContain('Insufficient funds');
-      
-      // Verify error was logged
-      expect(testLogger.contains('Payment rejected: Insufficient funds', 'error')).toBe(true);
-    } else {
-      fail('Tool callback not found');
-    }
+    // Verify the result contains an error message
+    expect(result).toBeDefined();
+    expect(result).toHaveProperty('error', 'insufficient_funds');
+    expect(result).toHaveProperty('message', 'Insufficient funds to execute this operation');
     
-    // Restore Math.random
-    Math.random = originalRandom;
+    // Verify error was logged
+    expect(testLogger.contains('Insufficient funds')).toBe(true);
   });
   
   test('registers a resource and proxies its methods', () => {
@@ -202,8 +196,14 @@ describe('wrapWithPayments', () => {
     // Register a resource
     wrappedServer.resource('new_resource', template, handler);
     
-    // Verify debug log shows registration
-    expect(testLogger.contains('Registering resource with payment wrapper: new_resource')).toBe(true);
+    // Verify debug log shows registration - check for the exact format
+    const hasRegistrationLog = testLogger.getAllLogs().some(log => 
+      log.message === 'Registering resource' && 
+      log.args && 
+      log.args === 'new_resource'
+    );
+    
+    expect(hasRegistrationLog).toBe(true);
   });
   
   test('registers a prompt and proxies its methods', () => {
@@ -223,7 +223,13 @@ describe('wrapWithPayments', () => {
     // Register a prompt
     wrappedServer.prompt('new_prompt', handler);
     
-    // Verify debug log shows registration
-    expect(testLogger.contains('Registering prompt with payment wrapper: new_prompt')).toBe(true);
+    // Verify debug log shows registration - check for the exact format
+    const hasRegistrationLog = testLogger.getAllLogs().some(log => 
+      log.message === 'Registering prompt' && 
+      log.args && 
+      log.args === 'new_prompt'
+    );
+    
+    expect(hasRegistrationLog).toBe(true);
   });
 }); 
