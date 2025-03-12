@@ -277,6 +277,56 @@ expect(errorLogs.length).toBe(1);
 testLogger.clear();
 ```
 
+## Mock Backend for Integration Testing
+
+The project includes a well-structured proof-of-concept mock backend that facilitates integration testing and serves as a reference design for implementing a real backend service.
+
+### Backend Architecture
+
+1. **Clean, Modular Structure**
+   - **Models**: Data storage and business logic in `/models` directory
+     - `users.ts`: User model with balance management
+     - `transactions.ts`: Transaction tracking and analytics
+     - `developers.ts`: API key validation and developer profiles
+
+   - **Controllers**: Request handling logic in `/controllers` directory
+     - `auth.ts`: Authentication operations (token verification, generation)
+     - `billing.ts`: Billing operations (fund checking, charge processing)
+
+   - **Routes**: Simplified API routing in `/routes` directory
+     - `auth.ts`: Authentication-related endpoints
+     - `billing.ts`: Billing-related endpoints
+
+   - **Server**: Core server setup with middleware and plugin registration
+
+2. **Backend Practices**
+   - Proper separation of concerns (models, controllers, routes)
+   - Centralized error handling
+   - Middleware for authentication
+   - Clean environment startup/shutdown
+   - Type safety with TypeScript
+
+### Multiple Server Options
+
+- **Original Server**: The fully-featured mock backend
+- **Simple Server**: A single-file simplified version
+- **Improved Server**: The well-structured modular version
+
+### Integration Testing Options
+
+- `npm run test:integration`: Run tests (assuming server is running)
+- `npm run test:integration:with-server`: Run with original server
+- `npm run test:integration:simple`: Run with simple server
+- `npm run test:integration:improved`: Run with improved modular server
+
+### Design for Real Backend Development
+
+The mock backend structure provides a solid foundation that can be adapted for real backend implementation:
+- Models can be replaced with actual database models
+- Controllers can be extended with additional business logic
+- Routes can be enhanced with more comprehensive validation
+- Server setup can be expanded for production needs
+
 ## Future Enhancements
 
 - Integration with actual payment processors (e.g., Stripe)
