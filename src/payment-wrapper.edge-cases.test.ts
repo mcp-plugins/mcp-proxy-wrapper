@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { wrapWithPayments } from './payment-wrapper.js';
 import { MemoryTransport, createLogger } from './utils/logger.js';
 import winston from 'winston';
+import { createTestServer } from './utils/test-helpers.js';
 
 // Valid JWT token for testing
 const VALID_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
@@ -20,7 +21,7 @@ const VALID_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIs
 // Invalid JWT token (missing parts)
 const INVALID_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0';
 
-// Memory transport for capturing logs
+// Setup memory transport and logger for tests
 let memoryTransport: MemoryTransport;
 let testLogger: winston.Logger;
 
@@ -35,15 +36,6 @@ function createValidOptions(overrides: Record<string, any> = {}) {
     },
     ...overrides
   };
-}
-
-// Helper function to create a test server
-function createTestServer() {
-  return new McpServer({
-    name: "Test Server",
-    version: "1.0.0",
-    description: "Test server for edge cases"
-  });
 }
 
 beforeEach(() => {
