@@ -54,47 +54,37 @@ The MCP Payment Wrapper adds payment functionality to an existing MCP server. It
 
 ## Quick Start
 
-Check out the [Getting Started](getting-started) guide to begin using the MCP Payment Wrapper in your project.
+Our [Quick Start Guide](./quickstart) will help you get up and running with MCP Payment Wrapper in just a few minutes.
 
 ## System Architecture
 
 The MCP Payment Wrapper uses a proxy-based architecture to intercept calls to the MCP server and add payment verification functionality without modifying the original server code.
 
-```
-┌─────────────────┐     ┌───────────────────────────────────────────────────────────────────────────────────────────┐
-│                 │     │                                                                                           │
-│                 │     │                              Wrapped MCP Server                                           │
-│                 │     │                                                                                           │
-│                 │     │  ┌─────────────────────────────────────────────────────────────────────────────────────┐  │
-│                 │     │  │                                                                                     │  │
-│                 │     │  │                               JavaScript Proxy                                      │  │
-│     Client      │     │  │                                                                                     │  │
-│     (LLM)       │─────┼─▶│  ┌─────────────────────────────────────────────────────────────────────────────────┐  │
-│                 │     │  │  │                                                                                 │  │
-│                 │     │  │  │                           Method Interception                                   │  │
-│                 │     │  │  │                                                                                 │  │
-│                 │     │  │  │  ┌─────────────────┐    ┌────────────────┐    ┌────────────────────────────┐   │  │
-└─────────────────┘     │  │  │  │                 │    │                │    │                            │   │  │
-                        │  │  │  │  Authentication ├───▶│  Funds Check   ├───▶│ Original Method Execution  │   │  │
-                        │  │  │  │                 │    │                │    │                            │   │  │
-                        │  │  │  └────────┬────────┘    └────────┬───────┘    └─────────────┬──────────────┘   │  │
-                        │  │  │           │                      │                          │                  │  │
-                        │  │  │           │                      │                          │                  │  │
-                        │  │  │           ▼                      ▼                          ▼                  │  │
-                        │  │  │  ┌─────────────────┐    ┌────────────────┐    ┌────────────────────────────┐   │  │
-                        │  │  │  │                 │    │                │    │                            │   │  │
-                        │  │  │  │  Error Handling │    │ Billing Process│    │      Result Handling       │   │  │
-                        │  │  │  │                 │    │                │    │                            │   │  │
-                        │  │  │  └─────────────────┘    └────────────────┘    └────────────────────────────┘   │  │
+```mermaid
+flowchart TB
+    Client["Client (LLM)"] --> Proxy["JavaScript Proxy"]
+    
+    subgraph WrappedServer["Wrapped MCP Server"]
+        Proxy --> MethodInterception["Method Interception"]
+        
+        subgraph PaymentFlow["Payment Flow"]
+            Auth["Authentication"] --> FundsCheck["Funds Check"] --> OriginalMethod["Original Method Execution"]
+            Auth --> ErrorHandling["Error Handling"]
+            FundsCheck --> BillingProcess["Billing Process"]
+            OriginalMethod --> ResultHandling["Result Handling"]
+        end
+        
+        MethodInterception --> PaymentFlow
+    end
 ```
 
 ## API Documentation
 
-For detailed API documentation, check out the [API Reference](api) section.
+For detailed API documentation, please visit the [API Reference](./api/reference) section.
 
 ## Examples
 
-See the [Examples](examples) section for code samples and usage scenarios.
+See the [Examples](./examples) section for code samples and usage scenarios.
 
 ## Contributing
 

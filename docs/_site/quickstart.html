@@ -6,20 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>MCP Payment Wrapper | Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</title>
+<title>Quick Start Guide | MCP Payment Wrapper</title>
 <meta name="generator" content="Jekyll v3.9.5" />
-<meta property="og:title" content="MCP Payment Wrapper" />
+<meta property="og:title" content="Quick Start Guide" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
 <meta property="og:description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
-<link rel="canonical" href="http://localhost:4001/api/reference/globals.html" />
-<meta property="og:url" content="http://localhost:4001/api/reference/globals.html" />
+<link rel="canonical" href="http://localhost:4001/quickstart.html" />
+<meta property="og:url" content="http://localhost:4001/quickstart.html" />
 <meta property="og:site_name" content="MCP Payment Wrapper" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="MCP Payment Wrapper" />
+<meta property="twitter:title" content="Quick Start Guide" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"MCP Payment Wrapper","url":"http://localhost:4001/api/reference/globals.html"}</script>
+{"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"Quick Start Guide","url":"http://localhost:4001/quickstart.html"}</script>
 <!-- End Jekyll SEO tag -->
 
     <link rel="stylesheet" href="/assets/css/style.css?v=eee1f07ae9cd8b93b60c6ef0a6e4e35322cdae5b">
@@ -172,7 +172,7 @@
 
     <header class="page-header" role="banner">
       <div class="header-container">
-        <h1 class="project-name">MCP Payment Wrapper</h1>
+        <h1 class="project-name">Quick Start Guide</h1>
         <h2 class="project-tagline">Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</h2>
         <div class="header-buttons">
           
@@ -200,10 +200,10 @@
         <li><a href="/" >
           <i class="fas fa-home"></i> Home
         </a></li>
-        <li><a href="/quickstart.html" >
+        <li><a href="/quickstart.html" class="active">
           <i class="fas fa-rocket"></i> Quick Start
         </a></li>
-        <li><a href="/api/reference/" class="active">
+        <li><a href="/api/reference/" >
           <i class="fas fa-code"></i> API Reference
         </a></li>
         <li><a href="/implementation-plans/extensible-hooks-design.html" >
@@ -242,50 +242,80 @@
                 
                 
                   
-                    
-                    / <a href="/api">Api</a>
-                  
-                
-                  
-                    
-                    / <a href="/api/reference">Reference</a>
-                  
-                
-                  
-                    / <span class="current-page">Globals.html</span>
+                    / <span class="current-page">Quickstart.html</span>
                   
                 
               
             </div>
             
-            <p><a href="/api/reference/"><strong>MCP Payment Wrapper API Reference v1.0.0</strong></a></p>
+            <h1 id="quick-start-guide">Quick Start Guide</h1>
 
-<hr />
+<p>Getting started with MCP Payment Wrapper is straightforward. Follow these simple steps to integrate payment functionality into your MCP server.</p>
 
-<h1 id="mcp-payment-wrapper-api-reference-v100">MCP Payment Wrapper API Reference v1.0.0</h1>
+<h2 id="installation">Installation</h2>
 
-<h2 id="classes">Classes</h2>
+<p>Install the package using npm:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>npm <span class="nb">install</span> @modelcontextprotocol/payment-wrapper
+</code></pre></div></div>
+
+<h2 id="basic-usage">Basic Usage</h2>
+
+<p>Here’s a minimal example to get you up and running quickly:</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">wrapWithPayments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/payment-wrapper</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">YourMCPServer</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./your-mcp-server</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="c1">// Create your MCP server instance</span>
+<span class="kd">const</span> <span class="nx">mcpServer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">YourMCPServer</span><span class="p">();</span>
+
+<span class="c1">// Wrap it with payment functionality</span>
+<span class="kd">const</span> <span class="nx">wrappedServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">mcpServer</span><span class="p">,</span> <span class="p">{</span>
+  <span class="c1">// Your developer API key</span>
+  <span class="na">developerApiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">your-api-key</span><span class="dl">'</span><span class="p">,</span>
+  
+  <span class="c1">// Optional: Configure billing settings</span>
+  <span class="na">billing</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">enabled</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="na">defaultRate</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="c1">// Cost per call in your currency</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="c1">// Use the wrapped server exactly as you would use the original</span>
+<span class="c1">// All calls will now include payment verification</span>
+<span class="kd">const</span> <span class="nx">result</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">wrappedServer</span><span class="p">.</span><span class="nx">yourMethod</span><span class="p">({</span>
+  <span class="c1">// Your method parameters</span>
+  <span class="na">input</span><span class="p">:</span> <span class="dl">'</span><span class="s1">Your input</span><span class="dl">'</span><span class="p">,</span>
+  
+  <span class="c1">// Include user authentication token</span>
+  <span class="na">userToken</span><span class="p">:</span> <span class="dl">'</span><span class="s1">user-jwt-token</span><span class="dl">'</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h2 id="key-concepts">Key Concepts</h2>
+
+<ol>
+  <li>
+    <p><strong>Wrapping the Server</strong>: The wrapper uses a JavaScript Proxy to intercept all method calls without modifying your original server.</p>
+  </li>
+  <li><strong>Authentication</strong>: Each request requires either:
+    <ul>
+      <li>A user JWT token (<code class="language-plaintext highlighter-rouge">userToken</code> parameter)</li>
+      <li>A developer API key (for testing or non-user-specific operations)</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>Billing</strong>: Before executing the original method, the wrapper verifies the user has sufficient funds.</p>
+  </li>
+  <li><strong>Seamless Integration</strong>: Your server’s original functionality remains unchanged; the wrapper simply adds the payment layer.</li>
+</ol>
+
+<h2 id="next-steps">Next Steps</h2>
 
 <ul>
-  <li><a href="/api/reference/classes/MockAuthService.html">MockAuthService</a></li>
-</ul>
-
-<h2 id="interfaces">Interfaces</h2>
-
-<ul>
-  <li><a href="/api/reference/interfaces/IAuthService.html">IAuthService</a></li>
-  <li><a href="/api/reference/interfaces/LoggerOptions.html">LoggerOptions</a></li>
-  <li><a href="/api/reference/interfaces/PaymentWrapperOptions.html">PaymentWrapperOptions</a></li>
-  <li><a href="/api/reference/interfaces/SessionOptions.html">SessionOptions</a></li>
-  <li><a href="/api/reference/interfaces/SessionStatus.html">SessionStatus</a></li>
-  <li><a href="/api/reference/interfaces/UserData.html">UserData</a></li>
-</ul>
-
-<h2 id="functions">Functions</h2>
-
-<ul>
-  <li><a href="/api/reference/functions/createLogger.html">createLogger</a></li>
-  <li><a href="/api/reference/functions/wrapWithPayments.html">wrapWithPayments</a></li>
+  <li>See the <a href="/api/reference">API Reference</a> for detailed documentation</li>
+  <li>Learn about <a href="./advanced-configuration">Advanced Configuration</a> options</li>
+  <li>Check the <a href="./examples">Examples</a> for common integration patterns</li>
 </ul>
 
           </div>

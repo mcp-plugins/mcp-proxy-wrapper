@@ -13,8 +13,17 @@
         <li><a href="{{ '/' | relative_url }}" {% if page.url == '/' %}class="active"{% endif %}>
           <i class="fas fa-home"></i> Home
         </a></li>
+        <li><a href="{{ '/quickstart.html' | relative_url }}" {% if page.url contains 'quickstart' %}class="active"{% endif %}>
+          <i class="fas fa-rocket"></i> Quick Start
+        </a></li>
+        <li><a href="{{ '/api/reference/' | relative_url }}" {% if page.url contains 'api/reference' %}class="active"{% endif %}>
+          <i class="fas fa-code"></i> API Reference
+        </a></li>
         <li><a href="{{ '/implementation-plans/extensible-hooks-design.html' | relative_url }}" {% if page.url contains 'extensible-hooks-design' %}class="active"{% endif %}>
           <i class="fas fa-plug"></i> Extensible Hooks Design
+        </a></li>
+        <li><a href="{{ '/examples.html' | relative_url }}" {% if page.url contains 'examples' %}class="active"{% endif %}>
+          <i class="fas fa-lightbulb"></i> Examples
         </a></li>
       </ul>
     </div>
@@ -27,6 +36,9 @@
         </a></li>
         <li><a href="{{ site.github.repository_url }}/issues" target="_blank">
           <i class="fas fa-bug"></i> Issues
+        </a></li>
+        <li><a href="https://www.npmjs.com/package/@modelcontextprotocol/payment-wrapper" target="_blank">
+          <i class="fab fa-npm"></i> NPM Package
         </a></li>
       </ul>
     </div>

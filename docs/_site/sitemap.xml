@@ -13,6 +13,9 @@
 <loc>http://localhost:4001/</loc>
 </url>
 <url>
+<loc>http://localhost:4001/quickstart.html</loc>
+</url>
+<url>
 <loc>http://localhost:4001/api/reference/classes/MockAuthService.html</loc>
 </url>
 <url>

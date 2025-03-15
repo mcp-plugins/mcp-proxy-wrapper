@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"Examples","url":"http://localhost:4001/examples.html"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/assets/css/style.css?v=1c90d0aade04e0c43ffa95bb3aed4728648d58d2">
+    <link rel="stylesheet" href="/assets/css/style.css?v=eee1f07ae9cd8b93b60c6ef0a6e4e35322cdae5b">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Additional head elements for MCP Payment Wrapper Docs -->
 <meta name="theme-color" content="#2D7FF9">
@@ -31,6 +31,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Mermaid JS for diagrams -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@9/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis'
+      },
+      securityLevel: 'loose'
+    });
+  });
+</script>
+
 <style>
   :root {
     --primary-font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -181,8 +200,17 @@
         <li><a href="/" >
           <i class="fas fa-home"></i> Home
         </a></li>
+        <li><a href="/quickstart.html" >
+          <i class="fas fa-rocket"></i> Quick Start
+        </a></li>
+        <li><a href="/api/reference/" >
+          <i class="fas fa-code"></i> API Reference
+        </a></li>
         <li><a href="/implementation-plans/extensible-hooks-design.html" >
           <i class="fas fa-plug"></i> Extensible Hooks Design
+        </a></li>
+        <li><a href="/examples.html" class="active">
+          <i class="fas fa-lightbulb"></i> Examples
         </a></li>
       </ul>
     </div>
@@ -195,6 +223,9 @@
         </a></li>
         <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper/issues" target="_blank">
           <i class="fas fa-bug"></i> Issues
+        </a></li>
+        <li><a href="https://www.npmjs.com/package/@modelcontextprotocol/payment-wrapper" target="_blank">
+          <i class="fab fa-npm"></i> NPM Package
         </a></li>
       </ul>
     </div>
@@ -241,7 +272,7 @@
 
 <span class="c1">// Wrap with payment functionality</span>
 <span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
-  <span class="na">apiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">YOUR_API_KEY</span><span class="dl">'</span>
+  <span class="na">developerApiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">YOUR_API_KEY</span><span class="dl">'</span>
 <span class="p">});</span>
 
 <span class="c1">// The wrapped server can be used exactly like the original</span>
@@ -261,327 +292,137 @@
 <span class="kd">const</span> <span class="nx">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpServer</span><span class="p">({</span> 
   <span class="na">name</span><span class="p">:</span> <span class="dl">"</span><span class="s2">AI Assistant</span><span class="dl">"</span><span class="p">,</span>
   <span class="na">version</span><span class="p">:</span> <span class="dl">"</span><span class="s2">1.0.0</span><span class="dl">"</span><span class="p">,</span>
-  <span class="na">description</span><span class="p">:</span> <span class="dl">"</span><span class="s2">An AI assistant with payment functionality</span><span class="dl">"</span>
 <span class="p">});</span>
 
 <span class="c1">// Define your tools</span>
-<span class="nx">server</span><span class="p">.</span><span class="nx">tool</span><span class="p">(</span><span class="dl">"</span><span class="s2">get_weather</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span>
-  <span class="na">location</span><span class="p">:</span> <span class="nx">z</span><span class="p">.</span><span class="kr">string</span><span class="p">(),</span>
-  <span class="na">units</span><span class="p">:</span> <span class="nx">z</span><span class="p">.</span><span class="kr">enum</span><span class="p">([</span><span class="dl">"</span><span class="s2">celsius</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">fahrenheit</span><span class="dl">"</span><span class="p">]).</span><span class="k">default</span><span class="p">(</span><span class="dl">"</span><span class="s2">celsius</span><span class="dl">"</span><span class="p">)</span>
-<span class="p">},</span> <span class="k">async</span> <span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
-  <span class="c1">// In a real implementation, you would call a weather API</span>
-  <span class="k">return</span> <span class="p">{</span>
-    <span class="na">temperature</span><span class="p">:</span> <span class="mi">22</span><span class="p">,</span>
-    <span class="na">units</span><span class="p">:</span> <span class="nx">args</span><span class="p">.</span><span class="nx">units</span><span class="p">,</span>
-    <span class="na">conditions</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Sunny</span><span class="dl">"</span><span class="p">,</span>
-    <span class="na">location</span><span class="p">:</span> <span class="nx">args</span><span class="p">.</span><span class="nx">location</span>
-  <span class="p">};</span>
-<span class="p">});</span>
-
-<span class="nx">server</span><span class="p">.</span><span class="nx">tool</span><span class="p">(</span><span class="dl">"</span><span class="s2">search_web</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span>
-  <span class="na">query</span><span class="p">:</span> <span class="nx">z</span><span class="p">.</span><span class="kr">string</span><span class="p">(),</span>
-  <span class="na">max_results</span><span class="p">:</span> <span class="nx">z</span><span class="p">.</span><span class="kr">number</span><span class="p">().</span><span class="k">default</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-<span class="p">},</span> <span class="k">async</span> <span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
-  <span class="c1">// In a real implementation, you would call a search API</span>
-  <span class="k">return</span> <span class="p">{</span>
-    <span class="na">results</span><span class="p">:</span> <span class="p">[</span>
-      <span class="p">{</span> <span class="na">title</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Example Result 1</span><span class="dl">"</span><span class="p">,</span> <span class="na">url</span><span class="p">:</span> <span class="dl">"</span><span class="s2">https://example.com/1</span><span class="dl">"</span> <span class="p">},</span>
-      <span class="p">{</span> <span class="na">title</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Example Result 2</span><span class="dl">"</span><span class="p">,</span> <span class="na">url</span><span class="p">:</span> <span class="dl">"</span><span class="s2">https://example.com/2</span><span class="dl">"</span> <span class="p">}</span>
-    <span class="p">],</span>
-    <span class="na">query</span><span class="p">:</span> <span class="nx">args</span><span class="p">.</span><span class="nx">query</span>
-  <span class="p">};</span>
-<span class="p">});</span>
+<span class="nx">server</span><span class="p">.</span><span class="nx">tool</span><span class="p">(</span>
+  <span class="dl">"</span><span class="s2">search</span><span class="dl">"</span><span class="p">,</span>
+  <span class="p">{</span>
+    <span class="na">query</span><span class="p">:</span> <span class="nx">z</span><span class="p">.</span><span class="kr">string</span><span class="p">().</span><span class="nx">describe</span><span class="p">(</span><span class="dl">"</span><span class="s2">Search query</span><span class="dl">"</span><span class="p">),</span>
+  <span class="p">},</span>
+  <span class="k">async</span> <span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="c1">// Implement search functionality</span>
+    <span class="k">return</span> <span class="p">{</span> <span class="na">results</span><span class="p">:</span> <span class="p">[</span><span class="s2">`Result for </span><span class="p">${</span><span class="nx">args</span><span class="p">.</span><span class="nx">query</span><span class="p">}</span><span class="s2">`</span><span class="p">]</span> <span class="p">};</span>
+  <span class="p">}</span>
+<span class="p">);</span>
 
 <span class="c1">// Wrap with payment functionality</span>
-<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
-  <span class="na">apiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">YOUR_API_KEY</span><span class="dl">'</span><span class="p">,</span>
-  <span class="na">debugMode</span><span class="p">:</span> <span class="kc">true</span>
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span>
+  <span class="na">developerApiKey</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">API_KEY</span><span class="p">,</span>
+  <span class="na">billing</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">enabled</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="na">defaultRate</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="c1">// $0.01 per call</span>
+  <span class="p">},</span>
+  <span class="na">logging</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">level</span><span class="p">:</span> <span class="dl">'</span><span class="s1">info</span><span class="dl">'</span>
+  <span class="p">}</span>
 <span class="p">});</span>
 
-<span class="c1">// Create a transport</span>
-<span class="kd">const</span> <span class="nx">transport</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">StdioServerTransport</span><span class="p">();</span>
-
-<span class="c1">// Start the server</span>
-<span class="nx">paymentServer</span><span class="p">.</span><span class="nx">listen</span><span class="p">(</span><span class="nx">transport</span><span class="p">);</span>
+<span class="c1">// Start the server with stdio transport</span>
+<span class="k">new</span> <span class="nx">StdioServerTransport</span><span class="p">(</span><span class="nx">paymentServer</span><span class="p">).</span><span class="nx">start</span><span class="p">();</span>
 </code></pre></div></div>
 
-<h2 id="authentication-flow-example">Authentication Flow Example</h2>
+<h2 id="authentication-integration">Authentication Integration</h2>
 
-<p>This example demonstrates a complete authentication flow:</p>
+<p>This example shows how to integrate user authentication:</p>
 
-<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">McpClient</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/client/mcp.js</span><span class="dl">'</span><span class="p">;</span>
-
-<span class="c1">// Create an MCP client</span>
-<span class="kd">const</span> <span class="nx">client</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpClient</span><span class="p">({</span>
-  <span class="na">serverUrl</span><span class="p">:</span> <span class="dl">'</span><span class="s1">https://your-mcp-server.com</span><span class="dl">'</span>
-<span class="p">});</span>
-
-<span class="c1">// Step 1: Initiate authentication</span>
-<span class="k">async</span> <span class="kd">function</span> <span class="nx">startAuthentication</span><span class="p">()</span> <span class="p">{</span>
-  <span class="kd">const</span> <span class="nx">authResult</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">client</span><span class="p">.</span><span class="nx">callTool</span><span class="p">(</span><span class="dl">"</span><span class="s2">payment_authenticate</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span>
-    <span class="na">return_url</span><span class="p">:</span> <span class="dl">"</span><span class="s2">https://your-app.com/auth-callback</span><span class="dl">"</span>
-  <span class="p">});</span>
-  
-  <span class="kd">const</span> <span class="nx">sessionId</span> <span class="o">=</span> <span class="nx">authResult</span><span class="p">.</span><span class="nx">_meta</span><span class="p">.</span><span class="nx">session_id</span><span class="p">;</span>
-  <span class="kd">const</span> <span class="nx">authUrl</span> <span class="o">=</span> <span class="nx">authResult</span><span class="p">.</span><span class="nx">content</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="nx">text</span><span class="p">;</span>
-  
-  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">`Please authenticate at: </span><span class="p">${</span><span class="nx">authUrl</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
-  
-  <span class="c1">// Store the session ID for later use</span>
-  <span class="nx">localStorage</span><span class="p">.</span><span class="nx">setItem</span><span class="p">(</span><span class="dl">'</span><span class="s1">auth_session_id</span><span class="dl">'</span><span class="p">,</span> <span class="nx">sessionId</span><span class="p">);</span>
-  
-  <span class="c1">// Open the auth URL in a new window or redirect the user</span>
-  <span class="nb">window</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="nx">authUrl</span><span class="p">,</span> <span class="dl">'</span><span class="s1">_blank</span><span class="dl">'</span><span class="p">);</span>
-  
-  <span class="c1">// Start polling for auth status</span>
-  <span class="nx">pollAuthStatus</span><span class="p">(</span><span class="nx">sessionId</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="c1">// Step 2: Poll for authentication status</span>
-<span class="k">async</span> <span class="kd">function</span> <span class="nx">pollAuthStatus</span><span class="p">(</span><span class="nx">sessionId</span><span class="p">)</span> <span class="p">{</span>
-  <span class="kd">const</span> <span class="nx">pollInterval</span> <span class="o">=</span> <span class="nx">setInterval</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
-    <span class="k">try</span> <span class="p">{</span>
-      <span class="kd">const</span> <span class="nx">statusResult</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">client</span><span class="p">.</span><span class="nx">callTool</span><span class="p">(</span><span class="dl">"</span><span class="s2">payment_check_auth_status</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span>
-        <span class="na">session_id</span><span class="p">:</span> <span class="nx">sessionId</span>
-      <span class="p">});</span>
-      
-      <span class="k">if</span> <span class="p">(</span><span class="nx">statusResult</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="dl">"</span><span class="s2">complete</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">clearInterval</span><span class="p">(</span><span class="nx">pollInterval</span><span class="p">);</span>
-        
-        <span class="c1">// Store the user token</span>
-        <span class="nx">localStorage</span><span class="p">.</span><span class="nx">setItem</span><span class="p">(</span><span class="dl">'</span><span class="s1">user_token</span><span class="dl">'</span><span class="p">,</span> <span class="nx">statusResult</span><span class="p">.</span><span class="nx">user_token</span><span class="p">);</span>
-        
-        <span class="c1">// Create a new authenticated client</span>
-        <span class="nx">createAuthenticatedClient</span><span class="p">(</span><span class="nx">statusResult</span><span class="p">.</span><span class="nx">user_token</span><span class="p">);</span>
-        
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Authentication successful!</span><span class="dl">"</span><span class="p">);</span>
-      <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">statusResult</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="dl">"</span><span class="s2">failed</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">clearInterval</span><span class="p">(</span><span class="nx">pollInterval</span><span class="p">);</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Authentication failed:</span><span class="dl">"</span><span class="p">,</span> <span class="nx">statusResult</span><span class="p">.</span><span class="nx">error</span><span class="p">);</span>
-      <span class="p">}</span>
-    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
-      <span class="nx">clearInterval</span><span class="p">(</span><span class="nx">pollInterval</span><span class="p">);</span>
-      <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="dl">"</span><span class="s2">Error checking auth status:</span><span class="dl">"</span><span class="p">,</span> <span class="nx">error</span><span class="p">);</span>
-    <span class="p">}</span>
-  <span class="p">},</span> <span class="mi">3000</span><span class="p">);</span> <span class="c1">// Check every 3 seconds</span>
-<span class="p">}</span>
-
-<span class="c1">// Step 3: Create an authenticated client</span>
-<span class="kd">function</span> <span class="nx">createAuthenticatedClient</span><span class="p">(</span><span class="nx">userToken</span><span class="p">)</span> <span class="p">{</span>
-  <span class="kd">const</span> <span class="nx">authenticatedClient</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpClient</span><span class="p">({</span>
-    <span class="na">serverUrl</span><span class="p">:</span> <span class="dl">'</span><span class="s1">https://your-mcp-server.com</span><span class="dl">'</span><span class="p">,</span>
-    <span class="na">headers</span><span class="p">:</span> <span class="p">{</span>
-      <span class="dl">'</span><span class="s1">Authorization</span><span class="dl">'</span><span class="p">:</span> <span class="s2">`Bearer </span><span class="p">${</span><span class="nx">userToken</span><span class="p">}</span><span class="s2">`</span>
-    <span class="p">}</span>
-  <span class="p">});</span>
-  
-  <span class="c1">// Now you can make authenticated requests</span>
-  <span class="nx">checkBalance</span><span class="p">(</span><span class="nx">authenticatedClient</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="c1">// Step 4: Check user balance</span>
-<span class="k">async</span> <span class="kd">function</span> <span class="nx">checkBalance</span><span class="p">(</span><span class="nx">authenticatedClient</span><span class="p">)</span> <span class="p">{</span>
-  <span class="k">try</span> <span class="p">{</span>
-    <span class="kd">const</span> <span class="nx">balanceResult</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">authenticatedClient</span><span class="p">.</span><span class="nx">callTool</span><span class="p">(</span><span class="dl">"</span><span class="s2">payment_get_balance</span><span class="dl">"</span><span class="p">,</span> <span class="p">{});</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">`Current balance: </span><span class="p">${</span><span class="nx">balanceResult</span><span class="p">.</span><span class="nx">balance</span><span class="p">}</span><span class="s2"> </span><span class="p">${</span><span class="nx">balanceResult</span><span class="p">.</span><span class="nx">currency</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
-  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="dl">"</span><span class="s2">Error checking balance:</span><span class="dl">"</span><span class="p">,</span> <span class="nx">error</span><span class="p">);</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-
-<span class="c1">// Start the authentication process</span>
-<span class="nx">startAuthentication</span><span class="p">();</span>
-</code></pre></div></div>
-
-<h2 id="error-handling-example">Error Handling Example</h2>
-
-<p>This example shows how to handle different error scenarios:</p>
-
-<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">McpClient</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/client/mcp.js</span><span class="dl">'</span><span class="p">;</span>
-
-<span class="c1">// Create an MCP client</span>
-<span class="kd">const</span> <span class="nx">client</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpClient</span><span class="p">({</span>
-  <span class="na">serverUrl</span><span class="p">:</span> <span class="dl">'</span><span class="s1">https://your-mcp-server.com</span><span class="dl">'</span>
-<span class="p">});</span>
-
-<span class="k">async</span> <span class="kd">function</span> <span class="nx">callProtectedTool</span><span class="p">()</span> <span class="p">{</span>
-  <span class="k">try</span> <span class="p">{</span>
-    <span class="kd">const</span> <span class="nx">result</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">client</span><span class="p">.</span><span class="nx">callTool</span><span class="p">(</span><span class="dl">"</span><span class="s2">premium_tool</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span>
-      <span class="na">param</span><span class="p">:</span> <span class="dl">"</span><span class="s2">value</span><span class="dl">"</span>
-    <span class="p">});</span>
-    
-    <span class="c1">// If successful, process the result</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tool call successful:</span><span class="dl">"</span><span class="p">,</span> <span class="nx">result</span><span class="p">);</span>
-    <span class="k">return</span> <span class="nx">result</span><span class="p">;</span>
-  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// Handle different error types</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">error</span> <span class="o">===</span> <span class="dl">"</span><span class="s2">authentication_required</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
-      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Authentication required</span><span class="dl">"</span><span class="p">);</span>
-      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Auth URL:</span><span class="dl">"</span><span class="p">,</span> <span class="nx">error</span><span class="p">.</span><span class="nx">authUrl</span><span class="p">);</span>
-      
-      <span class="c1">// Start the authentication flow</span>
-      <span class="nx">startAuthFlow</span><span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">authUrl</span><span class="p">);</span>
-    <span class="p">}</span> 
-    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">error</span> <span class="o">===</span> <span class="dl">"</span><span class="s2">insufficient_funds</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
-      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Insufficient funds</span><span class="dl">"</span><span class="p">);</span>
-      
-      <span class="c1">// Redirect to payment page</span>
-      <span class="nx">redirectToPaymentPage</span><span class="p">();</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">error</span> <span class="o">===</span> <span class="dl">"</span><span class="s2">insufficient_permissions</span><span class="dl">"</span><span class="p">)</span> <span class="p">{</span>
-      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Insufficient permissions:</span><span class="dl">"</span><span class="p">,</span> <span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="p">);</span>
-      
-      <span class="c1">// Show upgrade options</span>
-      <span class="nx">showUpgradeOptions</span><span class="p">();</span>
-    <span class="p">}</span>
-    <span class="k">else</span> <span class="p">{</span>
-      <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="dl">"</span><span class="s2">Unknown error:</span><span class="dl">"</span><span class="p">,</span> <span class="nx">error</span><span class="p">);</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-
-<span class="kd">function</span> <span class="nx">startAuthFlow</span><span class="p">(</span><span class="nx">authUrl</span><span class="p">)</span> <span class="p">{</span>
-  <span class="c1">// Implementation of authentication flow</span>
-  <span class="nb">window</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="nx">authUrl</span><span class="p">,</span> <span class="dl">'</span><span class="s1">_blank</span><span class="dl">'</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="kd">function</span> <span class="nx">redirectToPaymentPage</span><span class="p">()</span> <span class="p">{</span>
-  <span class="c1">// Implementation of payment page redirect</span>
-  <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">/add-funds</span><span class="dl">'</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="kd">function</span> <span class="nx">showUpgradeOptions</span><span class="p">()</span> <span class="p">{</span>
-  <span class="c1">// Implementation of upgrade options UI</span>
-  <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="dl">'</span><span class="s1">upgrade-modal</span><span class="dl">'</span><span class="p">).</span><span class="nx">style</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">block</span><span class="dl">'</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="c1">// Call the protected tool</span>
-<span class="nx">callProtectedTool</span><span class="p">();</span>
-</code></pre></div></div>
-
-<h2 id="testing-example">Testing Example</h2>
-
-<p>This example shows how to test code that uses the MCP Payment Wrapper:</p>
-
-<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">McpServer</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/server/mcp.js</span><span class="dl">'</span><span class="p">;</span>
-<span class="k">import</span> <span class="p">{</span> <span class="nx">wrapWithPayments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/payment-wrapper</span><span class="dl">'</span><span class="p">;</span>
-<span class="k">import</span> <span class="p">{</span> <span class="nx">McpClient</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/client/mcp.js</span><span class="dl">'</span><span class="p">;</span>
-<span class="k">import</span> <span class="p">{</span> <span class="nx">HttpClientTransport</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/client/http.js</span><span class="dl">'</span><span class="p">;</span>
-<span class="k">import</span> <span class="p">{</span> <span class="nx">HttpServerTransport</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/server/http.js</span><span class="dl">'</span><span class="p">;</span>
-
-<span class="c1">// Test function</span>
-<span class="k">async</span> <span class="kd">function</span> <span class="nx">testPaymentWrapper</span><span class="p">()</span> <span class="p">{</span>
-  <span class="c1">// Create a basic MCP server</span>
-  <span class="kd">const</span> <span class="nx">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpServer</span><span class="p">({</span> 
-    <span class="na">name</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Test Server</span><span class="dl">"</span><span class="p">,</span>
-    <span class="na">version</span><span class="p">:</span> <span class="dl">"</span><span class="s2">1.0.0</span><span class="dl">"</span>
-  <span class="p">});</span>
-  
-  <span class="c1">// Add a test tool</span>
-  <span class="nx">server</span><span class="p">.</span><span class="nx">tool</span><span class="p">(</span><span class="dl">"</span><span class="s2">test_tool</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span> <span class="na">param</span><span class="p">:</span> <span class="dl">"</span><span class="s2">string</span><span class="dl">"</span> <span class="p">},</span> <span class="k">async</span> <span class="p">(</span><span class="nx">args</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="p">{</span> <span class="na">result</span><span class="p">:</span> <span class="s2">`Processed </span><span class="p">${</span><span class="nx">args</span><span class="p">.</span><span class="nx">param</span><span class="p">}</span><span class="s2">`</span> <span class="p">};</span>
-  <span class="p">});</span>
-  
-  <span class="c1">// Wrap with payment functionality and override funds check to always succeed</span>
-  <span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
-    <span class="na">apiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">test-api-key</span><span class="dl">'</span><span class="p">,</span>
-    <span class="na">_testOverrideFundsCheck</span><span class="p">:</span> <span class="kc">true</span>
-  <span class="p">});</span>
-  
-  <span class="c1">// Create an HTTP transport for the server</span>
-  <span class="kd">const</span> <span class="nx">serverTransport</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">HttpServerTransport</span><span class="p">({</span>
-    <span class="na">port</span><span class="p">:</span> <span class="mi">3000</span>
-  <span class="p">});</span>
-  
-  <span class="c1">// Start the server</span>
-  <span class="nx">paymentServer</span><span class="p">.</span><span class="nx">listen</span><span class="p">(</span><span class="nx">serverTransport</span><span class="p">);</span>
-  
-  <span class="c1">// Create a client to test with</span>
-  <span class="kd">const</span> <span class="nx">client</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpClient</span><span class="p">({</span>
-    <span class="na">transport</span><span class="p">:</span> <span class="k">new</span> <span class="nx">HttpClientTransport</span><span class="p">({</span>
-      <span class="na">baseUrl</span><span class="p">:</span> <span class="dl">'</span><span class="s1">http://localhost:3000</span><span class="dl">'</span>
-    <span class="p">})</span>
-  <span class="p">});</span>
-  
-  <span class="c1">// Test calling the tool</span>
-  <span class="k">try</span> <span class="p">{</span>
-    <span class="kd">const</span> <span class="nx">result</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">client</span><span class="p">.</span><span class="nx">callTool</span><span class="p">(</span><span class="dl">"</span><span class="s2">test_tool</span><span class="dl">"</span><span class="p">,</span> <span class="p">{</span> <span class="na">param</span><span class="p">:</span> <span class="dl">"</span><span class="s2">test</span><span class="dl">"</span> <span class="p">});</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Test successful:</span><span class="dl">"</span><span class="p">,</span> <span class="nx">result</span><span class="p">);</span>
-  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="dl">"</span><span class="s2">Test failed:</span><span class="dl">"</span><span class="p">,</span> <span class="nx">error</span><span class="p">);</span>
-  <span class="p">}</span>
-  
-  <span class="c1">// Stop the server</span>
-  <span class="nx">serverTransport</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
-<span class="p">}</span>
-
-<span class="c1">// Run the test</span>
-<span class="nx">testPaymentWrapper</span><span class="p">();</span>
-</code></pre></div></div>
-
-<h2 id="production-configuration-example">Production Configuration Example</h2>
-
-<p>This example shows a production-ready configuration:</p>
-
-<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">McpServer</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/server/mcp.js</span><span class="dl">'</span><span class="p">;</span>
-<span class="k">import</span> <span class="p">{</span> <span class="nx">HttpServerTransport</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/server/http.js</span><span class="dl">'</span><span class="p">;</span>
-<span class="k">import</span> <span class="p">{</span> <span class="nx">wrapWithPayments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/payment-wrapper</span><span class="dl">'</span><span class="p">;</span>
-<span class="k">import</span> <span class="o">*</span> <span class="k">as</span> <span class="nx">winston</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">winston</span><span class="dl">'</span><span class="p">;</span>
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">wrapWithPayments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/payment-wrapper</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">MyMcpServer</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./my-server.js</span><span class="dl">'</span><span class="p">;</span>
 
 <span class="c1">// Create your MCP server</span>
-<span class="kd">const</span> <span class="nx">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpServer</span><span class="p">({</span> 
-  <span class="na">name</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Production API</span><span class="dl">"</span><span class="p">,</span>
-  <span class="na">version</span><span class="p">:</span> <span class="dl">"</span><span class="s2">1.0.0</span><span class="dl">"</span>
-<span class="p">});</span>
-
-<span class="c1">// Define your tools, prompts, and resources</span>
-<span class="c1">// ...</span>
-
-<span class="c1">// Configure advanced logging</span>
-<span class="kd">const</span> <span class="nx">loggerOptions</span> <span class="o">=</span> <span class="p">{</span>
-  <span class="na">level</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_ENV</span> <span class="o">===</span> <span class="dl">'</span><span class="s1">production</span><span class="dl">'</span> <span class="p">?</span> <span class="dl">'</span><span class="s1">info</span><span class="dl">'</span> <span class="p">:</span> <span class="dl">'</span><span class="s1">debug</span><span class="dl">'</span><span class="p">,</span>
-  <span class="na">transports</span><span class="p">:</span> <span class="p">[</span>
-    <span class="k">new</span> <span class="nx">winston</span><span class="p">.</span><span class="nx">transports</span><span class="p">.</span><span class="nx">Console</span><span class="p">({</span>
-      <span class="na">format</span><span class="p">:</span> <span class="nx">winston</span><span class="p">.</span><span class="nx">format</span><span class="p">.</span><span class="nx">combine</span><span class="p">(</span>
-        <span class="nx">winston</span><span class="p">.</span><span class="nx">format</span><span class="p">.</span><span class="nx">colorize</span><span class="p">(),</span>
-        <span class="nx">winston</span><span class="p">.</span><span class="nx">format</span><span class="p">.</span><span class="nx">timestamp</span><span class="p">(),</span>
-        <span class="nx">winston</span><span class="p">.</span><span class="nx">format</span><span class="p">.</span><span class="nx">printf</span><span class="p">(({</span> <span class="nx">timestamp</span><span class="p">,</span> <span class="nx">level</span><span class="p">,</span> <span class="nx">message</span><span class="p">,</span> <span class="p">...</span><span class="nx">meta</span> <span class="p">})</span> <span class="o">=&gt;</span> <span class="p">{</span>
-          <span class="k">return</span> <span class="s2">`</span><span class="p">${</span><span class="nx">timestamp</span><span class="p">}</span><span class="s2"> </span><span class="p">${</span><span class="nx">level</span><span class="p">}</span><span class="s2">: </span><span class="p">${</span><span class="nx">message</span><span class="p">}</span><span class="s2"> </span><span class="p">${</span><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">meta</span><span class="p">).</span><span class="nx">length</span> <span class="p">?</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">meta</span><span class="p">)</span> <span class="p">:</span> <span class="dl">''</span><span class="p">}</span><span class="s2">`</span><span class="p">;</span>
-        <span class="p">})</span>
-      <span class="p">)</span>
-    <span class="p">}),</span>
-    <span class="k">new</span> <span class="nx">winston</span><span class="p">.</span><span class="nx">transports</span><span class="p">.</span><span class="nx">File</span><span class="p">({</span> 
-      <span class="na">filename</span><span class="p">:</span> <span class="dl">'</span><span class="s1">logs/payment-wrapper.log</span><span class="dl">'</span><span class="p">,</span>
-      <span class="na">maxsize</span><span class="p">:</span> <span class="mi">10485760</span><span class="p">,</span> <span class="c1">// 10MB</span>
-      <span class="na">maxFiles</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
-      <span class="na">format</span><span class="p">:</span> <span class="nx">winston</span><span class="p">.</span><span class="nx">format</span><span class="p">.</span><span class="nx">combine</span><span class="p">(</span>
-        <span class="nx">winston</span><span class="p">.</span><span class="nx">format</span><span class="p">.</span><span class="nx">timestamp</span><span class="p">(),</span>
-        <span class="nx">winston</span><span class="p">.</span><span class="nx">format</span><span class="p">.</span><span class="nx">json</span><span class="p">()</span>
-      <span class="p">)</span>
-    <span class="p">})</span>
-  <span class="p">]</span>
-<span class="p">};</span>
+<span class="kd">const</span> <span class="nx">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyMcpServer</span><span class="p">();</span>
 
 <span class="c1">// Wrap with payment functionality</span>
-<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
-  <span class="na">apiKey</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MCP_API_KEY</span><span class="p">,</span>
-  <span class="na">baseAuthUrl</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">AUTH_SERVICE_URL</span><span class="p">,</span>
-  <span class="nx">loggerOptions</span>
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span>
+  <span class="na">developerApiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">YOUR_API_KEY</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">auth</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1">// Configure authentication</span>
+    <span class="na">verifyUserToken</span><span class="p">:</span> <span class="k">async</span> <span class="p">(</span><span class="nx">token</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="c1">// Custom verification logic</span>
+      <span class="c1">// Return user ID if valid, null otherwise</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">token</span> <span class="o">===</span> <span class="dl">'</span><span class="s1">valid-token</span><span class="dl">'</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">{</span> <span class="na">userId</span><span class="p">:</span> <span class="dl">'</span><span class="s1">user123</span><span class="dl">'</span><span class="p">,</span> <span class="na">valid</span><span class="p">:</span> <span class="kc">true</span> <span class="p">};</span>
+      <span class="p">}</span>
+      <span class="k">return</span> <span class="p">{</span> <span class="na">userId</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span> <span class="na">valid</span><span class="p">:</span> <span class="kc">false</span> <span class="p">};</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
 <span class="p">});</span>
 
-<span class="c1">// Create an HTTP transport</span>
-<span class="kd">const</span> <span class="nx">transport</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">HttpServerTransport</span><span class="p">({</span>
-  <span class="na">port</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">PORT</span> <span class="o">||</span> <span class="mi">3000</span><span class="p">,</span>
-  <span class="na">host</span><span class="p">:</span> <span class="dl">'</span><span class="s1">0.0.0.0</span><span class="dl">'</span>
+<span class="c1">// Example of calling a method with user token</span>
+<span class="kd">const</span> <span class="nx">result</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">paymentServer</span><span class="p">.</span><span class="nx">yourMethod</span><span class="p">({</span>
+  <span class="c1">// Your regular parameters</span>
+  <span class="na">param1</span><span class="p">:</span> <span class="dl">'</span><span class="s1">value1</span><span class="dl">'</span><span class="p">,</span>
+  
+  <span class="c1">// Add user token for authentication</span>
+  <span class="na">userToken</span><span class="p">:</span> <span class="dl">'</span><span class="s1">valid-token</span><span class="dl">'</span>
 <span class="p">});</span>
-
-<span class="c1">// Start the server</span>
-<span class="nx">paymentServer</span><span class="p">.</span><span class="nx">listen</span><span class="p">(</span><span class="nx">transport</span><span class="p">);</span>
-
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">`Server running on port </span><span class="p">${</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">PORT</span> <span class="o">||</span> <span class="mi">3000</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
 </code></pre></div></div>
 
-<p>These examples should help you get started with the MCP Payment Wrapper in various scenarios. For more detailed information, check out the <a href="api">API Reference</a> section.</p>
+<h2 id="custom-pricing-strategy">Custom Pricing Strategy</h2>
+
+<p>This example shows how to implement a custom pricing strategy:</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">wrapWithPayments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/payment-wrapper</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">MyMcpServer</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./my-server.js</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="c1">// Define custom pricing strategy</span>
+<span class="kd">const</span> <span class="nx">customPricingStrategy</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">calculatePrice</span><span class="p">:</span> <span class="p">(</span><span class="nx">resourceType</span><span class="p">,</span> <span class="nx">resourceId</span><span class="p">,</span> <span class="nx">options</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="c1">// Different pricing for different resource types</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="nx">resourceType</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">case</span> <span class="dl">'</span><span class="s1">completion</span><span class="dl">'</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span> <span class="na">amount</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">,</span> <span class="na">currency</span><span class="p">:</span> <span class="dl">'</span><span class="s1">USD</span><span class="dl">'</span> <span class="p">};</span>
+      <span class="k">case</span> <span class="dl">'</span><span class="s1">embedding</span><span class="dl">'</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span> <span class="na">amount</span><span class="p">:</span> <span class="mf">0.0001</span><span class="p">,</span> <span class="na">currency</span><span class="p">:</span> <span class="dl">'</span><span class="s1">USD</span><span class="dl">'</span> <span class="p">};</span>
+      <span class="nl">default</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span> <span class="na">amount</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="na">currency</span><span class="p">:</span> <span class="dl">'</span><span class="s1">USD</span><span class="dl">'</span> <span class="p">};</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// Create and wrap your MCP server</span>
+<span class="kd">const</span> <span class="nx">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyMcpServer</span><span class="p">();</span>
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span>
+  <span class="na">developerApiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">YOUR_API_KEY</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">billing</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">enabled</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="na">pricingStrategy</span><span class="p">:</span> <span class="nx">customPricingStrategy</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h2 id="error-handling">Error Handling</h2>
+
+<p>This example shows how to handle payment-related errors:</p>
+
+<p>```typescript
+import { wrapWithPayments } from ‘@modelcontextprotocol/payment-wrapper’;
+import { MyMcpServer } from ‘./my-server.js’;</p>
+
+<p>// Create and wrap your MCP server
+const server = new MyMcpServer();
+const paymentServer = wrapWithPayments(server, {
+  developerApiKey: ‘YOUR_API_KEY’
+});</p>
+
+<p>// Example of handling payment errors
+try {
+  const result = await paymentServer.yourMethod({
+    param1: ‘value1’,
+    userToken: ‘user-token’
+  });
+  console.log(‘Success:’, result);
+} catch (error) {
+  if (error.code === ‘PAYMENT_REQUIRED’) {
+    console.error(‘Payment required:’, error.message);
+    // Prompt user to add funds
+  } else if (error.code === ‘UNAUTHORIZED’) {
+    console.error(‘Authentication failed:’, error.message);
+    // Prompt user to log in again
+  } else {
+    console.error(‘Other error:’, error);
+  }
+}</p>
 
           </div>
 

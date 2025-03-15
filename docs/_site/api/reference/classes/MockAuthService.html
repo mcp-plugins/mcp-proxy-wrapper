@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"MCP Payment Wrapper","url":"http://localhost:4001/api/reference/classes/MockAuthService.html"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/assets/css/style.css?v=1c90d0aade04e0c43ffa95bb3aed4728648d58d2">
+    <link rel="stylesheet" href="/assets/css/style.css?v=eee1f07ae9cd8b93b60c6ef0a6e4e35322cdae5b">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Additional head elements for MCP Payment Wrapper Docs -->
 <meta name="theme-color" content="#2D7FF9">
@@ -31,6 +31,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Mermaid JS for diagrams -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@9/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis'
+      },
+      securityLevel: 'loose'
+    });
+  });
+</script>
+
 <style>
   :root {
     --primary-font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -181,8 +200,17 @@
         <li><a href="/" >
           <i class="fas fa-home"></i> Home
         </a></li>
+        <li><a href="/quickstart.html" >
+          <i class="fas fa-rocket"></i> Quick Start
+        </a></li>
+        <li><a href="/api/reference/" class="active">
+          <i class="fas fa-code"></i> API Reference
+        </a></li>
         <li><a href="/implementation-plans/extensible-hooks-design.html" >
           <i class="fas fa-plug"></i> Extensible Hooks Design
+        </a></li>
+        <li><a href="/examples.html" >
+          <i class="fas fa-lightbulb"></i> Examples
         </a></li>
       </ul>
     </div>
@@ -195,6 +223,9 @@
         </a></li>
         <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper/issues" target="_blank">
           <i class="fas fa-bug"></i> Issues
+        </a></li>
+        <li><a href="https://www.npmjs.com/package/@modelcontextprotocol/payment-wrapper" target="_blank">
+          <i class="fab fa-npm"></i> NPM Package
         </a></li>
       </ul>
     </div>

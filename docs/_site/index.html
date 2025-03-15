@@ -22,7 +22,7 @@
 {"@context":"https://schema.org","@type":"WebSite","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"MCP Payment Wrapper","name":"MCP Payment Wrapper","url":"http://localhost:4001/"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/assets/css/style.css?v=1c90d0aade04e0c43ffa95bb3aed4728648d58d2">
+    <link rel="stylesheet" href="/assets/css/style.css?v=eee1f07ae9cd8b93b60c6ef0a6e4e35322cdae5b">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Additional head elements for MCP Payment Wrapper Docs -->
 <meta name="theme-color" content="#2D7FF9">
@@ -31,6 +31,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Mermaid JS for diagrams -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@9/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis'
+      },
+      securityLevel: 'loose'
+    });
+  });
+</script>
+
 <style>
   :root {
     --primary-font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -181,8 +200,17 @@
         <li><a href="/" class="active">
           <i class="fas fa-home"></i> Home
         </a></li>
+        <li><a href="/quickstart.html" >
+          <i class="fas fa-rocket"></i> Quick Start
+        </a></li>
+        <li><a href="/api/reference/" >
+          <i class="fas fa-code"></i> API Reference
+        </a></li>
         <li><a href="/implementation-plans/extensible-hooks-design.html" >
           <i class="fas fa-plug"></i> Extensible Hooks Design
+        </a></li>
+        <li><a href="/examples.html" >
+          <i class="fas fa-lightbulb"></i> Examples
         </a></li>
       </ul>
     </div>
@@ -195,6 +223,9 @@
         </a></li>
         <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper/issues" target="_blank">
           <i class="fas fa-bug"></i> Issues
+        </a></li>
+        <li><a href="https://www.npmjs.com/package/@modelcontextprotocol/payment-wrapper" target="_blank">
+          <i class="fab fa-npm"></i> NPM Package
         </a></li>
       </ul>
     </div>
@@ -279,46 +310,36 @@
 
 <h2 id="quick-start">Quick Start</h2>
 
-<p>Check out the <a href="getting-started">Getting Started</a> guide to begin using the MCP Payment Wrapper in your project.</p>
+<p>Our <a href="./quickstart">Quick Start Guide</a> will help you get up and running with MCP Payment Wrapper in just a few minutes.</p>
 
 <h2 id="system-architecture">System Architecture</h2>
 
 <p>The MCP Payment Wrapper uses a proxy-based architecture to intercept calls to the MCP server and add payment verification functionality without modifying the original server code.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────┐     ┌───────────────────────────────────────────────────────────────────────────────────────────┐
-│                 │     │                                                                                           │
-│                 │     │                              Wrapped MCP Server                                           │
-│                 │     │                                                                                           │
-│                 │     │  ┌─────────────────────────────────────────────────────────────────────────────────────┐  │
-│                 │     │  │                                                                                     │  │
-│                 │     │  │                               JavaScript Proxy                                      │  │
-│     Client      │     │  │                                                                                     │  │
-│     (LLM)       │─────┼─▶│  ┌─────────────────────────────────────────────────────────────────────────────────┐  │
-│                 │     │  │  │                                                                                 │  │
-│                 │     │  │  │                           Method Interception                                   │  │
-│                 │     │  │  │                                                                                 │  │
-│                 │     │  │  │  ┌─────────────────┐    ┌────────────────┐    ┌────────────────────────────┐   │  │
-└─────────────────┘     │  │  │  │                 │    │                │    │                            │   │  │
-                        │  │  │  │  Authentication ├───▶│  Funds Check   ├───▶│ Original Method Execution  │   │  │
-                        │  │  │  │                 │    │                │    │                            │   │  │
-                        │  │  │  └────────┬────────┘    └────────┬───────┘    └─────────────┬──────────────┘   │  │
-                        │  │  │           │                      │                          │                  │  │
-                        │  │  │           │                      │                          │                  │  │
-                        │  │  │           ▼                      ▼                          ▼                  │  │
-                        │  │  │  ┌─────────────────┐    ┌────────────────┐    ┌────────────────────────────┐   │  │
-                        │  │  │  │                 │    │                │    │                            │   │  │
-                        │  │  │  │  Error Handling │    │ Billing Process│    │      Result Handling       │   │  │
-                        │  │  │  │                 │    │                │    │                            │   │  │
-                        │  │  │  └─────────────────┘    └────────────────┘    └────────────────────────────┘   │  │
-</code></pre></div></div>
+<pre><code class="language-mermaid">flowchart TB
+    Client["Client (LLM)"] --&gt; Proxy["JavaScript Proxy"]
+    
+    subgraph WrappedServer["Wrapped MCP Server"]
+        Proxy --&gt; MethodInterception["Method Interception"]
+        
+        subgraph PaymentFlow["Payment Flow"]
+            Auth["Authentication"] --&gt; FundsCheck["Funds Check"] --&gt; OriginalMethod["Original Method Execution"]
+            Auth --&gt; ErrorHandling["Error Handling"]
+            FundsCheck --&gt; BillingProcess["Billing Process"]
+            OriginalMethod --&gt; ResultHandling["Result Handling"]
+        end
+        
+        MethodInterception --&gt; PaymentFlow
+    end
+</code></pre>
 
 <h2 id="api-documentation">API Documentation</h2>
 
-<p>For detailed API documentation, check out the <a href="api">API Reference</a> section.</p>
+<p>For detailed API documentation, please visit the <a href="./api/reference">API Reference</a> section.</p>
 
 <h2 id="examples">Examples</h2>
 
-<p>See the <a href="examples">Examples</a> section for code samples and usage scenarios.</p>
+<p>See the <a href="./examples">Examples</a> section for code samples and usage scenarios.</p>
 
 <h2 id="contributing">Contributing</h2>
 
