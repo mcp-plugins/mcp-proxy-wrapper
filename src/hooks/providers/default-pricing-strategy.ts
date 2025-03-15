@@ -12,8 +12,8 @@ import {
   PricingResult,
   ResourcePricing,
   PricingStrategyOptions
-} from '../interfaces/pricing-strategy';
-import { createLogger } from '../../utils/logger';
+} from '../interfaces/pricing-strategy.js';
+import { createLogger } from '../../utils/logger.js';
 
 /**
  * Default Pricing Strategy

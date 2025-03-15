@@ -6,9 +6,9 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { DefaultPricingStrategy } from '../providers/default-pricing-strategy';
-import { IPricingStrategy, PricingOptions, ResourcePricing } from '../interfaces/pricing-strategy';
-import { validateInterfaceImplementation } from './utils/interface-validator';
+import { DefaultPricingStrategy } from '../providers/default-pricing-strategy.js';
+import { IPricingStrategy, PricingOptions, ResourcePricing } from '../interfaces/pricing-strategy.js';
+import { validateInterfaceImplementation } from './utils/interface-validator.js';
 
 describe('DefaultPricingStrategy', () => {
   let pricingStrategy: DefaultPricingStrategy;

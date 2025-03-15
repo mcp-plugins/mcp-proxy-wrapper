@@ -6,8 +6,8 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { DefaultAuthProvider } from '../providers/default-auth-provider';
-import { validateInterfaceImplementation } from './utils/interface-validator';
+import { DefaultAuthProvider } from '../providers/default-auth-provider.js';
+import { validateInterfaceImplementation } from './utils/interface-validator.js';
 
 describe('DefaultAuthProvider', () => {
   let authProvider: DefaultAuthProvider;

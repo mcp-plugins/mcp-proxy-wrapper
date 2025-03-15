@@ -6,9 +6,9 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { DefaultPaymentProvider } from '../providers/default-payment-provider';
-import { IPaymentProvider, PaymentMetadata } from '../interfaces/payment-provider';
-import { validateInterfaceImplementation } from './utils/interface-validator';
+import { DefaultPaymentProvider } from '../providers/default-payment-provider.js';
+import { IPaymentProvider, PaymentMetadata } from '../interfaces/payment-provider.js';
+import { validateInterfaceImplementation } from './utils/interface-validator.js';
 
 describe('DefaultPaymentProvider', () => {
   let paymentProvider: IPaymentProvider;
