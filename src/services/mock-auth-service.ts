@@ -152,7 +152,7 @@ export class MockAuthService implements IAuthService {
     
     // For testing, automatically authenticate sessions after 5 seconds
     // In a real implementation, this would happen when the user completes authentication
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       const session = this.sessions.get(sessionId);
       if (session && session.status === 'pending') {
         // Generate a mock JWT
@@ -180,6 +180,9 @@ export class MockAuthService implements IAuthService {
         });
       }
     }, 5000); // 5 seconds for testing
+    
+    // Allow the process to exit even if the timeout is pending
+    timeoutId.unref();
     
     // Return initial session status
     return {

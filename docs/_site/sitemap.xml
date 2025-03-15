@@ -43,6 +43,12 @@
 <loc>http://localhost:4000/api/reference/interfaces/UserData.html</loc>
 </url>
 <url>
+<loc>http://localhost:4000/implementation-plans/extensible-hooks-design.html</loc>
+</url>
+<url>
+<loc>http://localhost:4000/implementation-plans/implementation-checklist.html</loc>
+</url>
+<url>
 <loc>http://localhost:4000/api/reference/</loc>
 </url>
 </urlset>

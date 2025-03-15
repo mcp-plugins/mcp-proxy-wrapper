@@ -23,7 +23,7 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { createLogger, isUsingStdioTransport, LoggerOptions } from './utils/logger.js';
+import { createLogger, LoggerOptions } from './utils/logger.js';
 import * as winston from 'winston';
 import { v4 as uuidv4 } from 'uuid';
 import { IAuthService } from './interfaces/auth-service.js';

@@ -10,6 +10,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { wrapWithPayments } from './payment-wrapper.js';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { TestLogger, createTestServer, inspectObject } from './utils/test-helpers.js';
 import { MockAuthService } from './services/mock-auth-service.js';
 
@@ -87,7 +88,7 @@ async function testPaymentWrapper(
     switch (type) {
       case 'tool': {
         // Register a tool
-        wrappedServer.tool('wrapped_tool', { param: z.string() }, async (args, extra) => {
+        wrappedServer.tool('wrapped_tool', { param: z.string() }, async (_args, _extra) => {
           if (shouldThrow) {
             throw new Error(`Test error in tool`);
           }
@@ -99,17 +100,21 @@ async function testPaymentWrapper(
         
         // Add the prototype method to call a tool directly for tests
         if (!(McpServer.prototype as any).callTool) {
-          (McpServer.prototype as any).callTool = async function(name: string, args: any) {
+          const callToolMethod = async function(this: any, name: string, args: any) {
             const tool = (this as any)._registeredTools[name];
             if (!tool) {
               throw new Error(`Tool not found: ${name}`);
             }
             return await tool.callback(args, {});
           };
+          
+          // Add to both prototype and instance for consistent behavior
+          (McpServer.prototype as any).callTool = callToolMethod;
+          (wrappedServer as any).callTool = callToolMethod;
         }
         
         try {
-          // Call the tool through the proxy
+          // Call the wrapped_tool using direct method call
           const result = await (wrappedServer as any).callTool('wrapped_tool', { param: 'test value' });
           
           return { 

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Implementation Checklist: MCP Payment Wrapper Extensible Hooks | MCP Payment Wrapper</title>
+<meta name="generator" content="Jekyll v3.9.5" />
+<meta property="og:title" content="Implementation Checklist: MCP Payment Wrapper Extensible Hooks" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<meta property="og:description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<link rel="canonical" href="http://localhost:4000/implementation-plans/implementation-checklist.html" />
+<meta property="og:url" content="http://localhost:4000/implementation-plans/implementation-checklist.html" />
+<meta property="og:site_name" content="MCP Payment Wrapper" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Implementation Checklist: MCP Payment Wrapper Extensible Hooks" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"Implementation Checklist: MCP Payment Wrapper Extensible Hooks","url":"http://localhost:4000/implementation-plans/implementation-checklist.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/assets/css/style.css?v=1ff06e57ea826fa74274a44578bd2a0ae2de8e57">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <a id="skip-to-content" href="#content">Skip to the content.</a>
+
+    <header class="page-header" role="banner">
+      <h1 class="project-name">Implementation Checklist: MCP Payment Wrapper Extensible Hooks</h1>
+      <h2 class="project-tagline">Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</h2>
+      
+        <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper" class="btn">View on GitHub</a>
+      
+      
+    </header>
+
+    <nav class="site-nav">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/getting-started">Getting Started</a></li>
+        
+          <li><a href="/api">API Reference</a></li>
+        
+          <li><a href="/examples">Examples</a></li>
+        
+          <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper">GitHub</a></li>
+        
+      </ul>
+    </nav>
+
+    <main id="content" class="main-content" role="main">
+      <h1 id="implementation-checklist-mcp-payment-wrapper-extensible-hooks">Implementation Checklist: MCP Payment Wrapper Extensible Hooks</h1>
+
+<p><strong>Document Version</strong>: 1.0<br />
+<strong>Date</strong>: March 14, 2025<br />
+<strong>Status</strong>: Development Plan</p>
+
+<p>This document provides a detailed checklist for implementing the extensible hooks design for the MCP Payment Wrapper. Each step includes specific implementation tasks and corresponding tests to ensure that the functionality works as expected while maintaining backward compatibility.</p>
+
+<h2 id="phase-1-interface-refinement-and-core-infrastructure">Phase 1: Interface Refinement and Core Infrastructure</h2>
+
+<h3 id="step-11-define-interface-contracts">Step 1.1: Define Interface Contracts</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>1.1.1</strong>: Review and update <code class="language-plaintext highlighter-rouge">IAuthService</code> interface
+    <ul>
+      <li>Add explicit method signatures for required methods</li>
+      <li>Add optional methods with proper TypeScript optional syntax</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">interface-definitions.test.ts</code> to validate interface structure</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>1.1.2</strong>: Create improved <code class="language-plaintext highlighter-rouge">IPaymentProvider</code> interface
+    <ul>
+      <li>Extend the existing <code class="language-plaintext highlighter-rouge">PaymentProvider</code> interface</li>
+      <li>Add detailed method documentation</li>
+      <li>Test: Add test cases to <code class="language-plaintext highlighter-rouge">interface-definitions.test.ts</code> for payment interface</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>1.1.3</strong>: Define new <code class="language-plaintext highlighter-rouge">IPricingStrategy</code> interface
+    <ul>
+      <li>Create interface with required methods for price calculation</li>
+      <li>Define input and output types for each method</li>
+      <li>Test: Add test cases to <code class="language-plaintext highlighter-rouge">interface-definitions.test.ts</code> for pricing interface</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="step-12-create-default-implementations">Step 1.2: Create Default Implementations</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>1.2.1</strong>: Create <code class="language-plaintext highlighter-rouge">DefaultAuthProvider</code> class
+    <ul>
+      <li>Implement all methods required by <code class="language-plaintext highlighter-rouge">IAuthService</code></li>
+      <li>Reuse existing authentication logic</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">default-auth-provider.test.ts</code> to validate implementation</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>1.2.2</strong>: Create <code class="language-plaintext highlighter-rouge">DefaultPaymentProvider</code> class
+    <ul>
+      <li>Implement all methods required by <code class="language-plaintext highlighter-rouge">IPaymentProvider</code></li>
+      <li>Reuse existing payment verification logic</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">default-payment-provider.test.ts</code> to validate implementation</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>1.2.3</strong>: Create <code class="language-plaintext highlighter-rouge">DefaultPricingStrategy</code> class
+    <ul>
+      <li>Implement flat-rate pricing as default strategy</li>
+      <li>Support resource-specific pricing</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">default-pricing-strategy.test.ts</code> to validate implementation</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="step-13-implement-provider-resolution-system">Step 1.3: Implement Provider Resolution System</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>1.3.1</strong>: Create provider factory functions
+    <ul>
+      <li>Implement <code class="language-plaintext highlighter-rouge">createAuthProvider</code> factory</li>
+      <li>Implement <code class="language-plaintext highlighter-rouge">createPaymentProvider</code> factory</li>
+      <li>Implement <code class="language-plaintext highlighter-rouge">createPricingStrategy</code> factory</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">provider-factory.test.ts</code> to validate provider creation</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>1.3.2</strong>: Implement provider resolution logic
+    <ul>
+      <li>Add logic to determine which provider to use</li>
+      <li>Implement fallback to default providers</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">provider-resolution.test.ts</code> to validate provider selection</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>1.3.3</strong>: Add validation for custom providers
+    <ul>
+      <li>Create validation functions to check provider interfaces</li>
+      <li>Throw helpful errors for invalid providers</li>
+      <li>Test: Add validation test cases to <code class="language-plaintext highlighter-rouge">provider-resolution.test.ts</code></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="phase-2-integration-with-wrapper">Phase 2: Integration with Wrapper</h2>
+
+<h3 id="step-21-update-configuration-options">Step 2.1: Update Configuration Options</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>2.1.1</strong>: Extend <code class="language-plaintext highlighter-rouge">PaymentWrapperOptions</code> interface
+    <ul>
+      <li>Add optional fields for custom providers</li>
+      <li>Maintain backward compatibility</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">extended-options.test.ts</code> to validate option parsing</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>2.1.2</strong>: Update option validation logic
+    <ul>
+      <li>Add validation for new provider options</li>
+      <li>Maintain validation for existing options</li>
+      <li>Test: Create test cases in <code class="language-plaintext highlighter-rouge">extended-options.test.ts</code> for validation</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>2.1.3</strong>: Create helper functions for config normalization
+    <ul>
+      <li>Add functions to normalize configuration</li>
+      <li>Provide sensible defaults for missing options</li>
+      <li>Test: Add normalization test cases to <code class="language-plaintext highlighter-rouge">extended-options.test.ts</code></li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="step-22-proxy-method-refactoring">Step 2.2: Proxy Method Refactoring</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>2.2.1</strong>: Extract authentication logic
+    <ul>
+      <li>Move authentication code to separate function</li>
+      <li>Allow for easy substitution of auth providers</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">proxy-auth.test.ts</code> to test isolated authentication</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>2.2.2</strong>: Extract payment logic
+    <ul>
+      <li>Move payment verification to separate function</li>
+      <li>Allow for easy substitution of payment providers</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">proxy-payment.test.ts</code> to test isolated payment logic</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>2.2.3</strong>: Extract pricing logic
+    <ul>
+      <li>Move price calculation to separate function</li>
+      <li>Allow for easy substitution of pricing strategies</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">proxy-pricing.test.ts</code> to test isolated pricing logic</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>2.2.4</strong>: Update proxy method handler
+    <ul>
+      <li>Refactor to use the extracted functions</li>
+      <li>Maintain the same control flow</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">proxy-integration.test.ts</code> to test complete flow</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="step-23-hook-injection">Step 2.3: Hook Injection</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>2.3.1</strong>: Implement hook system for proxied methods
+    <ul>
+      <li>Add pre/post hooks for proxied methods</li>
+      <li>Allow custom processing at key points</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">hook-injection.test.ts</code> to test hook system</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>2.3.2</strong>: Add resource-specific hook support
+    <ul>
+      <li>Implement resource handler registration</li>
+      <li>Add resolution logic for specific resources</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">resource-hooks.test.ts</code> to test resource handlers</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>2.3.3</strong>: Implement logging and error handling
+    <ul>
+      <li>Add detailed logging for hook execution</li>
+      <li>Implement consistent error handling</li>
+      <li>Test: Add test cases to <code class="language-plaintext highlighter-rouge">hook-injection.test.ts</code> for error cases</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="phase-3-backward-compatibility-and-testing">Phase 3: Backward Compatibility and Testing</h2>
+
+<h3 id="step-31-backward-compatibility-validation">Step 3.1: Backward Compatibility Validation</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>3.1.1</strong>: Run existing test suite
+    <ul>
+      <li>Verify all existing tests pass with changes</li>
+      <li>Identify and fix any regressions</li>
+      <li>Test: Run full existing test suite</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>3.1.2</strong>: Create explicit compatibility tests
+    <ul>
+      <li>Test with legacy configuration</li>
+      <li>Verify behavior matches existing functionality</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">backward-compatibility.test.ts</code> for explicit checks</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>3.1.3</strong>: Test with mixed configuration
+    <ul>
+      <li>Test with partial custom providers</li>
+      <li>Verify correct provider resolution</li>
+      <li>Test: Add test cases to <code class="language-plaintext highlighter-rouge">backward-compatibility.test.ts</code></li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="step-32-integration-testing">Step 3.2: Integration Testing</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>3.2.1</strong>: Create mock custom providers
+    <ul>
+      <li>Implement mock auth provider</li>
+      <li>Implement mock payment provider</li>
+      <li>Implement mock pricing strategy</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">mock-providers.test.ts</code> to validate mock implementations</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>3.2.2</strong>: Test complete workflow
+    <ul>
+      <li>Test authentication flow with custom providers</li>
+      <li>Test payment flow with custom providers</li>
+      <li>Test pricing with custom strategies</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">complete-workflow.test.ts</code> for end-to-end testing</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>3.2.3</strong>: Test error handling
+    <ul>
+      <li>Test provider failures</li>
+      <li>Test missing or invalid configuration</li>
+      <li>Test recovery from errors</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">error-handling.test.ts</code> for failure cases</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="step-33-performance-and-edge-case-testing">Step 3.3: Performance and Edge Case Testing</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>3.3.1</strong>: Test performance impact
+    <ul>
+      <li>Compare performance with/without custom providers</li>
+      <li>Identify any bottlenecks</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">performance.test.ts</code> for benchmarking</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>3.3.2</strong>: Test edge cases
+    <ul>
+      <li>Test with invalid provider implementations</li>
+      <li>Test with malformed data</li>
+      <li>Test with unexpected provider behavior</li>
+      <li>Test: Create <code class="language-plaintext highlighter-rouge">edge-cases.test.ts</code> for unusual scenarios</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>3.3.3</strong>: Test concurrency
+    <ul>
+      <li>Test parallel requests</li>
+      <li>Test provider state management</li>
+      <li>Test: Add concurrency test cases to <code class="language-plaintext highlighter-rouge">edge-cases.test.ts</code></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="phase-4-documentation-and-example-implementations">Phase 4: Documentation and Example Implementations</h2>
+
+<h3 id="step-41-documentation">Step 4.1: Documentation</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>4.1.1</strong>: Update API documentation
+    <ul>
+      <li>Document new interfaces and options</li>
+      <li>Provide usage examples</li>
+      <li>Test: Verify documentation accuracy</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>4.1.2</strong>: Create developer guide
+    <ul>
+      <li>Write guide for implementing custom providers</li>
+      <li>Include best practices</li>
+      <li>Test: Review for clarity and completeness</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>4.1.3</strong>: Update existing documentation
+    <ul>
+      <li>Update README and other docs</li>
+      <li>Note backward compatibility guarantees</li>
+      <li>Test: Verify all documentation is consistent</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="step-42-example-implementations">Step 4.2: Example Implementations</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>4.2.1</strong>: Create Stripe payment provider example
+    <ul>
+      <li>Implement <code class="language-plaintext highlighter-rouge">IPaymentProvider</code> with Stripe API</li>
+      <li>Include complete implementation</li>
+      <li>Test: Create tests for Stripe provider example</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>4.2.2</strong>: Create Auth0 authentication provider example
+    <ul>
+      <li>Implement <code class="language-plaintext highlighter-rouge">IAuthService</code> with Auth0 API</li>
+      <li>Include complete implementation</li>
+      <li>Test: Create tests for Auth0 provider example</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>4.2.3</strong>: Create usage-based pricing strategy example
+    <ul>
+      <li>Implement custom pricing based on usage patterns</li>
+      <li>Include complete implementation</li>
+      <li>Test: Create tests for usage-based pricing example</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="step-43-final-review-and-release">Step 4.3: Final Review and Release</h3>
+<ul class="task-list">
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>4.3.1</strong>: Conduct security review
+    <ul>
+      <li>Review authentication code</li>
+      <li>Check for potential vulnerabilities</li>
+      <li>Test: Run security-focused tests</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>4.3.2</strong>: Perform final testing
+    <ul>
+      <li>Run complete test suite</li>
+      <li>Verify coverage metrics</li>
+      <li>Test: Run full test suite with coverage</li>
+    </ul>
+  </li>
+  <li class="task-list-item"><input type="checkbox" class="task-list-item-checkbox" disabled="disabled" /><strong>4.3.3</strong>: Prepare release
+    <ul>
+      <li>Update version number</li>
+      <li>Write release notes</li>
+      <li>Test: Verify package builds correctly</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="implementation-schedule">Implementation Schedule</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Phase</th>
+      <th>Estimated Duration</th>
+      <th>Dependencies</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Phase 1</td>
+      <td>2 weeks</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Phase 2</td>
+      <td>3 weeks</td>
+      <td>Phase 1</td>
+    </tr>
+    <tr>
+      <td>Phase 3</td>
+      <td>2 weeks</td>
+      <td>Phase 2</td>
+    </tr>
+    <tr>
+      <td>Phase 4</td>
+      <td>1 week</td>
+      <td>Phase 3</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="testing-strategy">Testing Strategy</h2>
+
+<h3 id="unit-tests">Unit Tests</h3>
+<p>For each component:</p>
+<ul>
+  <li>Interface conformance tests</li>
+  <li>Functionality tests</li>
+  <li>Error handling tests</li>
+</ul>
+
+<h3 id="integration-tests">Integration Tests</h3>
+<p>For the system as a whole:</p>
+<ul>
+  <li>Provider resolution tests</li>
+  <li>Complete workflow tests</li>
+  <li>Backward compatibility tests</li>
+</ul>
+
+<h3 id="performance-tests">Performance Tests</h3>
+<ul>
+  <li>Benchmark tests comparing different configurations</li>
+</ul>
+
+<h2 id="getting-started">Getting Started</h2>
+
+<p>To begin implementation:</p>
+
+<ol>
+  <li>Set up the test infrastructure first</li>
+  <li>Implement interfaces and default providers</li>
+  <li>Update the core wrapper to use the provider system</li>
+  <li>Validate backward compatibility</li>
+  <li>Add example implementations</li>
+</ol>
+
+<p>This incremental approach ensures that each step builds on the previous ones and maintains compatibility throughout the development process.</p>
+
+
+      <footer class="site-footer">
+        
+          <span class="site-footer-owner"><a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper">mcp-payment-wrapper</a> is maintained by <a href="https://github.com/crazyrabbitLTC">crazyrabbitLTC</a>.</span>
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </main>
+  </body>
+</html>

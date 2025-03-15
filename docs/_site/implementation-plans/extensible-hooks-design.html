@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>MCP Payment Wrapper: Extensible Hooks Design Plan | MCP Payment Wrapper</title>
+<meta name="generator" content="Jekyll v3.9.5" />
+<meta property="og:title" content="MCP Payment Wrapper: Extensible Hooks Design Plan" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<meta property="og:description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<link rel="canonical" href="http://localhost:4000/implementation-plans/extensible-hooks-design.html" />
+<meta property="og:url" content="http://localhost:4000/implementation-plans/extensible-hooks-design.html" />
+<meta property="og:site_name" content="MCP Payment Wrapper" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="MCP Payment Wrapper: Extensible Hooks Design Plan" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"MCP Payment Wrapper: Extensible Hooks Design Plan","url":"http://localhost:4000/implementation-plans/extensible-hooks-design.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/assets/css/style.css?v=1ff06e57ea826fa74274a44578bd2a0ae2de8e57">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <a id="skip-to-content" href="#content">Skip to the content.</a>
+
+    <header class="page-header" role="banner">
+      <h1 class="project-name">MCP Payment Wrapper: Extensible Hooks Design Plan</h1>
+      <h2 class="project-tagline">Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</h2>
+      
+        <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper" class="btn">View on GitHub</a>
+      
+      
+    </header>
+
+    <nav class="site-nav">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/getting-started">Getting Started</a></li>
+        
+          <li><a href="/api">API Reference</a></li>
+        
+          <li><a href="/examples">Examples</a></li>
+        
+          <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper">GitHub</a></li>
+        
+      </ul>
+    </nav>
+
+    <main id="content" class="main-content" role="main">
+      <h1 id="mcp-payment-wrapper-extensible-hooks-design-plan">MCP Payment Wrapper: Extensible Hooks Design Plan</h1>
+
+<p><strong>Document Version</strong>: 1.0<br />
+<strong>Date</strong>: March 14, 2025<br />
+<strong>Author</strong>: Codeium AI<br />
+<strong>Status</strong>: Draft Proposal</p>
+
+<h2 id="executive-summary">Executive Summary</h2>
+
+<p>This document outlines a comprehensive plan for extending the MCP Payment Wrapper to allow third-party developers to implement custom payment and authentication backends. The proposed architecture uses a hook-based system that enables developers to plug in their own implementations for payment processing, authentication, and token verification while maintaining the wrapper’s core functionality.</p>
+
+<h2 id="current-architecture">Current Architecture</h2>
+
+<p>The current MCP Payment Wrapper uses:</p>
+
+<ol>
+  <li><strong>Proxy-based Method Interception</strong>: Intercepts method calls to the underlying MCP server</li>
+  <li><strong>Mock Authentication</strong>: Simulates JWT verification with <code class="language-plaintext highlighter-rouge">MockAuthService</code></li>
+  <li><strong>Simulated Billing</strong>: Simulates billing checks and transactions</li>
+  <li><strong>Hard-coded Logic</strong>: Core payment and authentication flows are tightly coupled to implementation</li>
+</ol>
+
+<h2 id="proposed-extension-points">Proposed Extension Points</h2>
+
+<p>We propose extending the wrapper with the following hook points:</p>
+
+<h3 id="1-authentication-provider-hook">1. Authentication Provider Hook</h3>
+
+<p>Allow developers to implement the <code class="language-plaintext highlighter-rouge">IAuthService</code> interface to provide custom authentication mechanisms.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Example of plugging in a custom auth service</span>
+<span class="kd">const</span> <span class="nx">customAuthService</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MyCustomAuthService</span><span class="p">({</span>
+  <span class="na">apiKey</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">API_KEY</span><span class="p">,</span>
+  <span class="na">serviceUrl</span><span class="p">:</span> <span class="dl">"</span><span class="s2">https://auth.myservice.com</span><span class="dl">"</span>
+<span class="p">});</span>
+
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
+  <span class="na">apiKey</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">API_KEY</span><span class="p">,</span>
+  <span class="na">authProvider</span><span class="p">:</span> <span class="nx">customAuthService</span> <span class="c1">// &lt;-- New option</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h3 id="2-payment-provider-hook">2. Payment Provider Hook</h3>
+
+<p>Allow developers to implement the <code class="language-plaintext highlighter-rouge">PaymentProvider</code> interface to handle custom payment processing.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Example of plugging in a custom payment provider</span>
+<span class="kd">const</span> <span class="nx">stripePaymentProvider</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">StripePaymentProvider</span><span class="p">({</span>
+  <span class="na">apiKey</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">STRIPE_SECRET_KEY</span><span class="p">,</span>
+  <span class="na">webhookSecret</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">STRIPE_WEBHOOK_SECRET</span>
+<span class="p">});</span>
+
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
+  <span class="na">apiKey</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">API_KEY</span><span class="p">,</span>
+  <span class="na">paymentProvider</span><span class="p">:</span> <span class="nx">stripePaymentProvider</span> <span class="c1">// &lt;-- New option</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h3 id="3-pricing-strategy-hook">3. Pricing Strategy Hook</h3>
+
+<p>Allow developers to implement custom pricing strategies for different operations.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Example of a custom pricing strategy</span>
+<span class="kd">const</span> <span class="nx">perTokenPricingStrategy</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PerTokenPricingStrategy</span><span class="p">({</span>
+  <span class="na">baseRate</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span> <span class="c1">// $0.001 per token</span>
+  <span class="na">bulkDiscountThreshold</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="c1">// tokens</span>
+  <span class="na">bulkDiscountRate</span><span class="p">:</span> <span class="mf">0.0008</span> <span class="c1">// $0.0008 per token after threshold</span>
+<span class="p">});</span>
+
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
+  <span class="na">apiKey</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">API_KEY</span><span class="p">,</span>
+  <span class="na">pricingStrategy</span><span class="p">:</span> <span class="nx">perTokenPricingStrategy</span> <span class="c1">// &lt;-- New option</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h3 id="4-resource-specific-hooks">4. Resource-specific Hooks</h3>
+
+<p>Allow for custom handling of specific resource types (tools, prompts, resources).</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Example of resource-specific handlers</span>
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
+  <span class="na">apiKey</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">API_KEY</span><span class="p">,</span>
+  <span class="na">resourceHandlers</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">premiumTools</span><span class="p">:</span> <span class="p">{</span>
+      <span class="na">isApplicable</span><span class="p">:</span> <span class="p">(</span><span class="nx">resourceId</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">resourceId</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="dl">'</span><span class="s1">premium_</span><span class="dl">'</span><span class="p">),</span>
+      <span class="na">getPricing</span><span class="p">:</span> <span class="p">(</span><span class="nx">resourceId</span><span class="p">,</span> <span class="nx">context</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">calculatePremiumPrice</span><span class="p">(</span><span class="nx">resourceId</span><span class="p">,</span> <span class="nx">context</span><span class="p">),</span>
+      <span class="na">handleAccess</span><span class="p">:</span> <span class="k">async</span> <span class="p">(</span><span class="nx">resourceId</span><span class="p">,</span> <span class="nx">userId</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">checkPremiumAccess</span><span class="p">(</span><span class="nx">resourceId</span><span class="p">,</span> <span class="nx">userId</span><span class="p">)</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h2 id="implementation-plan">Implementation Plan</h2>
+
+<h3 id="phase-1-interface-definition">Phase 1: Interface Definition</h3>
+
+<ol>
+  <li><strong>Refine Existing Interfaces</strong>
+    <ul>
+      <li>Update <code class="language-plaintext highlighter-rouge">IAuthService</code> interface if needed</li>
+      <li>Update <code class="language-plaintext highlighter-rouge">PaymentProvider</code> interface if needed</li>
+      <li>Create a new <code class="language-plaintext highlighter-rouge">PricingStrategy</code> interface</li>
+    </ul>
+  </li>
+  <li><strong>Create Plugin Manager</strong>
+    <ul>
+      <li>Develop a plugin registry system</li>
+      <li>Implement hook management infrastructure</li>
+      <li>Define fallback behaviors</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="phase-2-core-implementation">Phase 2: Core Implementation</h3>
+
+<ol>
+  <li><strong>Refactor Proxy Mechanism</strong>
+    <ul>
+      <li>Abstract the method interception logic</li>
+      <li>Separate concerns between authentication, payment, and execution</li>
+      <li>Add hook injection points</li>
+    </ul>
+  </li>
+  <li><strong>Implement Provider Selection Logic</strong>
+    <ul>
+      <li>Create a provider resolution system</li>
+      <li>Handle provider prioritization</li>
+      <li>Implement fallback to default providers</li>
+    </ul>
+  </li>
+  <li><strong>Update Configuration Options</strong>
+    <ul>
+      <li>Extend <code class="language-plaintext highlighter-rouge">PaymentWrapperOptions</code> with new provider options</li>
+      <li>Add validation for custom provider implementations</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="phase-3-default-implementations">Phase 3: Default Implementations</h3>
+
+<ol>
+  <li><strong>Default Authentication Provider</strong>
+    <ul>
+      <li>Refactor <code class="language-plaintext highlighter-rouge">MockAuthService</code> as a default implementation</li>
+      <li>Ensure it meets the updated interface requirements</li>
+      <li>Make it extensible for custom logic</li>
+    </ul>
+  </li>
+  <li><strong>Default Payment Provider</strong>
+    <ul>
+      <li>Create a default <code class="language-plaintext highlighter-rouge">MockPaymentProvider</code> implementation</li>
+      <li>Ensure it handles all required payment operations</li>
+      <li>Add simulation options for testing</li>
+    </ul>
+  </li>
+  <li><strong>Default Pricing Strategy</strong>
+    <ul>
+      <li>Implement a simple, configurable pricing strategy</li>
+      <li>Support different pricing models (flat-rate, per-token, etc.)</li>
+      <li>Make it extensible for custom calculations</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="phase-4-documentation-and-examples">Phase 4: Documentation and Examples</h3>
+
+<ol>
+  <li><strong>Developer Guide</strong>
+    <ul>
+      <li>Create comprehensive documentation for hook system</li>
+      <li>Document interface requirements</li>
+      <li>Provide examples of custom implementations</li>
+    </ul>
+  </li>
+  <li><strong>Example Implementations</strong>
+    <ul>
+      <li>Create sample Stripe payment provider</li>
+      <li>Create sample Auth0 authentication provider</li>
+      <li>Create sample usage-based pricing strategy</li>
+    </ul>
+  </li>
+  <li><strong>Testing Framework</strong>
+    <ul>
+      <li>Develop testing utilities for custom providers</li>
+      <li>Create validation tools</li>
+      <li>Document testing best practices</li>
+    </ul>
+  </li>
+</ol>
+
+<h2 id="interface-definitions">Interface Definitions</h2>
+
+<h3 id="authentication-provider">Authentication Provider</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">export</span> <span class="kr">interface</span> <span class="nx">IAuthProvider</span> <span class="p">{</span>
+  <span class="cm">/**
+   * Generate an authentication URL for a user
+   */</span>
+  <span class="nx">generateAuthUrl</span><span class="p">(</span><span class="nx">options</span><span class="p">?:</span> <span class="nx">AuthUrlOptions</span><span class="p">):</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Verify a JWT token for a specific resource
+   */</span>
+  <span class="nx">verifyToken</span><span class="p">(</span><span class="nx">token</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">resourceType</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">resourceId</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">VerifyResponse</span><span class="o">&gt;</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Create an authentication session
+   */</span>
+  <span class="nx">createSession</span><span class="p">(</span><span class="nx">sessionId</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">options</span><span class="p">:</span> <span class="nx">SessionOptions</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">SessionStatus</span><span class="o">&gt;</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Check the status of an authentication session
+   */</span>
+  <span class="nx">checkSessionStatus</span><span class="p">(</span><span class="nx">sessionId</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">SessionStatus</span><span class="o">&gt;</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Validate a JWT token and extract user data
+   */</span>
+  <span class="nx">validateJWT</span><span class="p">(</span><span class="nx">jwt</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">UserData</span> <span class="o">|</span> <span class="kc">null</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="payment-provider">Payment Provider</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">export</span> <span class="kr">interface</span> <span class="nx">IPaymentProvider</span> <span class="p">{</span>
+  <span class="cm">/**
+   * Verify if a user has sufficient funds
+   */</span>
+  <span class="nx">verifyFunds</span><span class="p">(</span><span class="nx">userId</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">amount</span><span class="p">:</span> <span class="kr">number</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">boolean</span><span class="o">&gt;</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Process a payment for a completed operation
+   */</span>
+  <span class="nx">processCharge</span><span class="p">(</span><span class="nx">userId</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">amount</span><span class="p">:</span> <span class="kr">number</span><span class="p">,</span> <span class="nx">metadata</span><span class="p">:</span> <span class="nx">PaymentMetadata</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="kr">string</span><span class="o">&gt;</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Get a user's current balance
+   */</span>
+  <span class="nx">getBalance</span><span class="p">(</span><span class="nx">userId</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">UserBalance</span><span class="o">&gt;</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Verify an API key
+   */</span>
+  <span class="nx">verifyApiKey</span><span class="p">(</span><span class="nx">apiKey</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">boolean</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kr">interface</span> <span class="nx">PaymentMetadata</span> <span class="p">{</span>
+  <span class="nl">resourceType</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">resourceId</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">operationType</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">tokenCount</span><span class="p">?:</span> <span class="kr">number</span><span class="p">;</span>
+  <span class="nl">processingTime</span><span class="p">?:</span> <span class="kr">number</span><span class="p">;</span>
+  <span class="nl">customData</span><span class="p">?:</span> <span class="nb">Record</span><span class="o">&lt;</span><span class="kr">string</span><span class="p">,</span> <span class="nx">unknown</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kr">interface</span> <span class="nx">UserBalance</span> <span class="p">{</span>
+  <span class="nl">available</span><span class="p">:</span> <span class="kr">number</span><span class="p">;</span>
+  <span class="nl">pending</span><span class="p">:</span> <span class="kr">number</span><span class="p">;</span>
+  <span class="nl">currency</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">lastUpdated</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="pricing-strategy">Pricing Strategy</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">export</span> <span class="kr">interface</span> <span class="nx">IPricingStrategy</span> <span class="p">{</span>
+  <span class="cm">/**
+   * Calculate the price for an operation
+   */</span>
+  <span class="nx">calculatePrice</span><span class="p">(</span><span class="nx">options</span><span class="p">:</span> <span class="nx">PricingOptions</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">PricingResult</span><span class="o">&gt;</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Get pricing information for a resource
+   */</span>
+  <span class="nx">getPricingInfo</span><span class="p">(</span><span class="nx">resourceId</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">resourceType</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ResourcePricing</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kr">interface</span> <span class="nx">PricingOptions</span> <span class="p">{</span>
+  <span class="nl">resourceId</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">resourceType</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">tokenCount</span><span class="p">?:</span> <span class="kr">number</span><span class="p">;</span>
+  <span class="nl">userId</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">operationType</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">metadata</span><span class="p">?:</span> <span class="nb">Record</span><span class="o">&lt;</span><span class="kr">string</span><span class="p">,</span> <span class="nx">unknown</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kr">interface</span> <span class="nx">PricingResult</span> <span class="p">{</span>
+  <span class="nl">amount</span><span class="p">:</span> <span class="kr">number</span><span class="p">;</span>
+  <span class="nl">currency</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">breakdown</span><span class="p">?:</span> <span class="p">{</span>
+    <span class="na">baseAmount</span><span class="p">:</span> <span class="kr">number</span><span class="p">;</span>
+    <span class="nl">discounts</span><span class="p">:</span> <span class="p">{</span> <span class="na">reason</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span> <span class="nl">amount</span><span class="p">:</span> <span class="kr">number</span> <span class="p">}[];</span>
+    <span class="nl">fees</span><span class="p">:</span> <span class="p">{</span> <span class="na">reason</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span> <span class="nl">amount</span><span class="p">:</span> <span class="kr">number</span> <span class="p">}[];</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="k">export</span> <span class="kr">interface</span> <span class="nx">ResourcePricing</span> <span class="p">{</span>
+  <span class="nl">basePrice</span><span class="p">:</span> <span class="kr">number</span><span class="p">;</span>
+  <span class="nl">currency</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">pricingModel</span><span class="p">:</span> <span class="dl">'</span><span class="s1">flat</span><span class="dl">'</span> <span class="o">|</span> <span class="dl">'</span><span class="s1">per-token</span><span class="dl">'</span> <span class="o">|</span> <span class="dl">'</span><span class="s1">subscription</span><span class="dl">'</span> <span class="o">|</span> <span class="dl">'</span><span class="s1">custom</span><span class="dl">'</span><span class="p">;</span>
+  <span class="nl">pricingDetails</span><span class="p">?:</span> <span class="nb">Record</span><span class="o">&lt;</span><span class="kr">string</span><span class="p">,</span> <span class="nx">unknown</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="example-usage">Example Usage</h2>
+
+<h3 id="basic-usage-no-custom-providers">Basic Usage (No Custom Providers)</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">McpServer</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/server/mcp.js</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">wrapWithPayments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/payment-wrapper</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpServer</span><span class="p">({</span> 
+  <span class="na">name</span><span class="p">:</span> <span class="dl">"</span><span class="s2">My MCP Server</span><span class="dl">"</span><span class="p">,</span>
+  <span class="na">version</span><span class="p">:</span> <span class="dl">"</span><span class="s2">1.0.0</span><span class="dl">"</span>
+<span class="p">});</span>
+
+<span class="c1">// Uses default mock implementations</span>
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
+  <span class="na">apiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">YOUR_API_KEY</span><span class="dl">'</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h3 id="custom-auth-provider">Custom Auth Provider</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">McpServer</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/server/mcp.js</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">wrapWithPayments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/payment-wrapper</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">Auth0Provider</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./auth0-provider.js</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpServer</span><span class="p">({</span> 
+  <span class="na">name</span><span class="p">:</span> <span class="dl">"</span><span class="s2">My MCP Server</span><span class="dl">"</span><span class="p">,</span>
+  <span class="na">version</span><span class="p">:</span> <span class="dl">"</span><span class="s2">1.0.0</span><span class="dl">"</span>
+<span class="p">});</span>
+
+<span class="kd">const</span> <span class="nx">auth0Provider</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Auth0Provider</span><span class="p">({</span>
+  <span class="na">domain</span><span class="p">:</span> <span class="dl">'</span><span class="s1">your-domain.auth0.com</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">clientId</span><span class="p">:</span> <span class="dl">'</span><span class="s1">your-client-id</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">clientSecret</span><span class="p">:</span> <span class="dl">'</span><span class="s1">your-client-secret</span><span class="dl">'</span>
+<span class="p">});</span>
+
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
+  <span class="na">apiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">YOUR_API_KEY</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">authProvider</span><span class="p">:</span> <span class="nx">auth0Provider</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h3 id="custom-payment-provider">Custom Payment Provider</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">McpServer</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/server/mcp.js</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">wrapWithPayments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/payment-wrapper</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">StripePaymentProvider</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./stripe-provider.js</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpServer</span><span class="p">({</span> 
+  <span class="na">name</span><span class="p">:</span> <span class="dl">"</span><span class="s2">My MCP Server</span><span class="dl">"</span><span class="p">,</span>
+  <span class="na">version</span><span class="p">:</span> <span class="dl">"</span><span class="s2">1.0.0</span><span class="dl">"</span>
+<span class="p">});</span>
+
+<span class="kd">const</span> <span class="nx">stripeProvider</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">StripePaymentProvider</span><span class="p">({</span>
+  <span class="na">secretKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">sk_test_your_key</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">webhookSecret</span><span class="p">:</span> <span class="dl">'</span><span class="s1">whsec_your_secret</span><span class="dl">'</span>
+<span class="p">});</span>
+
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
+  <span class="na">apiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">YOUR_API_KEY</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">paymentProvider</span><span class="p">:</span> <span class="nx">stripeProvider</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h3 id="complete-custom-configuration">Complete Custom Configuration</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">McpServer</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/server/mcp.js</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">wrapWithPayments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/payment-wrapper</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">Auth0Provider</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./auth0-provider.js</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">StripePaymentProvider</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./stripe-provider.js</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">UsageBasedPricingStrategy</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">./pricing-strategies.js</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpServer</span><span class="p">({</span> 
+  <span class="na">name</span><span class="p">:</span> <span class="dl">"</span><span class="s2">My MCP Server</span><span class="dl">"</span><span class="p">,</span>
+  <span class="na">version</span><span class="p">:</span> <span class="dl">"</span><span class="s2">1.0.0</span><span class="dl">"</span>
+<span class="p">});</span>
+
+<span class="c1">// Custom authentication provider</span>
+<span class="kd">const</span> <span class="nx">auth0Provider</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Auth0Provider</span><span class="p">({</span>
+  <span class="na">domain</span><span class="p">:</span> <span class="dl">'</span><span class="s1">your-domain.auth0.com</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">clientId</span><span class="p">:</span> <span class="dl">'</span><span class="s1">your-client-id</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">clientSecret</span><span class="p">:</span> <span class="dl">'</span><span class="s1">your-client-secret</span><span class="dl">'</span>
+<span class="p">});</span>
+
+<span class="c1">// Custom payment provider</span>
+<span class="kd">const</span> <span class="nx">stripeProvider</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">StripePaymentProvider</span><span class="p">({</span>
+  <span class="na">secretKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">sk_test_your_key</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">webhookSecret</span><span class="p">:</span> <span class="dl">'</span><span class="s1">whsec_your_secret</span><span class="dl">'</span>
+<span class="p">});</span>
+
+<span class="c1">// Custom pricing strategy</span>
+<span class="kd">const</span> <span class="nx">pricingStrategy</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">UsageBasedPricingStrategy</span><span class="p">({</span>
+  <span class="na">baseRatePerToken</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span>
+  <span class="na">premiumToolMultiplier</span><span class="p">:</span> <span class="mf">2.5</span><span class="p">,</span>
+  <span class="na">volumeDiscounts</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span> <span class="na">threshold</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="na">discount</span><span class="p">:</span> <span class="mf">0.1</span> <span class="p">},</span>
+    <span class="p">{</span> <span class="na">threshold</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span> <span class="na">discount</span><span class="p">:</span> <span class="mf">0.2</span> <span class="p">},</span>
+    <span class="p">{</span> <span class="na">threshold</span><span class="p">:</span> <span class="mi">100000</span><span class="p">,</span> <span class="na">discount</span><span class="p">:</span> <span class="mf">0.3</span> <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">});</span>
+
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
+  <span class="na">apiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">YOUR_API_KEY</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">authProvider</span><span class="p">:</span> <span class="nx">auth0Provider</span><span class="p">,</span>
+  <span class="na">paymentProvider</span><span class="p">:</span> <span class="nx">stripeProvider</span><span class="p">,</span>
+  <span class="na">pricingStrategy</span><span class="p">:</span> <span class="nx">pricingStrategy</span><span class="p">,</span>
+  <span class="na">debugMode</span><span class="p">:</span> <span class="kc">true</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h2 id="technical-considerations">Technical Considerations</h2>
+
+<h3 id="1-backward-compatibility">1. Backward Compatibility</h3>
+
+<p>The hook system should maintain backward compatibility with existing implementations:</p>
+
+<ul>
+  <li>Default to mock providers when custom ones aren’t specified</li>
+  <li>Ensure existing workflow continues to work without modification</li>
+  <li>Allow gradual adoption of custom providers</li>
+</ul>
+
+<h3 id="2-error-handling">2. Error Handling</h3>
+
+<p>Robust error handling for custom providers:</p>
+
+<ul>
+  <li>Validate custom providers implement required methods</li>
+  <li>Catch and handle errors from custom provider implementations</li>
+  <li>Provide clear error messages for implementation issues</li>
+</ul>
+
+<h3 id="3-performance">3. Performance</h3>
+
+<p>Minimize performance overhead:</p>
+
+<ul>
+  <li>Lazy instantiation of providers</li>
+  <li>Caching of verification results where appropriate</li>
+  <li>Efficient provider resolution</li>
+</ul>
+
+<h3 id="4-security">4. Security</h3>
+
+<p>Maintain security standards:</p>
+
+<ul>
+  <li>Validate all inputs before passing to custom providers</li>
+  <li>Ensure proper authentication of API calls</li>
+  <li>Prevent potential token leakage or manipulation</li>
+</ul>
+
+<h3 id="5-testing">5. Testing</h3>
+
+<p>Comprehensive testing strategy:</p>
+
+<ul>
+  <li>Unit tests for each hook point</li>
+  <li>Integration tests with example providers</li>
+  <li>Test utilities for provider implementation validation</li>
+</ul>
+
+<h2 id="migration-path">Migration Path</h2>
+
+<p>For existing users:</p>
+
+<ol>
+  <li><strong>No Changes Required</strong>: Existing code will continue to work with default providers</li>
+  <li><strong>Opt-in Extension</strong>: Users can gradually adopt custom providers as needed</li>
+  <li><strong>Gradual Rollout</strong>: Implement and test one provider type at a time</li>
+</ol>
+
+<h2 id="implementation-timeline">Implementation Timeline</h2>
+
+<ol>
+  <li><strong>Phase 1</strong> (2 weeks): Interface refinement and plugin infrastructure</li>
+  <li><strong>Phase 2</strong> (3 weeks): Core implementation and provider resolution</li>
+  <li><strong>Phase 3</strong> (2 weeks): Default provider implementations</li>
+  <li><strong>Phase 4</strong> (1 week): Documentation and examples</li>
+  <li><strong>Testing &amp; Review</strong> (2 weeks): Comprehensive testing and bug fixes</li>
+</ol>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The proposed extension system will significantly enhance the MCP Payment Wrapper’s flexibility by allowing third-party developers to implement custom authentication and payment backends. This architecture maintains the core functionality while opening up possibilities for integration with various authentication systems, payment processors, and pricing models.</p>
+
+<p>By implementing this hook-based architecture, we create a more versatile and future-proof system that can adapt to the diverse needs of the MCP ecosystem while maintaining a consistent interface for end users.</p>
+
+
+      <footer class="site-footer">
+        
+          <span class="site-footer-owner"><a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper">mcp-payment-wrapper</a> is maintained by <a href="https://github.com/crazyrabbitLTC">crazyrabbitLTC</a>.</span>
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </main>
+  </body>
+</html>
