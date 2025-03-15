@@ -165,27 +165,32 @@ export interface IAuthProvider {
   /**
    * Generate an authentication URL for a user
    */
-  generateAuthUrl(options?: AuthUrlOptions): string;
+  generateAuthUrl(options?: Record<string, unknown>): string;
   
   /**
    * Verify a JWT token for a specific resource
    */
-  verifyToken(token: string, resourceType: string, resourceId: string): Promise<VerifyResponse>;
+  verifyToken(token: string, resourceType: 'tool' | 'prompt' | 'resource', resourceId: string): Promise<VerifyResponse>;
+  
+  /**
+   * Generates a user token (primarily for testing)
+   */
+  generateToken(userId?: string): string;
   
   /**
    * Create an authentication session
    */
-  createSession(sessionId: string, options: SessionOptions): Promise<SessionStatus>;
+  createSession?(sessionId: string, options: SessionOptions): Promise<SessionStatus>;
   
   /**
    * Check the status of an authentication session
    */
-  checkSessionStatus(sessionId: string): Promise<SessionStatus>;
+  checkSessionStatus?(sessionId: string): Promise<SessionStatus>;
   
   /**
    * Validate a JWT token and extract user data
    */
-  validateJWT(jwt: string): Promise<UserData | null>;
+  validateJWT?(jwt: string): Promise<UserData | null>;
 }
 ```
 
@@ -196,7 +201,7 @@ export interface IPaymentProvider {
   /**
    * Verify if a user has sufficient funds
    */
-  verifyFunds(userId: string, amount: number): Promise<boolean>;
+  verifyFunds(userId: string, amount: number, metadata?: PaymentMetadata): Promise<boolean>;
   
   /**
    * Process a payment for a completed operation
@@ -212,10 +217,25 @@ export interface IPaymentProvider {
    * Verify an API key
    */
   verifyApiKey(apiKey: string): Promise<boolean>;
+  
+  /**
+   * Preauthorize a payment amount (optional)
+   */
+  preauthorize?(userId: string, amount: number, metadata: PaymentMetadata): Promise<string>;
+  
+  /**
+   * Capture a preauthorized payment (optional)
+   */
+  capturePreauthorized?(userId: string, preauthId: string, finalAmount: number, metadata: PaymentMetadata): Promise<string>;
+  
+  /**
+   * Cancel a preauthorized payment (optional)
+   */
+  cancelPreauthorization?(userId: string, preauthId: string): Promise<boolean>;
 }
 
 export interface PaymentMetadata {
-  resourceType: string;
+  resourceType: 'tool' | 'prompt' | 'resource';
   resourceId: string;
   operationType: string;
   tokenCount?: number;
@@ -243,15 +263,31 @@ export interface IPricingStrategy {
   /**
    * Get pricing information for a resource
    */
-  getPricingInfo(resourceId: string, resourceType: string): Promise<ResourcePricing>;
+  getPricingInfo(resourceId: string, resourceType: 'tool' | 'prompt' | 'resource'): Promise<ResourcePricing>;
+  
+  /**
+   * Check if this pricing strategy applies to a specific resource
+   */
+  isApplicable?(resourceId: string, resourceType: 'tool' | 'prompt' | 'resource'): Promise<boolean>;
+  
+  /**
+   * Set custom pricing for a specific resource
+   */
+  setResourcePricing?(resourceId: string, resourceType: 'tool' | 'prompt' | 'resource', pricing: ResourcePricing): void;
+  
+  /**
+   * Set default pricing for a resource type
+   */
+  setDefaultTypePricing?(resourceType: 'tool' | 'prompt' | 'resource', pricing: ResourcePricing): void;
 }
 
 export interface PricingOptions {
   resourceId: string;
-  resourceType: string;
-  tokenCount?: number;
+  resourceType: 'tool' | 'prompt' | 'resource';
   userId: string;
   operationType: string;
+  tokenCount?: number;
+  processingTime?: number;
   metadata?: Record<string, unknown>;
 }
 
@@ -278,7 +314,7 @@ export interface ResourcePricing {
 ### Basic Usage (No Custom Providers)
 
 ```typescript
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server';
 import { wrapWithPayments } from '@modelcontextprotocol/payment-wrapper';
 
 const server = new McpServer({ 
@@ -288,16 +324,36 @@ const server = new McpServer({
 
 // Uses default mock implementations
 const paymentServer = wrapWithPayments(server, { 
-  apiKey: 'YOUR_API_KEY'
+  apiKey: 'YOUR_API_KEY',
+  logLevel: 'info' // Optional: 'debug', 'info', 'warn', 'error'
 });
 ```
 
 ### Custom Auth Provider
 
 ```typescript
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server';
 import { wrapWithPayments } from '@modelcontextprotocol/payment-wrapper';
-import { Auth0Provider } from './auth0-provider.js';
+import { IAuthProvider } from '@modelcontextprotocol/payment-wrapper/hooks/interfaces/auth-provider';
+
+// Implement your custom auth provider
+class Auth0Provider implements IAuthProvider {
+  constructor(private config: { domain: string; clientId: string; clientSecret: string }) {}
+  
+  generateAuthUrl(options?: Record<string, unknown>): string {
+    // Implementation
+  }
+  
+  async verifyToken(token: string, resourceType: 'tool' | 'prompt' | 'resource', resourceId: string): Promise<VerifyResponse> {
+    // Implementation
+  }
+  
+  generateToken(userId?: string): string {
+    // Implementation
+  }
+  
+  // Implement optional methods if needed
+}
 
 const server = new McpServer({ 
   name: "My MCP Server",
@@ -319,9 +375,32 @@ const paymentServer = wrapWithPayments(server, {
 ### Custom Payment Provider
 
 ```typescript
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server';
 import { wrapWithPayments } from '@modelcontextprotocol/payment-wrapper';
-import { StripePaymentProvider } from './stripe-provider.js';
+import { IPaymentProvider, PaymentMetadata, UserBalance } from '@modelcontextprotocol/payment-wrapper/hooks/interfaces/payment-provider';
+
+// Implement your custom payment provider
+class StripePaymentProvider implements IPaymentProvider {
+  constructor(private config: { secretKey: string; webhookSecret: string }) {}
+  
+  async verifyFunds(userId: string, amount: number, metadata?: PaymentMetadata): Promise<boolean> {
+    // Implementation
+  }
+  
+  async processCharge(userId: string, amount: number, metadata: PaymentMetadata): Promise<string> {
+    // Implementation
+  }
+  
+  async getBalance(userId: string): Promise<UserBalance> {
+    // Implementation
+  }
+  
+  async verifyApiKey(apiKey: string): Promise<boolean> {
+    // Implementation
+  }
+  
+  // Implement optional methods if needed
+}
 
 const server = new McpServer({ 
   name: "My MCP Server",
@@ -342,31 +421,24 @@ const paymentServer = wrapWithPayments(server, {
 ### Complete Custom Configuration
 
 ```typescript
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server';
 import { wrapWithPayments } from '@modelcontextprotocol/payment-wrapper';
-import { Auth0Provider } from './auth0-provider.js';
-import { StripePaymentProvider } from './stripe-provider.js';
-import { UsageBasedPricingStrategy } from './pricing-strategies.js';
+import { IAuthProvider } from '@modelcontextprotocol/payment-wrapper/hooks/interfaces/auth-provider';
+import { IPaymentProvider } from '@modelcontextprotocol/payment-wrapper/hooks/interfaces/payment-provider';
+import { IPricingStrategy } from '@modelcontextprotocol/payment-wrapper/hooks/interfaces/pricing-strategy';
 
-const server = new McpServer({ 
-  name: "My MCP Server",
-  version: "1.0.0"
-});
-
-// Custom authentication provider
+// Custom implementations (as shown in previous examples)
 const auth0Provider = new Auth0Provider({
   domain: 'your-domain.auth0.com',
   clientId: 'your-client-id',
   clientSecret: 'your-client-secret'
 });
 
-// Custom payment provider
 const stripeProvider = new StripePaymentProvider({
   secretKey: 'sk_test_your_key',
   webhookSecret: 'whsec_your_secret'
 });
 
-// Custom pricing strategy
 const pricingStrategy = new UsageBasedPricingStrategy({
   baseRatePerToken: 0.001,
   premiumToolMultiplier: 2.5,
@@ -382,7 +454,7 @@ const paymentServer = wrapWithPayments(server, {
   authProvider: auth0Provider,
   paymentProvider: stripeProvider,
   pricingStrategy: pricingStrategy,
-  debugMode: true
+  logLevel: 'debug'
 });
 ```
 
@@ -446,6 +518,28 @@ For existing users:
 
 ## Conclusion
 
-The proposed extension system will significantly enhance the MCP Payment Wrapper's flexibility by allowing third-party developers to implement custom authentication and payment backends. This architecture maintains the core functionality while opening up possibilities for integration with various authentication systems, payment processors, and pricing models.
+The extensible hook system for the MCP Payment Wrapper has been successfully implemented with the following components:
 
-By implementing this hook-based architecture, we create a more versatile and future-proof system that can adapt to the diverse needs of the MCP ecosystem while maintaining a consistent interface for end users.
+1. **Interface Definitions**: Clear interfaces have been defined for authentication providers, payment providers, and pricing strategies in their respective files under `src/hooks/interfaces/`.
+
+2. **Default Implementations**: Working default implementations for each provider type have been created in `src/hooks/providers/`.
+
+3. **Comprehensive Testing**: A suite of tests has been implemented to verify the functionality of each provider and ensure proper error handling.
+
+4. **Extensibility**: The architecture now allows third-party developers to implement their own providers by following the defined interfaces.
+
+### Current Status
+
+As of March 14, 2025, the payment wrapper is fully functional with its extensible hook system. All tests are passing and previous issues with hanging processes during testing have been resolved.
+
+### Next Steps
+
+1. **Documentation Enhancement**: Create detailed developer guides for implementing custom providers.
+
+2. **Example Implementations**: Build real-world examples of custom providers (Stripe, Auth0, etc.).
+
+3. **Performance Optimization**: Profile and optimize the performance of provider resolution and execution.
+
+4. **Monitoring and Telemetry**: Add detailed logging and monitoring capabilities for production deployments.
+
+The MCP Payment Wrapper provides a robust foundation for integrating payment functionality with Model Context Protocol servers, with the flexibility to adapt to various authentication systems, payment processors, and pricing models as the ecosystem evolves.

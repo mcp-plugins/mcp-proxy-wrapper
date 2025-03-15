@@ -6,7 +6,7 @@
 
 # Interface: PaymentWrapperOptions
 
-Defined in: [payment-wrapper.ts:34](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L34)
+Defined in: [payment-wrapper.ts:34](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/payment-wrapper.ts#L34)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [payment-wrapper.ts:34](https://github.com/crazyrabbitLTC/mcp-paymen
 
 > `optional` **\_testOverrideFundsCheck**: `boolean`
 
-Defined in: [payment-wrapper.ts:66](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L66)
+Defined in: [payment-wrapper.ts:66](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/payment-wrapper.ts#L66)
 
 Optional override for the funds check result (for testing)
 
@@ -30,7 +30,7 @@ undefined
 
 > **apiKey**: `string`
 
-Defined in: [payment-wrapper.ts:38](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L38)
+Defined in: [payment-wrapper.ts:38](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/payment-wrapper.ts#L38)
 
 Developer API key used for authentication
 
@@ -40,7 +40,7 @@ Developer API key used for authentication
 
 > `optional` **baseAuthUrl**: `string`
 
-Defined in: [payment-wrapper.ts:60](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L60)
+Defined in: [payment-wrapper.ts:60](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/payment-wrapper.ts#L60)
 
 Optional base URL for the authentication service
 
@@ -56,7 +56,7 @@ Optional base URL for the authentication service
 
 > `optional` **debugMode**: `boolean`
 
-Defined in: [payment-wrapper.ts:49](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L49)
+Defined in: [payment-wrapper.ts:49](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/payment-wrapper.ts#L49)
 
 Optional flag to enable additional debug logging
 
@@ -66,7 +66,7 @@ Optional flag to enable additional debug logging
 
 > `optional` **loggerOptions**: [`LoggerOptions`](LoggerOptions.md)
 
-Defined in: [payment-wrapper.ts:54](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L54)
+Defined in: [payment-wrapper.ts:54](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/payment-wrapper.ts#L54)
 
 Optional configuration for the logger
 
@@ -76,7 +76,7 @@ Optional configuration for the logger
 
 > `optional` **userToken**: `string`
 
-Defined in: [payment-wrapper.ts:44](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L44)
+Defined in: [payment-wrapper.ts:44](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/payment-wrapper.ts#L44)
 
 User JWT token for identifying and authenticating the end user
 If not provided, the wrapper will return authentication-required responses

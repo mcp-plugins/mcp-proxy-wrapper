@@ -8,7 +8,7 @@
 
 > **createLogger**(`options`): `Logger`
 
-Defined in: [utils/logger.ts:59](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/utils/logger.ts#L59)
+Defined in: [utils/logger.ts:60](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/utils/logger.ts#L60)
 
 Creates a Winston logger configured based on the provided options
 

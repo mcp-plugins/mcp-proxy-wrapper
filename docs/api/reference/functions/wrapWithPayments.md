@@ -8,7 +8,7 @@
 
 > **wrapWithPayments**(`server`, `options`): `McpServer`
 
-Defined in: [payment-wrapper.ts:87](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L87)
+Defined in: [payment-wrapper.ts:87](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/payment-wrapper.ts#L87)
 
 Create a payment-enabled wrapper around an existing McpServer instance.
 The wrapper validates API keys and user tokens, and simulates billing checks

@@ -6,7 +6,7 @@
 
 # Interface: LoggerOptions
 
-Defined in: [utils/logger.ts:31](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/utils/logger.ts#L31)
+Defined in: [utils/logger.ts:32](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/utils/logger.ts#L32)
 
 Options for configuring the logger
 
@@ -16,7 +16,7 @@ Options for configuring the logger
 
 > `optional` **customLogger**: `Logger`
 
-Defined in: [utils/logger.ts:50](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/utils/logger.ts#L50)
+Defined in: [utils/logger.ts:51](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/utils/logger.ts#L51)
 
 Custom logger instance (for testing)
 
@@ -26,7 +26,7 @@ Custom logger instance (for testing)
 
 > `optional` **level**: `string`
 
-Defined in: [utils/logger.ts:35](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/utils/logger.ts#L35)
+Defined in: [utils/logger.ts:36](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/utils/logger.ts#L36)
 
 Log level (debug, info, warn, error)
 
@@ -36,7 +36,7 @@ Log level (debug, info, warn, error)
 
 > `optional` **logFilePath**: `string`
 
-Defined in: [utils/logger.ts:45](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/utils/logger.ts#L45)
+Defined in: [utils/logger.ts:46](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/utils/logger.ts#L46)
 
 Path to the log file
 
@@ -46,6 +46,6 @@ Path to the log file
 
 > `optional` **stdioMode**: `boolean`
 
-Defined in: [utils/logger.ts:40](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/utils/logger.ts#L40)
+Defined in: [utils/logger.ts:41](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/utils/logger.ts#L41)
 
 Whether the server is using stdio transport

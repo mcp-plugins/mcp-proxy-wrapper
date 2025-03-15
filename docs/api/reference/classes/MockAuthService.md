@@ -6,7 +6,7 @@
 
 # Class: MockAuthService
 
-Defined in: [services/mock-auth-service.ts:48](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L48)
+Defined in: [services/mock-auth-service.ts:48](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L48)
 
 Mock Authentication Service
 Provides a mock implementation of the authentication service for testing
@@ -21,7 +21,7 @@ Provides a mock implementation of the authentication service for testing
 
 > **new MockAuthService**(`config`): [`MockAuthService`](MockAuthService.md)
 
-Defined in: [services/mock-auth-service.ts:56](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L56)
+Defined in: [services/mock-auth-service.ts:56](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L56)
 
 #### Parameters
 
@@ -39,7 +39,7 @@ Defined in: [services/mock-auth-service.ts:56](https://github.com/crazyrabbitLTC
 
 > **checkSessionStatus**(`sessionId`): `Promise`\<[`SessionStatus`](../interfaces/SessionStatus.md)\>
 
-Defined in: [services/mock-auth-service.ts:197](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L197)
+Defined in: [services/mock-auth-service.ts:202](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L202)
 
 Checks the status of an authentication session
 
@@ -67,7 +67,7 @@ Session status or null if not found
 
 > **createSession**(`sessionId`, `options`?): `Promise`\<[`SessionStatus`](../interfaces/SessionStatus.md)\>
 
-Defined in: [services/mock-auth-service.ts:146](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L146)
+Defined in: [services/mock-auth-service.ts:148](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L148)
 
 Creates a new authentication session
 
@@ -99,7 +99,7 @@ Session options
 
 > **generateAuthUrl**(): `string`
 
-Defined in: [services/mock-auth-service.ts:67](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L67)
+Defined in: [services/mock-auth-service.ts:67](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L67)
 
 Generate an authentication URL for a user
 
@@ -119,7 +119,7 @@ URL for user authentication
 
 > **generateToken**(`userId`): `string`
 
-Defined in: [services/mock-auth-service.ts:125](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L125)
+Defined in: [services/mock-auth-service.ts:127](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L127)
 
 Generate a JWT token for testing
 This method is not part of the IAuthService interface
@@ -149,7 +149,7 @@ Generated JWT token
 
 > **validateJWT**(`jwt`): `Promise`\<`null` \| [`UserData`](../interfaces/UserData.md)\>
 
-Defined in: [services/mock-auth-service.ts:244](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L244)
+Defined in: [services/mock-auth-service.ts:249](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L249)
 
 Validates a JWT token and returns user data
 
@@ -177,7 +177,7 @@ User data if valid, null otherwise
 
 > **verifyToken**(`token`, `resourceType`, `resourceId`): `Promise`\<`VerifyResponse`\>
 
-Defined in: [services/mock-auth-service.ts:79](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L79)
+Defined in: [services/mock-auth-service.ts:79](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L79)
 
 Verify a JWT token
 

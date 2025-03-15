@@ -12,59 +12,227 @@
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
 <meta property="og:description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
-<link rel="canonical" href="http://localhost:4000/api/reference/classes/MockAuthService.html" />
-<meta property="og:url" content="http://localhost:4000/api/reference/classes/MockAuthService.html" />
+<link rel="canonical" href="http://localhost:4001/api/reference/classes/MockAuthService.html" />
+<meta property="og:url" content="http://localhost:4001/api/reference/classes/MockAuthService.html" />
 <meta property="og:site_name" content="MCP Payment Wrapper" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="MCP Payment Wrapper" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"MCP Payment Wrapper","url":"http://localhost:4000/api/reference/classes/MockAuthService.html"}</script>
+{"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"MCP Payment Wrapper","url":"http://localhost:4001/api/reference/classes/MockAuthService.html"}</script>
 <!-- End Jekyll SEO tag -->
 
-    <link rel="stylesheet" href="/assets/css/style.css?v=1ff06e57ea826fa74274a44578bd2a0ae2de8e57">
-    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
-
-<!-- Setup Google Analytics -->
-
-
-
-<!-- You can set your favicon here -->
-<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
-
-<!-- end custom head snippets -->
+    <link rel="stylesheet" href="/assets/css/style.css?v=1c90d0aade04e0c43ffa95bb3aed4728648d58d2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Additional head elements for MCP Payment Wrapper Docs -->
+<meta name="theme-color" content="#2D7FF9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary-font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  body {
+    font-family: var(--primary-font);
+  }
+  .main-content {
+    font-family: var(--primary-font);
+  }
+  .site-nav {
+    font-family: var(--primary-font);
+  }
+  /* Fix for the SCSS syntax issue */
+  .page-header .project-name {
+    margin-top: 0;
+  }
+  
+  /* Sidebar styles for Notion-like appearance */
+  .sidebar-nav {
+    position: sticky;
+    top: 20px;
+    background-color: var(--sidebar-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 3px var(--shadow-color);
+  }
+  
+  .sidebar-header {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+  }
+  
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1.2rem;
+    text-decoration: none;
+  }
+  
+  .sidebar-logo i {
+    margin-right: 0.5rem;
+  }
+  
+  .sidebar-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--light-text-color);
+    margin: 1.5rem 0 0.75rem;
+  }
+  
+  .sidebar-links {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem;
+  }
+  
+  .sidebar-links li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .sidebar-links a {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 4px;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+  
+  .sidebar-links a:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+  
+  .sidebar-links a.active {
+    background-color: rgba(45, 127, 249, 0.1);
+    color: var(--primary-color);
+    font-weight: 500;
+  }
+  
+  .sidebar-links a i {
+    margin-right: 0.5rem;
+    width: 20px;
+    text-align: center;
+    color: var(--secondary-color);
+  }
+  
+  .sidebar-links a.active i {
+    color: var(--primary-color);
+  }
+  
+  /* Two-column layout for documentation pages */
+  @media screen and (min-width: 64em) {
+    .docs-container {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+    
+    .content-main {
+      grid-column: 2;
+    }
+    
+    .sidebar-nav {
+      grid-column: 1;
+    }
+  }
+</style>
 
   </head>
   <body>
-    <a id="skip-to-content" href="#content">Skip to the content.</a>
+    <a id="skip-to-content" href="#content" class="screen-reader-text">Skip to the content.</a>
 
     <header class="page-header" role="banner">
-      <h1 class="project-name">MCP Payment Wrapper</h1>
-      <h2 class="project-tagline">Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</h2>
-      
-        <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper" class="btn">View on GitHub</a>
-      
-      
+      <div class="header-container">
+        <h1 class="project-name">MCP Payment Wrapper</h1>
+        <h2 class="project-tagline">Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</h2>
+        <div class="header-buttons">
+          
+            <a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper" class="btn"><i class="fab fa-github"></i> View on GitHub</a>
+          
+          
+        </div>
+      </div>
     </header>
 
-    <nav class="site-nav">
-      <ul>
-        
-          <li><a href="/">Home</a></li>
-        
-          <li><a href="/getting-started">Getting Started</a></li>
-        
-          <li><a href="/api">API Reference</a></li>
-        
-          <li><a href="/examples">Examples</a></li>
-        
-          <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper">GitHub</a></li>
-        
+    <div class="page-container">
+      <div class="docs-container">
+        <nav class="sidebar-nav">
+  <div class="sidebar-header">
+    <a href="/" class="sidebar-logo">
+      <i class="fas fa-book-open"></i>
+      <span>MCP Docs</span>
+    </a>
+  </div>
+  
+  <div class="sidebar-content">
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Documentation</h3>
+      <ul class="sidebar-links">
+        <li><a href="/" >
+          <i class="fas fa-home"></i> Home
+        </a></li>
+        <li><a href="/implementation-plans/extensible-hooks-design.html" >
+          <i class="fas fa-plug"></i> Extensible Hooks Design
+        </a></li>
       </ul>
-    </nav>
+    </div>
 
-    <main id="content" class="main-content" role="main">
-      <p><a href="/api/reference/"><strong>MCP Payment Wrapper API Reference v1.0.0</strong></a></p>
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Resources</h3>
+      <ul class="sidebar-links">
+        <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper" target="_blank">
+          <i class="fab fa-github"></i> GitHub Repository
+        </a></li>
+        <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper/issues" target="_blank">
+          <i class="fas fa-bug"></i> Issues
+        </a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+        
+        <main id="content" class="main-content content-main" role="main">
+          <div class="content-container">
+            <div class="breadcrumbs">
+              <a href="/">Home</a>
+              
+                
+                
+                
+                  
+                    
+                    / <a href="/api">Api</a>
+                  
+                
+                  
+                    
+                    / <a href="/api/reference">Reference</a>
+                  
+                
+                  
+                    
+                    / <a href="/api/reference/classes">Classes</a>
+                  
+                
+                  
+                    / <span class="current-page">Mockauthservice.html</span>
+                  
+                
+              
+            </div>
+            
+            <p><a href="/api/reference/"><strong>MCP Payment Wrapper API Reference v1.0.0</strong></a></p>
 
 <hr />
 
@@ -72,7 +240,7 @@
 
 <h1 id="class-mockauthservice">Class: MockAuthService</h1>
 
-<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L48">services/mock-auth-service.ts:48</a></p>
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L48">services/mock-auth-service.ts:48</a></p>
 
 <p>Mock Authentication Service
 Provides a mock implementation of the authentication service for testing</p>
@@ -91,7 +259,7 @@ Provides a mock implementation of the authentication service for testing</p>
   <p><strong>new MockAuthService</strong>(<code class="language-plaintext highlighter-rouge">config</code>): <a href="/api/reference/classes/MockAuthService.html"><code class="language-plaintext highlighter-rouge">MockAuthService</code></a></p>
 </blockquote>
 
-<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L56">services/mock-auth-service.ts:56</a></p>
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L56">services/mock-auth-service.ts:56</a></p>
 
 <h4 id="parameters">Parameters</h4>
 
@@ -111,7 +279,7 @@ Provides a mock implementation of the authentication service for testing</p>
   <p><strong>checkSessionStatus</strong>(<code class="language-plaintext highlighter-rouge">sessionId</code>): <code class="language-plaintext highlighter-rouge">Promise</code>&lt;<a href="/api/reference/interfaces/SessionStatus.html"><code class="language-plaintext highlighter-rouge">SessionStatus</code></a>&gt;</p>
 </blockquote>
 
-<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L197">services/mock-auth-service.ts:197</a></p>
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L202">services/mock-auth-service.ts:202</a></p>
 
 <p>Checks the status of an authentication session</p>
 
@@ -141,7 +309,7 @@ Provides a mock implementation of the authentication service for testing</p>
   <p><strong>createSession</strong>(<code class="language-plaintext highlighter-rouge">sessionId</code>, <code class="language-plaintext highlighter-rouge">options</code>?): <code class="language-plaintext highlighter-rouge">Promise</code>&lt;<a href="/api/reference/interfaces/SessionStatus.html"><code class="language-plaintext highlighter-rouge">SessionStatus</code></a>&gt;</p>
 </blockquote>
 
-<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L146">services/mock-auth-service.ts:146</a></p>
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L148">services/mock-auth-service.ts:148</a></p>
 
 <p>Creates a new authentication session</p>
 
@@ -175,7 +343,7 @@ Provides a mock implementation of the authentication service for testing</p>
   <p><strong>generateAuthUrl</strong>(): <code class="language-plaintext highlighter-rouge">string</code></p>
 </blockquote>
 
-<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L67">services/mock-auth-service.ts:67</a></p>
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L67">services/mock-auth-service.ts:67</a></p>
 
 <p>Generate an authentication URL for a user</p>
 
@@ -197,7 +365,7 @@ Provides a mock implementation of the authentication service for testing</p>
   <p><strong>generateToken</strong>(<code class="language-plaintext highlighter-rouge">userId</code>): <code class="language-plaintext highlighter-rouge">string</code></p>
 </blockquote>
 
-<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L125">services/mock-auth-service.ts:125</a></p>
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L127">services/mock-auth-service.ts:127</a></p>
 
 <p>Generate a JWT token for testing
 This method is not part of the IAuthService interface
@@ -229,7 +397,7 @@ It’s provided for testing purposes only</p>
   <p><strong>validateJWT</strong>(<code class="language-plaintext highlighter-rouge">jwt</code>): <code class="language-plaintext highlighter-rouge">Promise</code>&lt;<code class="language-plaintext highlighter-rouge">null</code> | <a href="/api/reference/interfaces/UserData.html"><code class="language-plaintext highlighter-rouge">UserData</code></a>&gt;</p>
 </blockquote>
 
-<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L244">services/mock-auth-service.ts:244</a></p>
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L249">services/mock-auth-service.ts:249</a></p>
 
 <p>Validates a JWT token and returns user data</p>
 
@@ -259,7 +427,7 @@ It’s provided for testing purposes only</p>
   <p><strong>verifyToken</strong>(<code class="language-plaintext highlighter-rouge">token</code>, <code class="language-plaintext highlighter-rouge">resourceType</code>, <code class="language-plaintext highlighter-rouge">resourceId</code>): <code class="language-plaintext highlighter-rouge">Promise</code>&lt;<code class="language-plaintext highlighter-rouge">VerifyResponse</code>&gt;</p>
 </blockquote>
 
-<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/services/mock-auth-service.ts#L79">services/mock-auth-service.ts:79</a></p>
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/services/mock-auth-service.ts#L79">services/mock-auth-service.ts:79</a></p>
 
 <p>Verify a JWT token</p>
 
@@ -301,13 +469,65 @@ It’s provided for testing purposes only</p>
 
 <p><a href="/api/reference/interfaces/IAuthService.html"><code class="language-plaintext highlighter-rouge">IAuthService</code></a>.<a href="/api/reference/interfaces/IAuthService.html#verifytoken"><code class="language-plaintext highlighter-rouge">verifyToken</code></a></p>
 
+          </div>
 
-      <footer class="site-footer">
+          <footer class="site-footer">
+            
+              <span class="site-footer-owner"><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper">mcp-payment-wrapper</a> is maintained by <a href="https://github.com/crazyrabbitltc">crazyrabbitltc</a>.</span>
+            
+            <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // Add smooth scrolling to anchor links
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+          });
+        });
+      });
+      
+      // Mobile navigation toggle
+      document.addEventListener("DOMContentLoaded", function() {
+        // Check if we're on a mobile device
+        const isMobile = window.matchMedia("(max-width: 64em)").matches;
         
-          <span class="site-footer-owner"><a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper">mcp-payment-wrapper</a> is maintained by <a href="https://github.com/crazyrabbitLTC">crazyrabbitLTC</a>.</span>
-        
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
-      </footer>
-    </main>
+        if (isMobile) {
+          const sidebarNav = document.querySelector('.sidebar-nav');
+          const sidebarHeader = document.querySelector('.sidebar-header');
+          const sidebarContent = document.querySelector('.sidebar-content');
+          
+          if (sidebarHeader && sidebarContent) {
+            // Initially hide sidebar content on mobile
+            sidebarContent.style.display = 'none';
+            
+            // Create toggle button
+            const toggleBtn = document.createElement('button');
+            toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+            toggleBtn.className = 'sidebar-toggle';
+            toggleBtn.setAttribute('aria-label', 'Toggle navigation');
+            
+            // Add toggle functionality
+            toggleBtn.addEventListener('click', function() {
+              if (sidebarContent.style.display === 'none') {
+                sidebarContent.style.display = 'block';
+                toggleBtn.innerHTML = '<i class="fas fa-times"></i>';
+              } else {
+                sidebarContent.style.display = 'none';
+                toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+              }
+            });
+            
+            // Add toggle button to sidebar header
+            sidebarHeader.appendChild(toggleBtn);
+          }
+        }
+      });
+    </script>
   </body>
 </html>

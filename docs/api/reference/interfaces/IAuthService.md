@@ -6,7 +6,7 @@
 
 # Interface: IAuthService
 
-Defined in: [interfaces/auth-service.ts:179](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L179)
+Defined in: [interfaces/auth-service.ts:179](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L179)
 
 Authentication Service Interface
 Defines the methods for authentication and token verification
@@ -17,7 +17,7 @@ Defines the methods for authentication and token verification
 
 > `optional` **checkSessionStatus**(`sessionId`): `Promise`\<[`SessionStatus`](SessionStatus.md)\>
 
-Defined in: [interfaces/auth-service.ts:224](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L224)
+Defined in: [interfaces/auth-service.ts:224](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L224)
 
 Checks the status of an authentication session
 
@@ -41,7 +41,7 @@ A promise resolving to the current session status
 
 > `optional` **createSession**(`sessionId`, `options`): `Promise`\<[`SessionStatus`](SessionStatus.md)\>
 
-Defined in: [interfaces/auth-service.ts:217](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L217)
+Defined in: [interfaces/auth-service.ts:217](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L217)
 
 Creates an authentication session
 
@@ -71,7 +71,7 @@ A promise resolving to the session status
 
 > **generateAuthUrl**(): `string`
 
-Defined in: [interfaces/auth-service.ts:184](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L184)
+Defined in: [interfaces/auth-service.ts:184](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L184)
 
 Generate an authentication URL for a user
 
@@ -87,7 +87,7 @@ URL for user authentication
 
 > **generateToken**(`userId`?): `string`
 
-Defined in: [interfaces/auth-service.ts:209](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L209)
+Defined in: [interfaces/auth-service.ts:209](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L209)
 
 Generates a user token (primarily for testing)
 
@@ -111,7 +111,7 @@ A promise resolving to a token string
 
 > `optional` **validateJWT**(`jwt`): `Promise`\<`null` \| [`UserData`](UserData.md)\>
 
-Defined in: [interfaces/auth-service.ts:231](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L231)
+Defined in: [interfaces/auth-service.ts:231](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L231)
 
 Validates a JWT token and retrieves user data
 
@@ -137,7 +137,7 @@ A promise resolving to user data or null if invalid
 
 > **verifyToken**(`token`, `resourceType`, `resourceId`): `Promise`\<`VerifyResponse`\>
 
-Defined in: [interfaces/auth-service.ts:193](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L193)
+Defined in: [interfaces/auth-service.ts:193](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L193)
 
 Verify a JWT token
 
@@ -171,7 +171,7 @@ Verification response
 
 > **verifyToken**(`token`, `resourceType`, `resourceId`): `Promise`\<`VerifyResponse`\>
 
-Defined in: [interfaces/auth-service.ts:202](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L202)
+Defined in: [interfaces/auth-service.ts:202](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L202)
 
 Verifies a user token for a specific resource
 

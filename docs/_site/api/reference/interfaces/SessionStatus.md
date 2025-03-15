@@ -6,7 +6,7 @@
 
 # Interface: SessionStatus
 
-Defined in: [interfaces/auth-service.ts:123](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L123)
+Defined in: [interfaces/auth-service.ts:123](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L123)
 
 Session status information
 
@@ -16,7 +16,7 @@ Session status information
 
 > `optional` **authenticated\_at**: `string`
 
-Defined in: [interfaces/auth-service.ts:140](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L140)
+Defined in: [interfaces/auth-service.ts:140](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L140)
 
 Timestamp of authentication
 
@@ -26,7 +26,7 @@ Timestamp of authentication
 
 > `optional` **email**: `string`
 
-Defined in: [interfaces/auth-service.ts:134](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L134)
+Defined in: [interfaces/auth-service.ts:134](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L134)
 
 User's email if available
 
@@ -36,7 +36,7 @@ User's email if available
 
 > `optional` **error**: `string`
 
-Defined in: [interfaces/auth-service.ts:146](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L146)
+Defined in: [interfaces/auth-service.ts:146](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L146)
 
 Error message if status is 'error'
 
@@ -46,7 +46,7 @@ Error message if status is 'error'
 
 > **expires\_in**: `number`
 
-Defined in: [interfaces/auth-service.ts:143](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L143)
+Defined in: [interfaces/auth-service.ts:143](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L143)
 
 Seconds until this session expires
 
@@ -56,7 +56,7 @@ Seconds until this session expires
 
 > `optional` **jwt**: `string`
 
-Defined in: [interfaces/auth-service.ts:137](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L137)
+Defined in: [interfaces/auth-service.ts:137](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L137)
 
 JWT token if authenticated
 
@@ -66,7 +66,7 @@ JWT token if authenticated
 
 > `optional` **name**: `string`
 
-Defined in: [interfaces/auth-service.ts:131](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L131)
+Defined in: [interfaces/auth-service.ts:131](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L131)
 
 User's name if available
 
@@ -76,7 +76,7 @@ User's name if available
 
 > **status**: `"error"` \| `"pending"` \| `"expired"` \| `"authenticated"`
 
-Defined in: [interfaces/auth-service.ts:125](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L125)
+Defined in: [interfaces/auth-service.ts:125](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L125)
 
 Current status of the authentication session
 
@@ -86,6 +86,6 @@ Current status of the authentication session
 
 > `optional` **user\_id**: `string`
 
-Defined in: [interfaces/auth-service.ts:128](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L128)
+Defined in: [interfaces/auth-service.ts:128](https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1c90d0aade04e0c43ffa95bb3aed4728648d58d2/src/interfaces/auth-service.ts#L128)
 
 User ID if authenticated

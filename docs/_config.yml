@@ -7,15 +7,33 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
 
-# Navigation
+# Additional settings for Notion-like design
+repository: crazyrabbitltc/mcp-payment-wrapper
+show_downloads: false
+google_analytics: 
+
+# Main navigation
 nav:
   - title: Home
     url: /
-  - title: Getting Started
-    url: /getting-started
+    icon: fa-home
+  - title: Extensible Hooks Design
+    url: /implementation-plans/extensible-hooks-design
+    icon: fa-plug
   - title: API Reference
     url: /api
+    icon: fa-code
   - title: Examples
     url: /examples
+    icon: fa-lightbulb
   - title: GitHub
     url: https://github.com/crazyrabbitltc/mcp-payment-wrapper
+    icon: fa-github
+
+# Defaults for all pages
+defaults:
+  -
+    scope:
+      path: "" # an empty string here means all files in the project
+    values:
+      layout: "default"
