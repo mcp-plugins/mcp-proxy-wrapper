@@ -305,7 +305,7 @@ function registerPaymentTools(
       user_hint: z.string().optional() 
     }, 
     // Handler function
-    async (args, extra) => {
+    async (args) => {
       try {
         const sessionId = uuidv4();
         
@@ -368,7 +368,7 @@ function registerPaymentTools(
     { 
       session_id: z.string().uuid() 
     }, 
-    async (args, extra) => {
+    async (args) => {
       try {
         // Check if session management is supported
         if (!supportsSessionManagement || !authService.checkSessionStatus) {
@@ -456,7 +456,7 @@ function registerPaymentTools(
     { 
       jwt: z.string().min(20) 
     }, 
-    async (args, extra) => {
+    async (args) => {
       try {
         // Check if user data retrieval is supported
         if (!supportsUserData || !authService.validateJWT) {

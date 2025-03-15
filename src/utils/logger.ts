@@ -23,6 +23,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import * as path from 'path';
 import * as fs from 'fs';
 // Use require instead of import for CommonJS compatibility
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const Transport = require('winston-transport');
 
 /**

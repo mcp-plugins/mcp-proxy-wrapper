@@ -78,8 +78,10 @@ export class MockAuthService implements IAuthService {
    */
   async verifyToken(
     token: string, 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     resourceType: 'tool' | 'prompt' | 'resource', 
-    resourceId: string
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    resourceId: string 
   ): Promise<VerifyResponse> {
     try {
       // Verify the token

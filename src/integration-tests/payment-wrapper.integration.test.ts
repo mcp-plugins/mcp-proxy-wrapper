@@ -1,10 +1,9 @@
 import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
-import { wrapWithPayments, PaymentWrapperOptions } from '../payment-wrapper';
+import { wrapWithPayments } from '../payment-wrapper.js';
 import request from 'supertest';
-import { IAuthService, VerifyResponse } from '../interfaces/auth-service';
 
-// Import the mock backend server
-const mockBackendModule = require('../mock-backend/server-js.cjs');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const backendScript = require('../mock-backend/server-js.cjs');
 
 // Define a port for the test server
 const TEST_PORT = 3004;
@@ -12,50 +11,52 @@ const TEST_BASE_URL = `http://localhost:${TEST_PORT}`;
 
 describe('Payment Wrapper Integration Tests', () => {
   let mockBackend: any;
-  let testMcpServer: any;
+  let testMcpServer: any; 
   let adminApiKey: string;
   let clientApiKey: string;
   let userToken: string;
   let lowFundsToken: string;
   
   beforeAll(async () => {
+    jest.setTimeout(30000); 
+    
     console.log('Setting up integration tests...');
     
     // Start the mock backend server
     mockBackend = {};
-    mockBackend.server = mockBackendModule.buildServer({ logger: false });
+    mockBackend.server = backendScript.buildServer({ logger: false });
     
     // Start the server on an actual port
     await mockBackend.server.listen(TEST_PORT);
     console.log(`Mock backend server created and listening on port ${TEST_PORT}`);
     
-    // Create a simple MCP server for testing
+    // Create a mock MCP server for testing
     testMcpServer = {
-      _registeredTools: {},
-      tool: function(name: string, schema: any, callback: any) {
-        this._registeredTools[name] = { schema, callback };
+      // Mock implementation of the tool method
+      tool: function(name: string, descriptionOrCallback: any, callbackOrUndefined?: any) {
+        // Simple mock that just records the tool registration
+        if (!this._registeredTools) {
+          this._registeredTools = {};
+        }
+        
+        // Handle both function signatures (name, callback) and (name, description, callback)
+        const callback = callbackOrUndefined || descriptionOrCallback;
+        this._registeredTools[name] = { callback };
         return this;
-      }
+      },
+      _registeredTools: {}
     };
     
     // Register a test tool
-    testMcpServer.tool('test_tool', {
-      name: 'test_tool',
-      description: 'A test tool for integration testing',
-      parameters: {
-        type: 'object',
-        properties: {
-          param: {
-            type: 'string',
-            description: 'Test parameter'
-          }
-        },
-        required: ['param']
-      }
-    }, async (args: any) => {
-      console.log('Test tool called with args:', args);
+    testMcpServer.tool('test_tool', 'Test tool description', async (extra: any) => {
+      console.log('Test tool called with args:', extra);
       return {
-        content: [{ type: 'text', text: `Processed: ${args.param}` }]
+        content: [
+          {
+            type: 'text',
+            text: `Processed: ${extra.args.param}`
+          }
+        ]
       };
     });
 
@@ -66,7 +67,7 @@ describe('Payment Wrapper Integration Tests', () => {
       if (!tool) {
         throw new Error(`Tool not found: ${name}`);
       }
-      const result = await tool.callback(args, {});
+      const result = await tool.callback({ args, ...args }, {});
       console.log('Tool result:', result);
       return result;
     };
@@ -82,7 +83,7 @@ describe('Payment Wrapper Integration Tests', () => {
       .send({
         userId: 'user_123456',
         expiresIn: '1h',
-        clientApiKey: clientApiKey // Specify the client API key
+        clientApiKey: clientApiKey 
       });
 
     console.log('Token response:', tokenResponse.status, tokenResponse.body);
@@ -96,7 +97,7 @@ describe('Payment Wrapper Integration Tests', () => {
       .send({
         userId: 'low-funds-user',
         expiresIn: '1h',
-        clientApiKey: clientApiKey // Specify the client API key
+        clientApiKey: clientApiKey 
       });
 
     console.log('Low funds token response:', lowFundsTokenResponse.status, lowFundsTokenResponse.body);
@@ -196,7 +197,7 @@ describe('Payment Wrapper Integration Tests', () => {
       userToken: userToken,
       debugMode: true,
       baseAuthUrl: baseAuthUrl,
-      _testOverrideFundsCheck: true // Force sufficient funds
+      _testOverrideFundsCheck: true 
     });
 
     console.log('Calling tool through payment wrapper');
@@ -220,7 +221,7 @@ describe('Payment Wrapper Integration Tests', () => {
       userToken: lowFundsToken,
       debugMode: true,
       baseAuthUrl: baseAuthUrl,
-      _testOverrideFundsCheck: false // Force insufficient funds
+      _testOverrideFundsCheck: false 
     });
 
     console.log('Calling tool through payment wrapper with insufficient funds');
