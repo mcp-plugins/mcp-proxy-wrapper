@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>MCP Payment Wrapper | Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</title>
+<meta name="generator" content="Jekyll v3.9.5" />
+<meta property="og:title" content="MCP Payment Wrapper" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<meta property="og:description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<link rel="canonical" href="http://localhost:4000/api/reference/functions/wrapWithPayments.html" />
+<meta property="og:url" content="http://localhost:4000/api/reference/functions/wrapWithPayments.html" />
+<meta property="og:site_name" content="MCP Payment Wrapper" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="MCP Payment Wrapper" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"MCP Payment Wrapper","url":"http://localhost:4000/api/reference/functions/wrapWithPayments.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/assets/css/style.css?v=1ff06e57ea826fa74274a44578bd2a0ae2de8e57">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <a id="skip-to-content" href="#content">Skip to the content.</a>
+
+    <header class="page-header" role="banner">
+      <h1 class="project-name">MCP Payment Wrapper</h1>
+      <h2 class="project-tagline">Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</h2>
+      
+        <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper" class="btn">View on GitHub</a>
+      
+      
+    </header>
+
+    <nav class="site-nav">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/getting-started">Getting Started</a></li>
+        
+          <li><a href="/api">API Reference</a></li>
+        
+          <li><a href="/examples">Examples</a></li>
+        
+          <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper">GitHub</a></li>
+        
+      </ul>
+    </nav>
+
+    <main id="content" class="main-content" role="main">
+      <p><a href="/api/reference/"><strong>MCP Payment Wrapper API Reference v1.0.0</strong></a></p>
+
+<hr />
+
+<p><a href="/api/reference/globals.html">MCP Payment Wrapper API Reference</a> / wrapWithPayments</p>
+
+<h1 id="function-wrapwithpayments">Function: wrapWithPayments()</h1>
+
+<blockquote>
+  <p><strong>wrapWithPayments</strong>(<code class="language-plaintext highlighter-rouge">server</code>, <code class="language-plaintext highlighter-rouge">options</code>): <code class="language-plaintext highlighter-rouge">McpServer</code></p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L87">payment-wrapper.ts:87</a></p>
+
+<p>Create a payment-enabled wrapper around an existing McpServer instance.
+The wrapper validates API keys and user tokens, and simulates billing checks
+before forwarding calls to the underlying MCP server.</p>
+
+<h2 id="parameters">Parameters</h2>
+
+<h3 id="server">server</h3>
+
+<p><code class="language-plaintext highlighter-rouge">McpServer</code></p>
+
+<p>The existing McpServer instance to wrap</p>
+
+<h3 id="options">options</h3>
+
+<p><a href="/api/reference/interfaces/PaymentWrapperOptions.html"><code class="language-plaintext highlighter-rouge">PaymentWrapperOptions</code></a></p>
+
+<p>The options for the payment wrapper</p>
+
+<h2 id="returns">Returns</h2>
+
+<p><code class="language-plaintext highlighter-rouge">McpServer</code></p>
+
+<p>A proxy McpServer instance with payment functionality</p>
+
+
+      <footer class="site-footer">
+        
+          <span class="site-footer-owner"><a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper">mcp-payment-wrapper</a> is maintained by <a href="https://github.com/crazyrabbitLTC">crazyrabbitLTC</a>.</span>
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </main>
+  </body>
+</html>

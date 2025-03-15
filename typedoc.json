@@ -1,0 +1,14 @@
+{
+  "entryPoints": ["./src/index.ts"],
+  "out": "docs/api/reference",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "includeVersion": true,
+  "disableSources": false,
+  "readme": "README.md",
+  "name": "MCP Payment Wrapper API Reference",
+  "plugin": ["typedoc-plugin-markdown"],
+  "theme": "default",
+  "hideGenerator": true
+}

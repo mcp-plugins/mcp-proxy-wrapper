@@ -1,0 +1,21 @@
+title: MCP Payment Wrapper
+description: Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality
+theme: jekyll-theme-cayman
+markdown: kramdown
+highlighter: rouge
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Navigation
+nav:
+  - title: Home
+    url: /
+  - title: Getting Started
+    url: /getting-started
+  - title: API Reference
+    url: /api
+  - title: Examples
+    url: /examples
+  - title: GitHub
+    url: https://github.com/crazyrabbitltc/mcp-payment-wrapper

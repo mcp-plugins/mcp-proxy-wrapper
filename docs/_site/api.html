@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>API Reference | MCP Payment Wrapper</title>
+<meta name="generator" content="Jekyll v3.9.5" />
+<meta property="og:title" content="API Reference" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<meta property="og:description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<link rel="canonical" href="http://localhost:4000/api.html" />
+<meta property="og:url" content="http://localhost:4000/api.html" />
+<meta property="og:site_name" content="MCP Payment Wrapper" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="API Reference" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"API Reference","url":"http://localhost:4000/api.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/assets/css/style.css?v=1ff06e57ea826fa74274a44578bd2a0ae2de8e57">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <a id="skip-to-content" href="#content">Skip to the content.</a>
+
+    <header class="page-header" role="banner">
+      <h1 class="project-name">API Reference</h1>
+      <h2 class="project-tagline">Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</h2>
+      
+        <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper" class="btn">View on GitHub</a>
+      
+      
+    </header>
+
+    <nav class="site-nav">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/getting-started">Getting Started</a></li>
+        
+          <li><a href="/api">API Reference</a></li>
+        
+          <li><a href="/examples">Examples</a></li>
+        
+          <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper">GitHub</a></li>
+        
+      </ul>
+    </nav>
+
+    <main id="content" class="main-content" role="main">
+      <h1 id="api-reference">API Reference</h1>
+
+<p>This page provides detailed documentation for the MCP Payment Wrapper API.</p>
+
+<h2 id="core-functions">Core Functions</h2>
+
+<h3 id="wrapwithpayments">wrapWithPayments</h3>
+
+<p>The main function that wraps an existing MCP server with payment functionality.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">:</span> <span class="nx">McpServer</span><span class="p">,</span> <span class="nx">options</span><span class="p">:</span> <span class="nx">PaymentWrapperOptions</span><span class="p">):</span> <span class="nx">McpServer</span>
+</code></pre></div></div>
+
+<h4 id="parameters">Parameters</h4>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">server</code>: The existing McpServer instance to wrap</li>
+  <li><code class="language-plaintext highlighter-rouge">options</code>: Configuration options for the payment wrapper</li>
+</ul>
+
+<h4 id="returns">Returns</h4>
+
+<p>A proxy McpServer instance with payment functionality that maintains the same interface as the original server.</p>
+
+<h4 id="example">Example</h4>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">import</span> <span class="p">{</span> <span class="nx">McpServer</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/sdk/server/mcp.js</span><span class="dl">'</span><span class="p">;</span>
+<span class="k">import</span> <span class="p">{</span> <span class="nx">wrapWithPayments</span> <span class="p">}</span> <span class="k">from</span> <span class="dl">'</span><span class="s1">@modelcontextprotocol/payment-wrapper</span><span class="dl">'</span><span class="p">;</span>
+
+<span class="kd">const</span> <span class="nx">server</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">McpServer</span><span class="p">({</span> 
+  <span class="na">name</span><span class="p">:</span> <span class="dl">"</span><span class="s2">My MCP Server</span><span class="dl">"</span><span class="p">,</span>
+  <span class="na">version</span><span class="p">:</span> <span class="dl">"</span><span class="s2">1.0.0</span><span class="dl">"</span>
+<span class="p">});</span>
+
+<span class="kd">const</span> <span class="nx">paymentServer</span> <span class="o">=</span> <span class="nx">wrapWithPayments</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span> <span class="p">{</span> 
+  <span class="na">apiKey</span><span class="p">:</span> <span class="dl">'</span><span class="s1">YOUR_API_KEY</span><span class="dl">'</span><span class="p">,</span>
+  <span class="na">baseAuthUrl</span><span class="p">:</span> <span class="dl">'</span><span class="s1">https://auth.yourservice.com</span><span class="dl">'</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h2 id="interfaces">Interfaces</h2>
+
+<h3 id="paymentwrapperoptions">PaymentWrapperOptions</h3>
+
+<p>Configuration options for the payment wrapper.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">interface</span> <span class="nx">PaymentWrapperOptions</span> <span class="p">{</span>
+  <span class="cm">/**
+   * Developer API key used for authentication
+   */</span>
+  <span class="nl">apiKey</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * User JWT token for identifying and authenticating the end user
+   * If not provided, the wrapper will return authentication-required responses
+   */</span>
+  <span class="nl">userToken</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Optional flag to enable additional debug logging
+   */</span>
+  <span class="nl">debugMode</span><span class="p">?:</span> <span class="nx">boolean</span><span class="p">;</span>
+
+  <span class="cm">/**
+   * Optional configuration for the logger
+   */</span>
+  <span class="nl">loggerOptions</span><span class="p">?:</span> <span class="nx">LoggerOptions</span><span class="p">;</span>
+
+  <span class="cm">/**
+   * Optional base URL for the authentication service
+   * @default "https://auth.mcp-api.com"
+   */</span>
+  <span class="nl">baseAuthUrl</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Optional override for the funds check result (for testing)
+   * @default undefined
+   */</span>
+  <span class="nl">_testOverrideFundsCheck</span><span class="p">?:</span> <span class="nx">boolean</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="authrequiredresponse">AuthRequiredResponse</h3>
+
+<p>Error response returned when authentication is required.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">interface</span> <span class="nx">AuthRequiredResponse</span> <span class="p">{</span>
+  <span class="nl">error</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">message</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="nl">authUrl</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="iauthservice">IAuthService</h3>
+
+<p>Interface for authentication services used by the payment wrapper.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">interface</span> <span class="nx">IAuthService</span> <span class="p">{</span>
+  <span class="cm">/**
+   * Verify a user token for a specific resource
+   */</span>
+  <span class="nx">verifyToken</span><span class="p">(</span><span class="nx">token</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">resourceType</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">resourceId</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">TokenVerificationResult</span><span class="o">&gt;</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Generate an authentication URL
+   */</span>
+  <span class="nx">generateAuthUrl</span><span class="p">():</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Create an authentication session
+   */</span>
+  <span class="nx">createSession</span><span class="p">?(</span><span class="nx">sessionId</span><span class="p">:</span> <span class="kr">string</span><span class="p">,</span> <span class="nx">options</span><span class="p">:</span> <span class="nx">SessionOptions</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="k">void</span><span class="o">&gt;</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Check the status of an authentication session
+   */</span>
+  <span class="nx">checkSessionStatus</span><span class="p">?(</span><span class="nx">sessionId</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">SessionStatus</span><span class="o">&gt;</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Validate a JWT token and extract user data
+   */</span>
+  <span class="nx">validateJWT</span><span class="p">?(</span><span class="nx">token</span><span class="p">:</span> <span class="kr">string</span><span class="p">):</span> <span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">UserData</span> <span class="o">|</span> <span class="kc">null</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="sessionoptions">SessionOptions</h3>
+
+<p>Options for creating an authentication session.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">interface</span> <span class="nx">SessionOptions</span> <span class="p">{</span>
+  <span class="cm">/**
+   * URL to redirect to after authentication
+   */</span>
+  <span class="nl">return_url</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Optional user hint (e.g., email) to pre-fill in the auth form
+   */</span>
+  <span class="nl">user_hint</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * ISO timestamp when the session was created
+   */</span>
+  <span class="nl">created_at</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * ISO timestamp when the session expires
+   */</span>
+  <span class="nl">expires_at</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="sessionstatus">SessionStatus</h3>
+
+<p>Status of an authentication session.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">interface</span> <span class="nx">SessionStatus</span> <span class="p">{</span>
+  <span class="cm">/**
+   * Status of the session: "pending", "complete", or "failed"
+   */</span>
+  <span class="nl">status</span><span class="p">:</span> <span class="dl">"</span><span class="s2">pending</span><span class="dl">"</span> <span class="o">|</span> <span class="dl">"</span><span class="s2">complete</span><span class="dl">"</span> <span class="o">|</span> <span class="dl">"</span><span class="s2">failed</span><span class="dl">"</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * User JWT token if authentication is complete
+   */</span>
+  <span class="nl">token</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * Error message if authentication failed
+   */</span>
+  <span class="nl">error</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * ISO timestamp when the session expires
+   */</span>
+  <span class="nl">expires_at</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="userdata">UserData</h3>
+
+<p>User data extracted from a JWT token.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">interface</span> <span class="nx">UserData</span> <span class="p">{</span>
+  <span class="cm">/**
+   * Unique identifier for the user
+   */</span>
+  <span class="nl">id</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * User's email address
+   */</span>
+  <span class="nl">email</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * User's display name
+   */</span>
+  <span class="nl">name</span><span class="p">?:</span> <span class="kr">string</span><span class="p">;</span>
+  
+  <span class="cm">/**
+   * User's account balance
+   */</span>
+  <span class="nl">balance</span><span class="p">?:</span> <span class="p">{</span>
+    <span class="cm">/**
+     * Amount of funds available
+     */</span>
+    <span class="na">amount</span><span class="p">:</span> <span class="kr">number</span><span class="p">;</span>
+    
+    <span class="cm">/**
+     * Currency of the balance
+     */</span>
+    <span class="nl">currency</span><span class="p">:</span> <span class="kr">string</span><span class="p">;</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="payment-tools">Payment Tools</h2>
+
+<p>The wrapper adds the following payment-related tools to the MCP server:</p>
+
+<h3 id="payment_authenticate">payment_authenticate</h3>
+
+<p>Initiates the authentication process for a user.</p>
+
+<h4 id="parameters-1">Parameters</h4>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">return_url</span><span class="p">:</span> <span class="nx">z</span><span class="p">.</span><span class="kr">string</span><span class="p">().</span><span class="nx">url</span><span class="p">().</span><span class="nx">optional</span><span class="p">(),</span> 
+  <span class="nx">user_hint</span><span class="p">:</span> <span class="nx">z</span><span class="p">.</span><span class="kr">string</span><span class="p">().</span><span class="nx">optional</span><span class="p">()</span> 
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h4 id="returns-1">Returns</h4>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">content</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span> 
+      <span class="na">type</span><span class="p">:</span> <span class="dl">"</span><span class="s2">text</span><span class="dl">"</span><span class="p">,</span> 
+      <span class="na">text</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Authentication initiated. Please use the following link to authenticate:</span><span class="dl">"</span> 
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="na">type</span><span class="p">:</span> <span class="dl">"</span><span class="s2">text</span><span class="dl">"</span><span class="p">,</span>
+      <span class="na">text</span><span class="p">:</span> <span class="dl">"</span><span class="s2">https://auth.example.com/auth?session=session-id&amp;hint=user@example.com&amp;return_url=https://app.example.com/callback</span><span class="dl">"</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="nx">_meta</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nl">session_id</span><span class="p">:</span> <span class="dl">"</span><span class="s2">session-id</span><span class="dl">"</span><span class="p">,</span>
+    <span class="nx">expires_in</span><span class="p">:</span> <span class="mi">1800</span><span class="p">,</span> <span class="c1">// 30 minutes in seconds</span>
+    <span class="nx">status</span><span class="p">:</span> <span class="dl">"</span><span class="s2">pending</span><span class="dl">"</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="payment_check_auth_status">payment_check_auth_status</h3>
+
+<p>Checks the status of an authentication session.</p>
+
+<h4 id="parameters-2">Parameters</h4>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">session_id</span><span class="p">:</span> <span class="nx">z</span><span class="p">.</span><span class="kr">string</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h4 id="returns-2">Returns</h4>
+
+<p>For pending authentication:</p>
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">status</span><span class="p">:</span> <span class="dl">"</span><span class="s2">pending</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">expires_in</span><span class="p">:</span> <span class="mi">1500</span> <span class="c1">// Remaining seconds until expiration</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>For completed authentication:</p>
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">status</span><span class="p">:</span> <span class="dl">"</span><span class="s2">complete</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">user_token</span><span class="p">:</span> <span class="dl">"</span><span class="s2">jwt-token-for-authenticated-user</span><span class="dl">"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>For failed authentication:</p>
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">status</span><span class="p">:</span> <span class="dl">"</span><span class="s2">failed</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">error</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Authentication failed or expired</span><span class="dl">"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="payment_get_balance">payment_get_balance</h3>
+
+<p>Gets the user’s current balance.</p>
+
+<h4 id="parameters-3">Parameters</h4>
+
+<p>None</p>
+
+<h4 id="returns-3">Returns</h4>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">balance</span><span class="p">:</span> <span class="mf">100.50</span><span class="p">,</span>
+  <span class="nx">currency</span><span class="p">:</span> <span class="dl">"</span><span class="s2">USD</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">last_updated</span><span class="p">:</span> <span class="dl">"</span><span class="s2">2024-03-14T12:34:56Z</span><span class="dl">"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="error-handling">Error Handling</h2>
+
+<p>The payment wrapper returns standardized error responses for various scenarios:</p>
+
+<h3 id="authentication-required">Authentication Required</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">error</span><span class="p">:</span> <span class="dl">"</span><span class="s2">authentication_required</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Authentication required to access this resource</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">authUrl</span><span class="p">:</span> <span class="dl">"</span><span class="s2">https://auth.example.com/auth?session=session-id</span><span class="dl">"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="insufficient-permissions">Insufficient Permissions</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">error</span><span class="p">:</span> <span class="dl">"</span><span class="s2">insufficient_permissions</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Insufficient permissions to access this resource</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">authUrl</span><span class="p">:</span> <span class="dl">""</span>  <span class="c1">// No auth URL needed for insufficient permissions</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="insufficient-funds">Insufficient Funds</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">error</span><span class="p">:</span> <span class="dl">"</span><span class="s2">insufficient_funds</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Insufficient funds to execute this operation</span><span class="dl">"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="authentication-error">Authentication Error</h3>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">error</span><span class="p">:</span> <span class="dl">"</span><span class="s2">authentication_error</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Error verifying authentication token</span><span class="dl">"</span><span class="p">,</span>
+  <span class="nx">authUrl</span><span class="p">:</span> <span class="dl">"</span><span class="s2">https://auth.example.com/auth?session=session-id</span><span class="dl">"</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="utility-functions">Utility Functions</h2>
+
+<h3 id="createlogger">createLogger</h3>
+
+<p>Creates a Winston-based logger for the payment wrapper.</p>
+
+<div class="language-typescript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">createLogger</span><span class="p">(</span><span class="nx">options</span><span class="p">:</span> <span class="nx">LoggerOptions</span><span class="p">):</span> <span class="nx">winston</span><span class="p">.</span><span class="nx">Logger</span>
+</code></pre></div></div>
+
+<h4 id="parameters-4">Parameters</h4>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">options</code>: Configuration options for the logger</li>
+</ul>
+
+<h4 id="returns-4">Returns</h4>
+
+<p>A configured Winston logger instance.</p>
+
+
+      <footer class="site-footer">
+        
+          <span class="site-footer-owner"><a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper">mcp-payment-wrapper</a> is maintained by <a href="https://github.com/crazyrabbitLTC">crazyrabbitLTC</a>.</span>
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </main>
+  </body>
+</html>

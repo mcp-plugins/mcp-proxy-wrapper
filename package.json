@@ -21,7 +21,9 @@
     "version:minor": "npm version minor",
     "version:major": "npm version major",
     "publish": "npm publish --access public",
-    "start:mock-backend": "node --loader ts-node/esm src/mock-backend/start.ts"
+    "start:mock-backend": "node --loader ts-node/esm src/mock-backend/start.ts",
+    "docs": "typedoc --options typedoc.json",
+    "docs:serve": "cd docs && jekyll serve"
   },
   "keywords": [
     "mcp",
@@ -68,6 +70,8 @@
     "supertest": "^6.3.4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
+    "typedoc": "^0.27.9",
+    "typedoc-plugin-markdown": "^4.4.2",
     "typescript": "^5.3.3"
   },
   "peerDependencies": {

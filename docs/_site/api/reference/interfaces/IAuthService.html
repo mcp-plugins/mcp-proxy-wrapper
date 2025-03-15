@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>MCP Payment Wrapper | Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</title>
+<meta name="generator" content="Jekyll v3.9.5" />
+<meta property="og:title" content="MCP Payment Wrapper" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<meta property="og:description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<link rel="canonical" href="http://localhost:4000/api/reference/interfaces/IAuthService.html" />
+<meta property="og:url" content="http://localhost:4000/api/reference/interfaces/IAuthService.html" />
+<meta property="og:site_name" content="MCP Payment Wrapper" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="MCP Payment Wrapper" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"MCP Payment Wrapper","url":"http://localhost:4000/api/reference/interfaces/IAuthService.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/assets/css/style.css?v=1ff06e57ea826fa74274a44578bd2a0ae2de8e57">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <a id="skip-to-content" href="#content">Skip to the content.</a>
+
+    <header class="page-header" role="banner">
+      <h1 class="project-name">MCP Payment Wrapper</h1>
+      <h2 class="project-tagline">Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</h2>
+      
+        <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper" class="btn">View on GitHub</a>
+      
+      
+    </header>
+
+    <nav class="site-nav">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/getting-started">Getting Started</a></li>
+        
+          <li><a href="/api">API Reference</a></li>
+        
+          <li><a href="/examples">Examples</a></li>
+        
+          <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper">GitHub</a></li>
+        
+      </ul>
+    </nav>
+
+    <main id="content" class="main-content" role="main">
+      <p><a href="/api/reference/"><strong>MCP Payment Wrapper API Reference v1.0.0</strong></a></p>
+
+<hr />
+
+<p><a href="/api/reference/globals.html">MCP Payment Wrapper API Reference</a> / IAuthService</p>
+
+<h1 id="interface-iauthservice">Interface: IAuthService</h1>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L179">interfaces/auth-service.ts:179</a></p>
+
+<p>Authentication Service Interface
+Defines the methods for authentication and token verification</p>
+
+<h2 id="methods">Methods</h2>
+
+<h3 id="checksessionstatus">checkSessionStatus()?</h3>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">optional</code> <strong>checkSessionStatus</strong>(<code class="language-plaintext highlighter-rouge">sessionId</code>): <code class="language-plaintext highlighter-rouge">Promise</code>&lt;<a href="/api/reference/interfaces/SessionStatus.html"><code class="language-plaintext highlighter-rouge">SessionStatus</code></a>&gt;</p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L224">interfaces/auth-service.ts:224</a></p>
+
+<p>Checks the status of an authentication session</p>
+
+<h4 id="parameters">Parameters</h4>
+
+<h5 id="sessionid">sessionId</h5>
+
+<p><code class="language-plaintext highlighter-rouge">string</code></p>
+
+<p>The session ID to check</p>
+
+<h4 id="returns">Returns</h4>
+
+<p><code class="language-plaintext highlighter-rouge">Promise</code>&lt;<a href="/api/reference/interfaces/SessionStatus.html"><code class="language-plaintext highlighter-rouge">SessionStatus</code></a>&gt;</p>
+
+<p>A promise resolving to the current session status</p>
+
+<hr />
+
+<h3 id="createsession">createSession()?</h3>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">optional</code> <strong>createSession</strong>(<code class="language-plaintext highlighter-rouge">sessionId</code>, <code class="language-plaintext highlighter-rouge">options</code>): <code class="language-plaintext highlighter-rouge">Promise</code>&lt;<a href="/api/reference/interfaces/SessionStatus.html"><code class="language-plaintext highlighter-rouge">SessionStatus</code></a>&gt;</p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L217">interfaces/auth-service.ts:217</a></p>
+
+<p>Creates an authentication session</p>
+
+<h4 id="parameters-1">Parameters</h4>
+
+<h5 id="sessionid-1">sessionId</h5>
+
+<p><code class="language-plaintext highlighter-rouge">string</code></p>
+
+<p>The unique session identifier</p>
+
+<h5 id="options">options</h5>
+
+<p><a href="/api/reference/interfaces/SessionOptions.html"><code class="language-plaintext highlighter-rouge">SessionOptions</code></a></p>
+
+<p>Session configuration options</p>
+
+<h4 id="returns-1">Returns</h4>
+
+<p><code class="language-plaintext highlighter-rouge">Promise</code>&lt;<a href="/api/reference/interfaces/SessionStatus.html"><code class="language-plaintext highlighter-rouge">SessionStatus</code></a>&gt;</p>
+
+<p>A promise resolving to the session status</p>
+
+<hr />
+
+<h3 id="generateauthurl">generateAuthUrl()</h3>
+
+<blockquote>
+  <p><strong>generateAuthUrl</strong>(): <code class="language-plaintext highlighter-rouge">string</code></p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L184">interfaces/auth-service.ts:184</a></p>
+
+<p>Generate an authentication URL for a user</p>
+
+<h4 id="returns-2">Returns</h4>
+
+<p><code class="language-plaintext highlighter-rouge">string</code></p>
+
+<p>URL for user authentication</p>
+
+<hr />
+
+<h3 id="generatetoken">generateToken()</h3>
+
+<blockquote>
+  <p><strong>generateToken</strong>(<code class="language-plaintext highlighter-rouge">userId</code>?): <code class="language-plaintext highlighter-rouge">string</code></p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L209">interfaces/auth-service.ts:209</a></p>
+
+<p>Generates a user token (primarily for testing)</p>
+
+<h4 id="parameters-2">Parameters</h4>
+
+<h5 id="userid">userId?</h5>
+
+<p><code class="language-plaintext highlighter-rouge">string</code></p>
+
+<p>Optional user ID to include in the token</p>
+
+<h4 id="returns-3">Returns</h4>
+
+<p><code class="language-plaintext highlighter-rouge">string</code></p>
+
+<p>A promise resolving to a token string</p>
+
+<hr />
+
+<h3 id="validatejwt">validateJWT()?</h3>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">optional</code> <strong>validateJWT</strong>(<code class="language-plaintext highlighter-rouge">jwt</code>): <code class="language-plaintext highlighter-rouge">Promise</code>&lt;<code class="language-plaintext highlighter-rouge">null</code> | <a href="/api/reference/interfaces/UserData.html"><code class="language-plaintext highlighter-rouge">UserData</code></a>&gt;</p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L231">interfaces/auth-service.ts:231</a></p>
+
+<p>Validates a JWT token and retrieves user data</p>
+
+<h4 id="parameters-3">Parameters</h4>
+
+<h5 id="jwt">jwt</h5>
+
+<p><code class="language-plaintext highlighter-rouge">string</code></p>
+
+<p>The JWT token to validate</p>
+
+<h4 id="returns-4">Returns</h4>
+
+<p><code class="language-plaintext highlighter-rouge">Promise</code>&lt;<code class="language-plaintext highlighter-rouge">null</code> | <a href="/api/reference/interfaces/UserData.html"><code class="language-plaintext highlighter-rouge">UserData</code></a>&gt;</p>
+
+<p>A promise resolving to user data or null if invalid</p>
+
+<hr />
+
+<h3 id="verifytoken">verifyToken()</h3>
+
+<h4 id="call-signature">Call Signature</h4>
+
+<blockquote>
+  <p><strong>verifyToken</strong>(<code class="language-plaintext highlighter-rouge">token</code>, <code class="language-plaintext highlighter-rouge">resourceType</code>, <code class="language-plaintext highlighter-rouge">resourceId</code>): <code class="language-plaintext highlighter-rouge">Promise</code>&lt;<code class="language-plaintext highlighter-rouge">VerifyResponse</code>&gt;</p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L193">interfaces/auth-service.ts:193</a></p>
+
+<p>Verify a JWT token</p>
+
+<h5 id="parameters-4">Parameters</h5>
+
+<h6 id="token">token</h6>
+
+<p><code class="language-plaintext highlighter-rouge">string</code></p>
+
+<p>JWT token to verify</p>
+
+<h6 id="resourcetype">resourceType</h6>
+
+<p>Type of resource being accessed</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">"prompt"</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"resource"</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"tool"</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h6 id="resourceid">resourceId</h6>
+
+<p><code class="language-plaintext highlighter-rouge">string</code></p>
+
+<p>Identifier of the resource being accessed</p>
+
+<h5 id="returns-5">Returns</h5>
+
+<p><code class="language-plaintext highlighter-rouge">Promise</code>&lt;<code class="language-plaintext highlighter-rouge">VerifyResponse</code>&gt;</p>
+
+<p>Verification response</p>
+
+<h4 id="call-signature-1">Call Signature</h4>
+
+<blockquote>
+  <p><strong>verifyToken</strong>(<code class="language-plaintext highlighter-rouge">token</code>, <code class="language-plaintext highlighter-rouge">resourceType</code>, <code class="language-plaintext highlighter-rouge">resourceId</code>): <code class="language-plaintext highlighter-rouge">Promise</code>&lt;<code class="language-plaintext highlighter-rouge">VerifyResponse</code>&gt;</p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/interfaces/auth-service.ts#L202">interfaces/auth-service.ts:202</a></p>
+
+<p>Verifies a user token for a specific resource</p>
+
+<h5 id="parameters-5">Parameters</h5>
+
+<h6 id="token-1">token</h6>
+
+<p><code class="language-plaintext highlighter-rouge">string</code></p>
+
+<p>The user token to verify</p>
+
+<h6 id="resourcetype-1">resourceType</h6>
+
+<p>The type of resource being accessed</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">"prompt"</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"resource"</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"tool"</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h6 id="resourceid-1">resourceId</h6>
+
+<p><code class="language-plaintext highlighter-rouge">string</code></p>
+
+<p>The ID of the resource being accessed</p>
+
+<h5 id="returns-6">Returns</h5>
+
+<p><code class="language-plaintext highlighter-rouge">Promise</code>&lt;<code class="language-plaintext highlighter-rouge">VerifyResponse</code>&gt;</p>
+
+<p>A promise resolving to a verification result</p>
+
+
+      <footer class="site-footer">
+        
+          <span class="site-footer-owner"><a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper">mcp-payment-wrapper</a> is maintained by <a href="https://github.com/crazyrabbitLTC">crazyrabbitLTC</a>.</span>
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </main>
+  </body>
+</html>

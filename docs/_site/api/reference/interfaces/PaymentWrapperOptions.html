@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>MCP Payment Wrapper | Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</title>
+<meta name="generator" content="Jekyll v3.9.5" />
+<meta property="og:title" content="MCP Payment Wrapper" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<meta property="og:description" content="Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality" />
+<link rel="canonical" href="http://localhost:4000/api/reference/interfaces/PaymentWrapperOptions.html" />
+<meta property="og:url" content="http://localhost:4000/api/reference/interfaces/PaymentWrapperOptions.html" />
+<meta property="og:site_name" content="MCP Payment Wrapper" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="MCP Payment Wrapper" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality","headline":"MCP Payment Wrapper","url":"http://localhost:4000/api/reference/interfaces/PaymentWrapperOptions.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/assets/css/style.css?v=1ff06e57ea826fa74274a44578bd2a0ae2de8e57">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <a id="skip-to-content" href="#content">Skip to the content.</a>
+
+    <header class="page-header" role="banner">
+      <h1 class="project-name">MCP Payment Wrapper</h1>
+      <h2 class="project-tagline">Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality</h2>
+      
+        <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper" class="btn">View on GitHub</a>
+      
+      
+    </header>
+
+    <nav class="site-nav">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/getting-started">Getting Started</a></li>
+        
+          <li><a href="/api">API Reference</a></li>
+        
+          <li><a href="/examples">Examples</a></li>
+        
+          <li><a href="https://github.com/crazyrabbitltc/mcp-payment-wrapper">GitHub</a></li>
+        
+      </ul>
+    </nav>
+
+    <main id="content" class="main-content" role="main">
+      <p><a href="/api/reference/"><strong>MCP Payment Wrapper API Reference v1.0.0</strong></a></p>
+
+<hr />
+
+<p><a href="/api/reference/globals.html">MCP Payment Wrapper API Reference</a> / PaymentWrapperOptions</p>
+
+<h1 id="interface-paymentwrapperoptions">Interface: PaymentWrapperOptions</h1>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L34">payment-wrapper.ts:34</a></p>
+
+<h2 id="properties">Properties</h2>
+
+<h3 id="_testoverridefundscheck">_testOverrideFundsCheck?</h3>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">optional</code> <strong>_testOverrideFundsCheck</strong>: <code class="language-plaintext highlighter-rouge">boolean</code></p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L66">payment-wrapper.ts:66</a></p>
+
+<p>Optional override for the funds check result (for testing)</p>
+
+<h4 id="default">Default</h4>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kc">undefined</span>
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="apikey">apiKey</h3>
+
+<blockquote>
+  <p><strong>apiKey</strong>: <code class="language-plaintext highlighter-rouge">string</code></p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L38">payment-wrapper.ts:38</a></p>
+
+<p>Developer API key used for authentication</p>
+
+<hr />
+
+<h3 id="baseauthurl">baseAuthUrl?</h3>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">optional</code> <strong>baseAuthUrl</strong>: <code class="language-plaintext highlighter-rouge">string</code></p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L60">payment-wrapper.ts:60</a></p>
+
+<p>Optional base URL for the authentication service</p>
+
+<h4 id="default-1">Default</h4>
+
+<div class="language-ts highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="dl">"</span><span class="s2">https://auth.mcp-api.com</span><span class="dl">"</span>
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="debugmode">debugMode?</h3>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">optional</code> <strong>debugMode</strong>: <code class="language-plaintext highlighter-rouge">boolean</code></p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L49">payment-wrapper.ts:49</a></p>
+
+<p>Optional flag to enable additional debug logging</p>
+
+<hr />
+
+<h3 id="loggeroptions">loggerOptions?</h3>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">optional</code> <strong>loggerOptions</strong>: <a href="/api/reference/interfaces/LoggerOptions.html"><code class="language-plaintext highlighter-rouge">LoggerOptions</code></a></p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L54">payment-wrapper.ts:54</a></p>
+
+<p>Optional configuration for the logger</p>
+
+<hr />
+
+<h3 id="usertoken">userToken?</h3>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">optional</code> <strong>userToken</strong>: <code class="language-plaintext highlighter-rouge">string</code></p>
+</blockquote>
+
+<p>Defined in: <a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper/blob/1ff06e57ea826fa74274a44578bd2a0ae2de8e57/src/payment-wrapper.ts#L44">payment-wrapper.ts:44</a></p>
+
+<p>User JWT token for identifying and authenticating the end user
+If not provided, the wrapper will return authentication-required responses</p>
+
+
+      <footer class="site-footer">
+        
+          <span class="site-footer-owner"><a href="https://github.com/crazyrabbitLTC/mcp-payment-wrapper">mcp-payment-wrapper</a> is maintained by <a href="https://github.com/crazyrabbitLTC">crazyrabbitLTC</a>.</span>
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </main>
+  </body>
+</html>
