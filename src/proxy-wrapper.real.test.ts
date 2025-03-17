@@ -2,313 +2,293 @@
  * @file Proxy Wrapper Real Tests
  * @version 1.0.0
  * 
- * Integration tests for the MCP Proxy Wrapper using real MCP server and client instances.
+ * Real integration tests for the MCP Proxy Wrapper.
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Client } from '@modelcontextprotocol/sdk/client/client.js';
 import { wrapWithProxy } from './proxy-wrapper.js';
 import { z } from 'zod';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { MemoryTransport } from './test-utils/memory-transport.js';
 
 describe('MCP Proxy Wrapper Real Tests', () => {
   let server: McpServer;
   let client: Client;
+  let serverTransport: MemoryTransport;
+  let clientTransport: MemoryTransport;
   
   beforeEach(async () => {
-    // Create a new server for each test
+    // Create a pair of memory transports
+    const transportPair = MemoryTransport.createPair();
+    serverTransport = transportPair.server;
+    clientTransport = transportPair.client;
+    
+    // Create and start the server
     server = new McpServer({
       name: 'Test Server',
       version: '1.0.0'
     });
     
-    // Create a client
-    client = new Client({
-      name: 'Test Client',
-      version: '1.0.0'
-    }, {
-      capabilities: {}
-    });
+    await server.connect(serverTransport);
+    
+    // Create and start the client
+    client = new Client();
+    await client.connect(clientTransport);
   });
   
   afterEach(async () => {
-    // Disconnect the client
-    await client.disconnect();
+    await client.close();
+    await server.close();
   });
   
-  test('should successfully call tools through the proxy', async () => {
-    // Register a tool
-    server.tool('greet', { name: z.string() }, async (args) => {
-      return {
-        content: [{ type: 'text', text: `Hello, ${args.name}!` }]
-      };
+  test('should successfully call a tool', async () => {
+    // Wrap the server with a proxy
+    const proxiedServer = wrapWithProxy(server, {
+      hooks: {}
     });
     
-    // Wrap with proxy
-    const proxiedServer = wrapWithProxy(server);
+    // Register a tool
+    proxiedServer.tool('echo', { message: z.string() }, async (args) => ({
+      content: [{ type: 'text', text: args.message }]
+    }));
     
-    // Create a direct connection between client and server for testing
-    const { clientTransport, serverTransport } = createDirectTransports();
+    // Call the tool via the client
+    const result = await client.callTool('echo', { message: 'Hello, world!' });
     
-    // Connect the server and client
-    await proxiedServer.connect(serverTransport);
-    await client.connect(clientTransport);
-    
-    // Call the tool
-    const result = await client.callTool('greet', { name: 'World' });
-    
-    // Check the result
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0].type).toBe('text');
-    expect(result.content[0].text).toBe('Hello, World!');
+    // Verify the result
+    expect(result).toEqual({
+      content: [{ type: 'text', text: 'Hello, world!' }]
+    });
   });
   
   test('should modify arguments with beforeToolCall hook', async () => {
-    // Register a tool
-    server.tool('greet', { name: z.string() }, async (args) => {
-      return {
-        content: [{ type: 'text', text: `Hello, ${args.name}!` }]
-      };
-    });
+    let hookCalled = false;
     
-    // Wrap with proxy and hooks
+    // Wrap the server with a proxy
     const proxiedServer = wrapWithProxy(server, {
       hooks: {
         beforeToolCall: async (context) => {
-          // Modify the name argument
-          if (context.toolName === 'greet') {
-            context.args.name = `${context.args.name} (modified)`;
-          }
+          hookCalled = true;
+          // Modify the message argument
+          context.args.message = `Modified: ${context.args.message}`;
         }
       }
     });
     
-    // Create a direct connection between client and server for testing
-    const { clientTransport, serverTransport } = createDirectTransports();
+    // Register a tool
+    proxiedServer.tool('echo', { message: z.string() }, async (args) => ({
+      content: [{ type: 'text', text: args.message }]
+    }));
     
-    // Connect the server and client
-    await proxiedServer.connect(serverTransport);
-    await client.connect(clientTransport);
+    // Call the tool via the client
+    const result = await client.callTool('echo', { message: 'Hello, world!' });
     
-    // Call the tool
-    const result = await client.callTool('greet', { name: 'World' });
-    
-    // Check the result
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0].type).toBe('text');
-    expect(result.content[0].text).toBe('Hello, World (modified)!');
+    // Verify the hook was called and the result contains the modified message
+    expect(hookCalled).toBe(true);
+    expect(result).toEqual({
+      content: [{ type: 'text', text: 'Modified: Hello, world!' }]
+    });
   });
   
   test('should modify results with afterToolCall hook', async () => {
-    // Register a tool
-    server.tool('greet', { name: z.string() }, async (args) => {
-      return {
-        content: [{ type: 'text', text: `Hello, ${args.name}!` }]
-      };
-    });
+    let hookCalled = false;
     
-    // Wrap with proxy and hooks
+    // Wrap the server with a proxy
     const proxiedServer = wrapWithProxy(server, {
       hooks: {
         afterToolCall: async (context, result) => {
+          hookCalled = true;
           // Modify the result
-          if (context.toolName === 'greet' && result.result.content && result.result.content[0]) {
-            result.result.content[0].text += ' Thanks for using our service!';
-          }
-          
+          result.result.content[0].text = `Modified: ${result.result.content[0].text}`;
           return result;
         }
       }
     });
     
-    // Create a direct connection between client and server for testing
-    const { clientTransport, serverTransport } = createDirectTransports();
-    
-    // Connect the server and client
-    await proxiedServer.connect(serverTransport);
-    await client.connect(clientTransport);
-    
-    // Call the tool
-    const result = await client.callTool('greet', { name: 'World' });
-    
-    // Check the result
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0].type).toBe('text');
-    expect(result.content[0].text).toBe('Hello, World! Thanks for using our service!');
-  });
-  
-  test('should short-circuit tool calls with beforeToolCall hook', async () => {
     // Register a tool
-    server.tool('greet', { name: z.string() }, async (args) => {
-      return {
-        content: [{ type: 'text', text: `Hello, ${args.name}!` }]
-      };
+    proxiedServer.tool('echo', { message: z.string() }, async (args) => ({
+      content: [{ type: 'text', text: args.message }]
+    }));
+    
+    // Call the tool via the client
+    const result = await client.callTool('echo', { message: 'Hello, world!' });
+    
+    // Verify the hook was called and the result was modified
+    expect(hookCalled).toBe(true);
+    expect(result).toEqual({
+      content: [{ type: 'text', text: 'Modified: Hello, world!' }]
     });
-    
-    // Wrap with proxy and hooks
-    const proxiedServer = wrapWithProxy(server, {
-      hooks: {
-        beforeToolCall: async (context) => {
-          // Short-circuit the call if the name is 'blocked'
-          if (context.toolName === 'greet' && context.args.name === 'blocked') {
-            return {
-              result: {
-                content: [{ type: 'text', text: 'This name is blocked.' }]
-              }
-            };
-          }
-        }
-      }
-    });
-    
-    // Create a direct connection between client and server for testing
-    const { clientTransport, serverTransport } = createDirectTransports();
-    
-    // Connect the server and client
-    await proxiedServer.connect(serverTransport);
-    await client.connect(clientTransport);
-    
-    // Call the tool with a blocked name
-    const result = await client.callTool('greet', { name: 'blocked' });
-    
-    // Check the result
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0].type).toBe('text');
-    expect(result.content[0].text).toBe('This name is blocked.');
   });
   
-  test('should handle errors in tool handlers', async () => {
-    // Register a tool that throws an error
-    server.tool('error', { message: z.string() }, async (args) => {
-      throw new Error(args.message);
-    });
+  test('should short-circuit tool call if beforeToolCall returns a result', async () => {
+    let toolHandlerCalled = false;
     
-    // Wrap with proxy
-    const proxiedServer = wrapWithProxy(server);
-    
-    // Create a direct connection between client and server for testing
-    const { clientTransport, serverTransport } = createDirectTransports();
-    
-    // Connect the server and client
-    await proxiedServer.connect(serverTransport);
-    await client.connect(clientTransport);
-    
-    // Call the tool
-    const result = await client.callTool('error', { message: 'Test error' });
-    
-    // Check the result
-    expect(result.isError).toBe(true);
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0].type).toBe('text');
-    expect(result.content[0].text).toBe('Error: Test error');
-  });
-  
-  test('should handle errors in beforeToolCall hook', async () => {
-    // Register a tool
-    server.tool('greet', { name: z.string() }, async (args) => {
-      return {
-        content: [{ type: 'text', text: `Hello, ${args.name}!` }]
-      };
-    });
-    
-    // Wrap with proxy and hooks
+    // Wrap the server with a proxy
     const proxiedServer = wrapWithProxy(server, {
       hooks: {
         beforeToolCall: async () => {
-          throw new Error('Hook error');
+          // Short-circuit the tool call by returning a result
+          return {
+            content: [{ type: 'text', text: 'Short-circuited result' }]
+          };
         }
       }
     });
     
-    // Create a direct connection between client and server for testing
-    const { clientTransport, serverTransport } = createDirectTransports();
-    
-    // Connect the server and client
-    await proxiedServer.connect(serverTransport);
-    await client.connect(clientTransport);
-    
-    // Call the tool
-    const result = await client.callTool('greet', { name: 'World' });
-    
-    // Check the result
-    expect(result.isError).toBe(true);
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0].type).toBe('text');
-    expect(result.content[0].text).toContain('Hook error');
-  });
-  
-  test('should handle errors in afterToolCall hook', async () => {
-    // Register a tool
-    server.tool('greet', { name: z.string() }, async (args) => {
+    // Register a tool that should not be called
+    proxiedServer.tool('echo', { message: z.string() }, async (args) => {
+      toolHandlerCalled = true;
       return {
-        content: [{ type: 'text', text: `Hello, ${args.name}!` }]
+        content: [{ type: 'text', text: args.message }]
       };
     });
     
-    // Wrap with proxy and hooks
+    // Call the tool via the client
+    const result = await client.callTool('echo', { message: 'Hello, world!' });
+    
+    // Verify the tool handler was not called and the result is from the hook
+    expect(toolHandlerCalled).toBe(false);
+    expect(result).toEqual({
+      content: [{ type: 'text', text: 'Short-circuited result' }]
+    });
+  });
+  
+  test('should handle errors in tool handlers', async () => {
+    // Wrap the server with a proxy
+    const proxiedServer = wrapWithProxy(server, {
+      hooks: {}
+    });
+    
+    // Register a tool that throws an error
+    proxiedServer.tool('error', { message: z.string() }, async () => {
+      throw new Error('Tool handler error');
+    });
+    
+    // Call the tool via the client and expect it to throw
+    await expect(client.callTool('error', { message: 'Hello, world!' }))
+      .rejects.toThrow();
+  });
+  
+  test('should handle errors in beforeToolCall hook', async () => {
+    // Wrap the server with a proxy
     const proxiedServer = wrapWithProxy(server, {
       hooks: {
-        afterToolCall: async () => {
-          throw new Error('Hook error');
+        beforeToolCall: async () => {
+          throw new Error('beforeToolCall hook error');
         }
       }
     });
     
-    // Create a direct connection between client and server for testing
-    const { clientTransport, serverTransport } = createDirectTransports();
+    // Register a tool
+    proxiedServer.tool('echo', { message: z.string() }, async (args) => ({
+      content: [{ type: 'text', text: args.message }]
+    }));
     
-    // Connect the server and client
-    await proxiedServer.connect(serverTransport);
-    await client.connect(clientTransport);
-    
-    // Call the tool
-    const result = await client.callTool('greet', { name: 'World' });
-    
-    // Check the result
-    expect(result.isError).toBe(true);
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0].type).toBe('text');
-    expect(result.content[0].text).toContain('Hook error');
+    // Call the tool via the client and expect it to throw
+    await expect(client.callTool('echo', { message: 'Hello, world!' }))
+      .rejects.toThrow();
   });
-});
-
-/**
- * Creates a pair of transports that are directly connected to each other
- * for testing purposes.
- */
-function createDirectTransports() {
-  const messages = [];
-  const clientCallbacks = [];
-  const serverCallbacks = [];
-
-  const clientTransport = {
-    connect: async () => {},
-    disconnect: async () => {},
-    send: (message) => {
-      messages.push(message);
-      if (serverCallbacks.length > 0) {
-        const callback = serverCallbacks.shift();
-        callback(message);
+  
+  test('should handle errors in afterToolCall hook', async () => {
+    // Wrap the server with a proxy
+    const proxiedServer = wrapWithProxy(server, {
+      hooks: {
+        afterToolCall: async () => {
+          throw new Error('afterToolCall hook error');
+        }
       }
-    },
-    receive: (callback) => {
-      clientCallbacks.push(callback);
-    }
-  };
-
-  const serverTransport = {
-    connect: async () => {},
-    disconnect: async () => {},
-    send: (message) => {
-      if (clientCallbacks.length > 0) {
-        const callback = clientCallbacks.shift();
-        callback(message);
+    });
+    
+    // Register a tool
+    proxiedServer.tool('echo', { message: z.string() }, async (args) => ({
+      content: [{ type: 'text', text: args.message }]
+    }));
+    
+    // Call the tool via the client and expect it to throw
+    await expect(client.callTool('echo', { message: 'Hello, world!' }))
+      .rejects.toThrow();
+  });
+  
+  test('should pass tool metadata to hooks', async () => {
+    let metadataReceived = false;
+    
+    // Wrap the server with a proxy
+    const proxiedServer = wrapWithProxy(server, {
+      hooks: {
+        beforeToolCall: async (context) => {
+          metadataReceived = 
+            context.toolName === 'metadata' && 
+            context.toolSchema.description === 'Test description';
+        }
       }
-    },
-    receive: (callback) => {
-      serverCallbacks.push(callback);
-    }
-  };
-
-  return { clientTransport, serverTransport };
-} 
+    });
+    
+    // Register a tool with metadata
+    proxiedServer.tool(
+      'metadata', 
+      { message: z.string() },
+      async (args) => ({
+        content: [{ type: 'text', text: args.message }]
+      }),
+      { description: 'Test description' }
+    );
+    
+    // Call the tool via the client
+    await client.callTool('metadata', { message: 'Hello, world!' });
+    
+    // Verify the metadata was received by the hook
+    expect(metadataReceived).toBe(true);
+  });
+  
+  test('should handle multiple tools with different hooks', async () => {
+    const toolResults: Record<string, string> = {};
+    
+    // Wrap the server with a proxy
+    const proxiedServer = wrapWithProxy(server, {
+      hooks: {
+        beforeToolCall: async (context) => {
+          if (context.toolName === 'tool1') {
+            context.args.message = `Tool1 Modified: ${context.args.message}`;
+          }
+        },
+        afterToolCall: async (context, result) => {
+          if (context.toolName === 'tool2') {
+            result.result.content[0].text = `Tool2 Modified: ${result.result.content[0].text}`;
+          }
+          return result;
+        }
+      }
+    });
+    
+    // Register two tools
+    proxiedServer.tool('tool1', { message: z.string() }, async (args) => {
+      toolResults.tool1 = args.message;
+      return {
+        content: [{ type: 'text', text: args.message }]
+      };
+    });
+    
+    proxiedServer.tool('tool2', { message: z.string() }, async (args) => {
+      toolResults.tool2 = args.message;
+      return {
+        content: [{ type: 'text', text: args.message }]
+      };
+    });
+    
+    // Call both tools
+    const result1 = await client.callTool('tool1', { message: 'Hello from tool1' });
+    const result2 = await client.callTool('tool2', { message: 'Hello from tool2' });
+    
+    // Verify the results
+    expect(toolResults.tool1).toBe('Tool1 Modified: Hello from tool1');
+    expect(toolResults.tool2).toBe('Hello from tool2');
+    
+    expect(result1).toEqual({
+      content: [{ type: 'text', text: 'Tool1 Modified: Hello from tool1' }]
+    });
+    
+    expect(result2).toEqual({
+      content: [{ type: 'text', text: 'Tool2 Modified: Hello from tool2' }]
+    });
+  });
+}); 

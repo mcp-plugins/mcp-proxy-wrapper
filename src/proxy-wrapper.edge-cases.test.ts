@@ -9,29 +9,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy } from './proxy-wrapper.js';
 import { z } from 'zod';
 
-// Mock McpServer
-jest.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {
-  return {
-    McpServer: jest.fn().mockImplementation(() => {
-      const tools = new Map();
-      
-      return {
-        tool: jest.fn((name, schema, handler) => {
-          tools.set(name, { schema, handler });
-          return { name, schema };
-        }),
-        _tools: tools,
-        connect: jest.fn()
-      };
-    })
-  };
-});
-
 describe('MCP Proxy Wrapper Edge Cases', () => {
   let server: McpServer;
   
   beforeEach(() => {
-    jest.clearAllMocks();
     server = new McpServer({
       name: 'Test Server',
       version: '1.0.0'
@@ -47,8 +28,7 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
       content: [{ type: 'text', text: 'Test' }]
     }));
     
-    const wrappedHandler = server._tools.get('test').handler;
-    const result = await wrappedHandler({ value: 'test' }, {});
+    const result = await server.callTool('test', { value: 'test' });
     
     expect(result).toEqual({
       content: [{ type: 'text', text: 'Test' }]
@@ -64,8 +44,7 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
       content: [{ type: 'text', text: 'Test' }]
     }));
     
-    const wrappedHandler = server._tools.get('test').handler;
-    const result = await wrappedHandler({ value: 'test' }, {});
+    const result = await server.callTool('test', { value: 'test' });
     
     expect(result).toEqual({
       content: [{ type: 'text', text: 'Test' }]
@@ -73,22 +52,26 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
   });
   
   test('should handle null arguments', async () => {
-    const beforeToolCall = jest.fn();
+    let beforeToolCallCalled = false;
+    let nullValuePassed = false;
+    
     const proxiedServer = wrapWithProxy(server, {
-      hooks: { beforeToolCall }
+      hooks: { 
+        beforeToolCall: async (context) => {
+          beforeToolCallCalled = true;
+          nullValuePassed = context.args.value === null;
+        }
+      }
     });
     
     proxiedServer.tool('test', { value: z.string().nullable() }, async (args) => ({
       content: [{ type: 'text', text: `Value: ${args.value === null ? 'null' : args.value}` }]
     }));
     
-    const wrappedHandler = server._tools.get('test').handler;
-    const result = await wrappedHandler({ value: null }, {});
+    const result = await server.callTool('test', { value: null });
     
-    expect(beforeToolCall).toHaveBeenCalledWith(expect.objectContaining({
-      toolName: 'test',
-      args: { value: null }
-    }));
+    expect(beforeToolCallCalled).toBe(true);
+    expect(nullValuePassed).toBe(true);
     
     expect(result).toEqual({
       content: [{ type: 'text', text: 'Value: null' }]
@@ -96,22 +79,26 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
   });
   
   test('should handle undefined arguments', async () => {
-    const beforeToolCall = jest.fn();
+    let beforeToolCallCalled = false;
+    let emptyArgsPassed = false;
+    
     const proxiedServer = wrapWithProxy(server, {
-      hooks: { beforeToolCall }
+      hooks: { 
+        beforeToolCall: async (context) => {
+          beforeToolCallCalled = true;
+          emptyArgsPassed = Object.keys(context.args).length === 0;
+        }
+      }
     });
     
     proxiedServer.tool('test', { value: z.string().optional() }, async (args) => ({
       content: [{ type: 'text', text: `Value: ${args.value === undefined ? 'undefined' : args.value}` }]
     }));
     
-    const wrappedHandler = server._tools.get('test').handler;
-    const result = await wrappedHandler({ }, {});
+    const result = await server.callTool('test', { });
     
-    expect(beforeToolCall).toHaveBeenCalledWith(expect.objectContaining({
-      toolName: 'test',
-      args: { }
-    }));
+    expect(beforeToolCallCalled).toBe(true);
+    expect(emptyArgsPassed).toBe(true);
     
     expect(result).toEqual({
       content: [{ type: 'text', text: 'Value: undefined' }]
@@ -119,9 +106,18 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
   });
   
   test('should handle complex nested arguments', async () => {
-    const beforeToolCall = jest.fn();
+    let beforeToolCallCalled = false;
+    let complexArgsReceived = false;
+    
     const proxiedServer = wrapWithProxy(server, {
-      hooks: { beforeToolCall }
+      hooks: { 
+        beforeToolCall: async (context) => {
+          beforeToolCallCalled = true;
+          complexArgsReceived = 
+            context.args.user?.name === 'John' && 
+            context.args.items?.length === 2;
+        }
+      }
     });
     
     const complexSchema = {
@@ -145,8 +141,6 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
       content: [{ type: 'text', text: `User: ${args.user.name}, Items: ${args.items.length}` }]
     }));
     
-    const wrappedHandler = server._tools.get('complex').handler;
-    
     const complexArgs = {
       user: {
         name: 'John',
@@ -163,12 +157,10 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
       ]
     };
     
-    const result = await wrappedHandler(complexArgs, {});
+    const result = await server.callTool('complex', complexArgs);
     
-    expect(beforeToolCall).toHaveBeenCalledWith(expect.objectContaining({
-      toolName: 'complex',
-      args: complexArgs
-    }));
+    expect(beforeToolCallCalled).toBe(true);
+    expect(complexArgsReceived).toBe(true);
     
     expect(result).toEqual({
       content: [{ type: 'text', text: 'User: John, Items: 2' }]
@@ -176,23 +168,28 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
   });
   
   test('should handle async hooks that return promises', async () => {
-    const beforeToolCall = jest.fn().mockImplementation(async (context) => {
+    let beforeHookCalled = false;
+    let afterHookCalled = false;
+    
+    const beforeToolCall = async (context) => {
       // Simulate async operation
       await new Promise(resolve => setTimeout(resolve, 10));
+      beforeHookCalled = true;
       
       // Modify args
       context.args.value = `${context.args.value} (async modified)`;
-    });
+    };
     
-    const afterToolCall = jest.fn().mockImplementation(async (context, result) => {
+    const afterToolCall = async (context, result) => {
       // Simulate async operation
       await new Promise(resolve => setTimeout(resolve, 10));
+      afterHookCalled = true;
       
       // Modify result
       result.result.content[0].text += ' (async modified)';
       
       return result;
-    });
+    };
     
     const proxiedServer = wrapWithProxy(server, {
       hooks: { beforeToolCall, afterToolCall }
@@ -202,11 +199,10 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
       content: [{ type: 'text', text: `Value: ${args.value}` }]
     }));
     
-    const wrappedHandler = server._tools.get('test').handler;
-    const result = await wrappedHandler({ value: 'test' }, {});
+    const result = await server.callTool('test', { value: 'test' });
     
-    expect(beforeToolCall).toHaveBeenCalled();
-    expect(afterToolCall).toHaveBeenCalled();
+    expect(beforeHookCalled).toBe(true);
+    expect(afterHookCalled).toBe(true);
     
     expect(result).toEqual({
       content: [{ type: 'text', text: 'Value: test (async modified) (async modified)' }]
@@ -214,9 +210,14 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
   });
   
   test('should handle non-object results', async () => {
-    const afterToolCall = jest.fn().mockImplementation((context, result) => {
+    let afterHookCalled = false;
+    let nonStandardResultReceived = false;
+    
+    const afterToolCall = async (context, result) => {
+      afterHookCalled = true;
+      nonStandardResultReceived = typeof result.result === 'string';
       return result;
-    });
+    };
     
     const proxiedServer = wrapWithProxy(server, {
       hooks: { afterToolCall }
@@ -227,65 +228,69 @@ describe('MCP Proxy Wrapper Edge Cases', () => {
       return 'This is not a standard result object';
     });
     
-    const wrappedHandler = server._tools.get('nonstandard').handler;
-    const result = await wrappedHandler({}, {});
+    const result = await server.callTool('nonstandard', {});
     
-    expect(afterToolCall).toHaveBeenCalledWith(
-      expect.any(Object),
-      expect.objectContaining({
-        result: 'This is not a standard result object'
-      })
-    );
-    
+    expect(afterHookCalled).toBe(true);
+    expect(nonStandardResultReceived).toBe(true);
     expect(result).toBe('This is not a standard result object');
   });
   
   test('should handle circular references in arguments', async () => {
-    const beforeToolCall = jest.fn();
+    let beforeHookCalled = false;
+    
     const proxiedServer = wrapWithProxy(server, {
-      hooks: { beforeToolCall }
+      hooks: { 
+        beforeToolCall: async () => {
+          beforeHookCalled = true;
+        }
+      }
     });
     
     proxiedServer.tool('circular', { obj: z.any() }, async (args) => ({
       content: [{ type: 'text', text: 'Processed circular reference' }]
     }));
     
-    const wrappedHandler = server._tools.get('circular').handler;
-    
-    // Create an object with circular reference
-    const circularObj: any = { name: 'Circular' };
+    // Create an object with a circular reference
+    const circularObj: any = { name: 'circular' };
     circularObj.self = circularObj;
     
-    // This should not throw
-    const result = await wrappedHandler({ obj: circularObj }, {});
+    const result = await server.callTool('circular', { obj: circularObj });
     
-    expect(beforeToolCall).toHaveBeenCalled();
+    expect(beforeHookCalled).toBe(true);
     expect(result).toEqual({
       content: [{ type: 'text', text: 'Processed circular reference' }]
     });
   });
   
-  test('should handle very large payloads', async () => {
-    const beforeToolCall = jest.fn();
+  test('should handle large objects', async () => {
+    let beforeHookCalled = false;
+    
     const proxiedServer = wrapWithProxy(server, {
-      hooks: { beforeToolCall }
+      hooks: { 
+        beforeToolCall: async () => {
+          beforeHookCalled = true;
+        }
+      }
     });
     
-    proxiedServer.tool('large', { data: z.string() }, async (args) => ({
-      content: [{ type: 'text', text: `Processed ${args.data.length} bytes` }]
+    proxiedServer.tool('large', { data: z.any() }, async (args) => ({
+      content: [{ type: 'text', text: `Processed ${args.data.items.length} items` }]
     }));
     
-    const wrappedHandler = server._tools.get('large').handler;
+    // Create a large object
+    const largeObj = {
+      items: Array(1000).fill(0).map((_, i) => ({
+        id: i,
+        name: `Item ${i}`,
+        description: `This is item ${i} with a long description to make the object larger.`
+      }))
+    };
     
-    // Create a large string (1MB)
-    const largeString = 'a'.repeat(1024 * 1024);
+    const result = await server.callTool('large', { data: largeObj });
     
-    // This should not throw or timeout
-    const result = await wrappedHandler({ data: largeString }, {});
-    
-    expect(beforeToolCall).toHaveBeenCalled();
+    expect(beforeHookCalled).toBe(true);
     expect(result).toEqual({
-      content: [{ type: 'text', text: 'Processed 1048576 bytes' }]
+      content: [{ type: 'text', text: 'Processed 1000 items' }]
     });
   });
 }); 

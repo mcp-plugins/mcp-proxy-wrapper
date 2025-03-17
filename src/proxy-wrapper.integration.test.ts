@@ -8,13 +8,14 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy } from './proxy-wrapper.js';
 import { z } from 'zod';
-import { MemoryServerTransport } from '@modelcontextprotocol/sdk/server/memory.js';
-import { McpClient } from '@modelcontextprotocol/sdk/client/mcp.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { MemoryTransport } from './test-utils/memory-transport';
 
 describe('MCP Proxy Wrapper Integration', () => {
   let server: McpServer;
-  let client: McpClient;
-  let transport: MemoryServerTransport;
+  let client: Client;
+  let serverTransport: MemoryTransport;
+  let clientTransport: MemoryTransport;
   
   beforeEach(async () => {
     // Create a new server for each test
@@ -23,17 +24,24 @@ describe('MCP Proxy Wrapper Integration', () => {
       version: '1.0.0'
     });
     
-    // Create a memory transport
-    transport = new MemoryServerTransport();
+    // Create a memory transport pair
+    const transports = MemoryTransport.createPair();
+    serverTransport = transports.serverTransport;
+    clientTransport = transports.clientTransport;
     
     // Create a client
-    client = new McpClient();
+    client = new Client({
+      name: 'Test Client',
+      version: '1.0.0'
+    }, {
+      capabilities: {}
+    });
   });
   
   afterEach(async () => {
-    // Disconnect the client and server
-    await client.disconnect();
-    await transport.close();
+    // Close the transports
+    await serverTransport.close();
+    await clientTransport.close();
   });
   
   test('should successfully call tools through the proxy', async () => {
@@ -48,10 +56,10 @@ describe('MCP Proxy Wrapper Integration', () => {
     const proxiedServer = wrapWithProxy(server);
     
     // Connect the server to the transport
-    await proxiedServer.connect(transport);
+    await proxiedServer.connect(serverTransport);
     
     // Connect the client to the transport
-    await client.connect(transport.clientTransport);
+    await client.connect(clientTransport);
     
     // Call the tool
     const result = await client.callTool('greet', { name: 'World' });
@@ -83,10 +91,10 @@ describe('MCP Proxy Wrapper Integration', () => {
     });
     
     // Connect the server to the transport
-    await proxiedServer.connect(transport);
+    await proxiedServer.connect(serverTransport);
     
     // Connect the client to the transport
-    await client.connect(transport.clientTransport);
+    await client.connect(clientTransport);
     
     // Call the tool
     const result = await client.callTool('greet', { name: 'World' });
@@ -120,10 +128,10 @@ describe('MCP Proxy Wrapper Integration', () => {
     });
     
     // Connect the server to the transport
-    await proxiedServer.connect(transport);
+    await proxiedServer.connect(serverTransport);
     
     // Connect the client to the transport
-    await client.connect(transport.clientTransport);
+    await client.connect(clientTransport);
     
     // Call the tool
     const result = await client.callTool('greet', { name: 'World' });
@@ -159,10 +167,10 @@ describe('MCP Proxy Wrapper Integration', () => {
     });
     
     // Connect the server to the transport
-    await proxiedServer.connect(transport);
+    await proxiedServer.connect(serverTransport);
     
     // Connect the client to the transport
-    await client.connect(transport.clientTransport);
+    await client.connect(clientTransport);
     
     // Call the tool with a blocked name
     const result = await client.callTool('greet', { name: 'blocked' });
@@ -183,10 +191,10 @@ describe('MCP Proxy Wrapper Integration', () => {
     const proxiedServer = wrapWithProxy(server);
     
     // Connect the server to the transport
-    await proxiedServer.connect(transport);
+    await proxiedServer.connect(serverTransport);
     
     // Connect the client to the transport
-    await client.connect(transport.clientTransport);
+    await client.connect(clientTransport);
     
     // Call the tool
     const result = await client.callTool('error', { message: 'Test error' });
@@ -216,10 +224,10 @@ describe('MCP Proxy Wrapper Integration', () => {
     });
     
     // Connect the server to the transport
-    await proxiedServer.connect(transport);
+    await proxiedServer.connect(serverTransport);
     
     // Connect the client to the transport
-    await client.connect(transport.clientTransport);
+    await client.connect(clientTransport);
     
     // Call the tool
     const result = await client.callTool('greet', { name: 'World' });
@@ -249,10 +257,10 @@ describe('MCP Proxy Wrapper Integration', () => {
     });
     
     // Connect the server to the transport
-    await proxiedServer.connect(transport);
+    await proxiedServer.connect(serverTransport);
     
     // Connect the client to the transport
-    await client.connect(transport.clientTransport);
+    await client.connect(clientTransport);
     
     // Call the tool
     const result = await client.callTool('greet', { name: 'World' });

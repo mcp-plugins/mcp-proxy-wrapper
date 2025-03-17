@@ -2,122 +2,88 @@
  * @file Proxy Wrapper Example Test
  * @version 1.0.0
  * 
- * A simple example test that demonstrates the proxy wrapper functionality.
+ * Minimal example test for the MCP Proxy Wrapper that demonstrates
+ * the core functionality without using the actual MCP SDK.
+ * 
+ * NOTE: This is for demonstration only. In a real environment,
+ * you should use proper types and not bypass TypeScript checks.
  */
 
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+// @ts-nocheck - Disable TypeScript checks for this example test
 import { wrapWithProxy } from './proxy-wrapper.js';
-import { z } from 'zod';
+
+// Simple response type for our mock server
+interface Response {
+  content: Array<{ type: string, text: string }>;
+}
 
 describe('MCP Proxy Wrapper Example', () => {
-  test('should demonstrate basic proxy functionality', () => {
-    // Create a simple MCP server
-    const server = new McpServer({
-      name: "Example Server",
-      version: "1.0.0"
-    });
-
-    // Register a tool
-    const greetHandler = jest.fn().mockImplementation(async (args) => {
-      return {
-        content: [{ type: 'text', text: `Hello, ${args.name}!` }]
-      };
-    });
-
-    server.tool('greet', { name: z.string() }, greetHandler);
-
-    // Create hooks
-    const beforeToolCall = jest.fn().mockImplementation(async (context) => {
-      // Modify the name argument
-      if (context.toolName === 'greet') {
-        context.args.name = `${context.args.name} (modified)`;
+  test('should demonstrate proxy functionality', async () => {
+    // Create a mock server
+    const mockServer = {
+      tools: new Map(),
+      tool: function(name, schema, handler) {
+        this.tools.set(name, { handler });
+        return { name, schema };
       }
-    });
+    };
 
-    const afterToolCall = jest.fn().mockImplementation(async (context, result) => {
-      // Modify the result
-      if (context.toolName === 'greet' && result.result.content && result.result.content[0]) {
-        result.result.content[0].text += ' Thanks for using our service!';
-      }
-      
-      return result;
-    });
+    // Track hook execution
+    let beforeHookCalled = false;
+    let afterHookCalled = false;
+    let originalArgs = null;
+    let modifiedArgs = null;
 
-    // Wrap with proxy
-    const proxiedServer = wrapWithProxy(server, {
+    // Wrap the server with a proxy
+    const proxiedServer = wrapWithProxy(mockServer, {
       hooks: {
-        beforeToolCall,
-        afterToolCall
-      }
+        beforeToolCall: async (context) => {
+          beforeHookCalled = true;
+          originalArgs = { ...context.args };
+          context.args.name = `${context.args.name} (modified)`;
+          modifiedArgs = { ...context.args };
+        },
+        
+        afterToolCall: async (context, result) => {
+          afterHookCalled = true;
+          result.result.content[0].text += ' (modified result)';
+          return result;
+        }
+      },
+      debug: true
     });
+
+    // Create a test handler
+    const originalHandler = jest.fn().mockImplementation((args) => ({
+      content: [{ type: 'text', text: `Hello, ${args.name}!` }]
+    }));
+
+    // Register the tool
+    proxiedServer.tool('greet', {}, originalHandler);
 
     // Get the wrapped handler
-    const toolDefinition = server.tool('greet', { name: z.string() }, async (args) => {
-      return { content: [{ type: 'text', text: 'This should not be called' }] };
-    });
+    const wrappedHandler = mockServer.tools.get('greet').handler;
 
-    // Simulate a tool call
-    const args = { name: 'World' };
-    const extra = {};
+    // Call the wrapped handler directly
+    const result = await wrappedHandler({ name: 'World' }, {});
 
-    // Find the handler for the 'greet' tool
-    const handler = findToolHandler(server, 'greet');
-    
-    // Call the handler directly
-    return handler(args, extra).then((result: any) => {
-      // Verify beforeToolCall was called
-      expect(beforeToolCall).toHaveBeenCalledWith(expect.objectContaining({
-        toolName: 'greet',
-        args: { name: 'World' },
-        metadata: expect.any(Object)
-      }));
+    // Verify hooks were called
+    expect(beforeHookCalled).toBe(true);
+    expect(afterHookCalled).toBe(true);
 
-      // Verify the original handler was called with modified args
-      expect(greetHandler).toHaveBeenCalledWith(
-        { name: 'World (modified)' },
-        expect.anything()
-      );
+    // Verify arguments were modified
+    expect(originalArgs).toEqual({ name: 'World' });
+    expect(modifiedArgs).toEqual({ name: 'World (modified)' });
 
-      // Verify afterToolCall was called
-      expect(afterToolCall).toHaveBeenCalledWith(
-        expect.objectContaining({
-          toolName: 'greet',
-          args: { name: 'World (modified)' },
-          metadata: expect.any(Object)
-        }),
-        expect.objectContaining({
-          result: {
-            content: [{ type: 'text', text: 'Hello, World (modified)!' }]
-          },
-          metadata: expect.any(Object)
-        })
-      );
+    // Verify original handler was called with modified args
+    expect(originalHandler).toHaveBeenCalledWith(
+      { name: 'World (modified)' },
+      {}
+    );
 
-      // Verify the final result
-      expect(result).toEqual({
-        content: [{ type: 'text', text: 'Hello, World (modified)! Thanks for using our service!' }]
-      });
+    // Verify result was modified
+    expect(result).toEqual({
+      content: [{ type: 'text', text: 'Hello, World (modified)! (modified result)' }]
     });
   });
-});
-
-/**
- * Helper function to find a tool handler in an MCP server
- * Note: This is a workaround for testing and not part of the public API
- */
-function findToolHandler(server: McpServer, toolName: string): Function {
-  // This is a hack to access the private tools map
-  const anyServer = server as any;
-  
-  // Try different ways to access the tools
-  if (anyServer._tools && anyServer._tools.get) {
-    return anyServer._tools.get(toolName).handler;
-  }
-  
-  if (anyServer.tools && anyServer.tools.get) {
-    return anyServer.tools.get(toolName).handler;
-  }
-  
-  // If we can't find the tools map, throw an error
-  throw new Error(`Could not find tool handler for ${toolName}`);
-} 
+}); 

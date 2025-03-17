@@ -5,13 +5,7 @@
  * A simple in-memory transport implementation for testing MCP servers.
  */
 
-// Define the Transport interface locally to avoid import issues
-interface Transport {
-  start(): Promise<void>;
-  close(): Promise<void>;
-  send(message: JSONRPCMessage): Promise<void>;
-  onMessage(handler: (message: JSONRPCMessage) => void): void;
-}
+import { Transport } from '@modelcontextprotocol/sdk/transport/index.js';
 
 // Define the JSONRPCMessage type locally
 type JSONRPCMessage = {
@@ -33,6 +27,21 @@ type JSONRPCMessage = {
 export class MemoryTransport implements Transport {
   private messageHandler: ((message: JSONRPCMessage) => void) | null = null;
   private isConnected = false;
+  private pairTransport: MemoryTransport | null = null;
+
+  /**
+   * Create a pair of connected memory transports
+   * @returns A pair of connected memory transports
+   */
+  static createPair(): { serverTransport: MemoryTransport; clientTransport: MemoryTransport } {
+    const serverTransport = new MemoryTransport();
+    const clientTransport = new MemoryTransport();
+    
+    serverTransport.pairTransport = clientTransport;
+    clientTransport.pairTransport = serverTransport;
+    
+    return { serverTransport, clientTransport };
+  }
 
   /**
    * Start the transport
@@ -58,9 +67,12 @@ export class MemoryTransport implements Transport {
       throw new Error('Transport is not connected');
     }
     
-    // In a real transport, this would send the message to the other side
-    // For testing, we can just log it or process it internally
-    console.debug('Transport message sent:', message);
+    if (!this.pairTransport) {
+      throw new Error('Transport is not paired');
+    }
+    
+    // Forward the message to the paired transport
+    this.pairTransport.receiveMessage(message);
   }
 
   /**
@@ -72,10 +84,10 @@ export class MemoryTransport implements Transport {
   }
 
   /**
-   * Simulate receiving a message from the other side
+   * Receive a message from the paired transport
    * @param message The message to receive
    */
-  simulateReceive(message: JSONRPCMessage): void {
+  private receiveMessage(message: JSONRPCMessage): void {
     if (!this.isConnected) {
       throw new Error('Transport is not connected');
     }
