@@ -57,7 +57,6 @@ async function main() {
   const transport = new StdioServerTransport();
   
   // Connect the payments-enabled server to the transport
-  console.log('Starting payments-enabled MCP server...');
   await paymentsEnabledServer.connect(transport);
 }
 

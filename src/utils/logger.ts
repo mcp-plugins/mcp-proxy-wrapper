@@ -22,9 +22,8 @@ import * as winston from 'winston';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import * as path from 'path';
 import * as fs from 'fs';
-// Use require instead of import for CommonJS compatibility
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const Transport = require('winston-transport');
+// Import Transport from winston-transport as an ES module
+import Transport from 'winston-transport';
 
 /**
  * Options for configuring the logger
