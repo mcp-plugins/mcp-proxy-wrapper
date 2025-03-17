@@ -38,7 +38,7 @@ npm install @modelcontextprotocol/payment-wrapper
   
 7. **Error Handling and Logging:**  
    - ✅ If any step fails, returns an appropriate error response.
-   - ✅ Logs errors and important events using a Winston-based logger.
+   - ✅ Logs errors and important events using the native MCP logging system.
 
 8. **Payment Authentication Tools:**  
    - ✅ Provides tools for user authentication and balance management.

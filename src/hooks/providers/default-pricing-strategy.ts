@@ -13,7 +13,7 @@ import {
   ResourcePricing,
   PricingStrategyOptions
 } from '../interfaces/pricing-strategy.js';
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/mcp-logger.js';
 
 /**
  * Default Pricing Strategy

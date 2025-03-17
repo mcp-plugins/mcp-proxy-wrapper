@@ -12,7 +12,7 @@ import {
   UserBalance,
   PaymentProviderOptions
 } from '../interfaces/payment-provider.js';
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/mcp-logger.js';
 
 /**
  * Default Payment Provider

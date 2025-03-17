@@ -3,14 +3,13 @@
  * @version 1.0.0
  * 
  * This module provides helper functions for testing the payment wrapper
- * using the Winston memory transport for logging capture and verification.
+ * using the MCP native logger for logging capture and verification.
  */
 
-import winston from 'winston';
-import Transport from 'winston-transport';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { MemoryTransport, createMemoryTransport } from './logger.js';
 import { PaymentWrapperOptions } from '../payment-wrapper.js';
+import { TestLogger as McpTestLogger } from './test-logger.js';
+import { Logger } from './mcp-logger.js';
 
 // Valid JWT token for testing
 export const VALID_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
@@ -19,18 +18,54 @@ export const VALID_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyL
 export const DEBUG_MODE = true;
 
 /**
- * A wrapper for memory transport and logger to simplify testing
+ * A wrapper for the MCP test logger to maintain compatibility with existing tests
  */
 export class TestLogger {
-  transport: MemoryTransport;
-  logger: winston.Logger;
+  // Make this public for backward compatibility
+  public mcpTestLogger: McpTestLogger;
   
   constructor() {
-    this.transport = createMemoryTransport();
-    this.logger = winston.createLogger({
-      level: 'debug',
-      transports: [this.transport as unknown as Transport]
-    });
+    this.mcpTestLogger = new McpTestLogger();
+  }
+  
+  /**
+   * Returns an object that can be used as a mock MCP server for logging
+   */
+  get logger(): Logger & { loggingNotification: (log: any) => void } {
+    return {
+      debug: (message: string, meta?: any) => {
+        this.mcpTestLogger.logger.loggingNotification({
+          level: 0,
+          logger: 'test-logger',
+          data: meta ? `${message} ${JSON.stringify(meta)}` : message
+        });
+      },
+      info: (message: string, meta?: any) => {
+        this.mcpTestLogger.logger.loggingNotification({
+          level: 1,
+          logger: 'test-logger',
+          data: meta ? `${message} ${JSON.stringify(meta)}` : message
+        });
+      },
+      warn: (message: string, meta?: any) => {
+        this.mcpTestLogger.logger.loggingNotification({
+          level: 3,
+          logger: 'test-logger',
+          data: meta ? `${message} ${JSON.stringify(meta)}` : message
+        });
+      },
+      error: (message: string, meta?: any) => {
+        this.mcpTestLogger.logger.loggingNotification({
+          level: 4,
+          logger: 'test-logger',
+          data: meta ? `${message} ${JSON.stringify(meta)}` : message
+        });
+      },
+      // Add loggingNotification method for backward compatibility
+      loggingNotification: (log: any) => {
+        this.mcpTestLogger.logger.loggingNotification(log);
+      }
+    };
   }
   
   /**
@@ -41,16 +76,15 @@ export class TestLogger {
    * @returns True if the substring is found in any log message
    */
   contains(substring: string, level?: string): boolean {
-    const logs = level ? this.getLogsByLevel(level) : this.transport.logs;
+    // Convert string level to number if provided
+    const numLevel = level ? this.stringLevelToNumber(level) : undefined;
     
-    const contains = logs.some(log => 
-      JSON.stringify(log).includes(substring)
-    );
+    const contains = this.mcpTestLogger.contains(substring, numLevel);
     
     if (!contains && DEBUG_MODE) {
       // Original console for debugging helper itself
       console.log(`Expected to find "${substring}" in logs, but it wasn't found.`);
-      console.log('Available logs:', JSON.stringify(logs, null, 2));
+      console.log('Available logs:', JSON.stringify(this.mcpTestLogger.getAllLogs(), null, 2));
     }
     
     return contains;
@@ -63,7 +97,8 @@ export class TestLogger {
    * @returns Array of log entries with the specified level
    */
   getLogsByLevel(level: string): Record<string, any>[] {
-    return this.transport.getLogsByLevel(level);
+    const numLevel = this.stringLevelToNumber(level);
+    return this.mcpTestLogger.getLogsByLevel(numLevel);
   }
   
   /**
@@ -72,14 +107,31 @@ export class TestLogger {
    * @returns Array of all log entries
    */
   getAllLogs(): Record<string, any>[] {
-    return this.transport.logs;
+    return this.mcpTestLogger.getAllLogs();
   }
   
   /**
    * Clears all logs
    */
   clear(): void {
-    this.transport.clear();
+    this.mcpTestLogger.clear();
+  }
+  
+  /**
+   * Converts a string log level to its numeric equivalent
+   * 
+   * @param level The string log level
+   * @returns The numeric log level
+   */
+  private stringLevelToNumber(level: string): number {
+    const levelMap: Record<string, number> = {
+      'debug': 0,
+      'info': 1,
+      'warn': 3,
+      'error': 4
+    };
+    
+    return levelMap[level] || 1; // Default to INFO if unknown
   }
 }
 
@@ -99,6 +151,8 @@ export function createTestOptions(
     userToken: VALID_JWT,
     debugMode: DEBUG_MODE,
     loggerOptions: {
+      level: 'debug',
+      loggerName: 'test-logger',
       customLogger: testLogger.logger
     },
     ...overrides

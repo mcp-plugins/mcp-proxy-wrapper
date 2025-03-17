@@ -23,8 +23,7 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { createLogger, LoggerOptions } from './utils/logger.js';
-import * as winston from 'winston';
+import { createLogger, LoggerOptions, Logger } from './utils/mcp-logger.js';
 import { v4 as uuidv4 } from 'uuid';
 import { IAuthService } from './interfaces/auth-service.js';
 import { MockAuthService } from './services/mock-auth-service.js';
@@ -89,8 +88,13 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
     throw new Error('Developer API key is required');
   }
 
-  // Initialize logger
-  const logger = createLogger(options.loggerOptions || {});
+  // Create logger using MCP's native logging
+  const logger = createLogger({
+    level: options.loggerOptions?.level || 'info',
+    server,
+    loggerName: options.loggerOptions?.loggerName || 'mcp-payment-wrapper',
+    customLogger: options.loggerOptions?.customLogger
+  });
   const debugMode = options.debugMode || false;
 
   // Create auth service
@@ -280,7 +284,7 @@ function registerPaymentTools(
   server: McpServer, 
   authService: IAuthService, 
   options: PaymentWrapperOptions, 
-  logger: winston.Logger
+  logger: Logger
 ): void {
   logger.info('Registering payment tools on wrapped MCP server');
 

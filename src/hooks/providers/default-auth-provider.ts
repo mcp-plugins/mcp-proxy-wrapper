@@ -14,7 +14,7 @@ import {
   SessionStatus, 
   UserData 
 } from '../../interfaces/auth-service.js';
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '../../utils/mcp-logger.js';
 
 /**
  * Default Authentication Provider
