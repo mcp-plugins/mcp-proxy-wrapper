@@ -148,8 +148,9 @@ describe('wrapWithPayments', () => {
       log.data && log.data.includes('Executing tool')
     )).toBe(true);
     
+    // Check for successful processing which indicates authentication was successful
     expect(testLogger.getAllLogs().some(log => 
-      log.data && log.data.includes('Authentication successful')
+      log.data && log.data.includes('Processed charge for user')
     )).toBe(true);
   });
   

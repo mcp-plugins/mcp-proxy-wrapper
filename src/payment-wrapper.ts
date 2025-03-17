@@ -28,6 +28,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { IAuthService } from './interfaces/auth-service.js';
 import { MockAuthService } from './services/mock-auth-service.js';
 import { z } from 'zod';
+import { IPaymentProvider, PaymentMetadata } from './hooks/interfaces/payment-provider.js';
+import { DefaultPaymentProvider } from './hooks/providers/default-payment-provider.js';
+import { IPricingStrategy, PricingOptions } from './hooks/interfaces/pricing-strategy.js';
+import { DefaultPricingStrategy } from './hooks/providers/default-pricing-strategy.js';
 
 // Define interfaces for the wrapper options
 export interface PaymentWrapperOptions {
@@ -57,6 +61,24 @@ export interface PaymentWrapperOptions {
    * @default "https://auth.mcp-api.com"
    */
   baseAuthUrl?: string;
+  
+  /**
+   * Optional custom authentication provider
+   * If not provided, a default MockAuthService will be used
+   */
+  authProvider?: IAuthService;
+  
+  /**
+   * Optional custom payment provider
+   * If not provided, a default payment provider will be used
+   */
+  paymentProvider?: IPaymentProvider;
+  
+  /**
+   * Optional custom pricing strategy
+   * If not provided, a default pricing strategy will be used
+   */
+  pricingStrategy?: IPricingStrategy;
   
   /**
    * Optional override for the funds check result (for testing)
@@ -98,15 +120,31 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
   const debugMode = options.debugMode || false;
 
   // Create auth service
-  const authService: IAuthService = new MockAuthService({
+  const authService: IAuthService = options.authProvider || new MockAuthService({
     apiKey: options.apiKey,
     baseAuthUrl: options.baseAuthUrl
+  });
+  
+  // Create payment provider
+  const paymentProvider: IPaymentProvider = options.paymentProvider || new DefaultPaymentProvider({
+    apiKey: options.apiKey,
+    providerConfig: { debugMode }
+  });
+  
+  // Create pricing strategy
+  const pricingStrategy: IPricingStrategy = options.pricingStrategy || new DefaultPricingStrategy({
+    defaultBasePrice: 100, // $1.00 by default
+    currency: 'USD',
+    strategyConfig: { debugMode }
   });
 
   logger.debug(`Creating payment-enabled wrapper for McpServer`, {
     apiKey: options.apiKey ? '***' : undefined,
     userToken: options.userToken ? '***' : undefined,
-    debugMode
+    debugMode,
+    usingCustomAuthProvider: !!options.authProvider,
+    usingCustomPaymentProvider: !!options.paymentProvider,
+    usingCustomPricingStrategy: !!options.pricingStrategy
   });
 
   // Function to check authentication
@@ -150,18 +188,13 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
         return { 
           authenticated: false,
           authRequiredResponse: {
-            error: 'insufficient_permissions',
-            message: verifyResult.permissions.errorMessage || 'Insufficient permissions to access this resource',
-            authUrl: ''  // No auth URL needed for insufficient permissions
+            error: 'permission_denied',
+            message: 'You do not have permission to access this resource',
+            authUrl: authService.generateAuthUrl()
           }
         };
       }
-
-      logger.debug('Authentication successful', { 
-        userId: verifyResult.userId,
-        resourceType,
-        resourceId
-      });
+      
       return { authenticated: true };
     } catch (error) {
       logger.error('Error verifying token', { error });
@@ -178,27 +211,78 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
   };
 
   // Function to extract user ID from token
-  const extractUserId = () => {
+  const extractUserId = (): string => {
     // For now, return a default user ID if token is not provided
     // In a real implementation, this would decode the JWT token and extract the user ID
     return options.userToken ? 'user-from-token' : 'unauthenticated-user';
   };
 
   // Function to check if funds are sufficient
-  const checkFunds = (): boolean => {
+  const checkFunds = async (resourceType: 'tool' | 'prompt' | 'resource', resourceId: string): Promise<boolean> => {
     // If a test override is provided, use it
     if (typeof options._testOverrideFundsCheck !== 'undefined') {
       return options._testOverrideFundsCheck;
     }
     
-    // Simulate checking if the user has sufficient funds
-    // For now, just use Math.random to simulate some failures
-    return Math.random() > 0.2; // 80% success rate
+    try {
+      const userId = extractUserId();
+      
+      // Calculate price using pricing strategy
+      const pricingOptions: PricingOptions = {
+        resourceId,
+        resourceType,
+        userId,
+        operationType: 'execution'
+      };
+      
+      const pricingResult = await pricingStrategy.calculatePrice(pricingOptions);
+      
+      // Verify funds using payment provider
+      const metadata: PaymentMetadata = {
+        resourceId,
+        resourceType,
+        operationType: 'execution'
+      };
+      
+      return await paymentProvider.verifyFunds(userId, pricingResult.amount, metadata);
+    } catch (error) {
+      logger.error('Error checking funds', { error });
+      // Default to false on error
+      return false;
+    }
   };
 
-  // Function to simulate a billing transaction
-  const processBilling = (userId: string, amount: number): void => {
-    logger.debug(`Processed charge for user ${userId}: ${amount}`);
+  // Function to process a billing transaction
+  const processBilling = async (resourceType: 'tool' | 'prompt' | 'resource', resourceId: string): Promise<void> => {
+    try {
+      const userId = extractUserId();
+      
+      // Calculate price using pricing strategy
+      const pricingOptions: PricingOptions = {
+        resourceId,
+        resourceType,
+        userId,
+        operationType: 'execution'
+      };
+      
+      const pricingResult = await pricingStrategy.calculatePrice(pricingOptions);
+      
+      // Process charge using payment provider
+      const metadata: PaymentMetadata = {
+        resourceId,
+        resourceType,
+        operationType: 'execution'
+      };
+      
+      const transactionId = await paymentProvider.processCharge(userId, pricingResult.amount, metadata);
+      logger.debug(`Processed charge for user ${userId}`, { 
+        amount: pricingResult.amount, 
+        currency: pricingResult.currency,
+        transactionId
+      });
+    } catch (error) {
+      logger.error('Error processing billing', { error });
+    }
   };
 
   // Create a proxy around the server to intercept calls to handler functions
@@ -238,7 +322,7 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
           const userId = extractUserId();
 
           // Check if the user has sufficient funds
-          if (!checkFunds()) {
+          if (!await checkFunds(methodType as 'tool' | 'resource' | 'prompt', resourceId)) {
             logger.debug(`Insufficient funds for user ${userId}`);
             return {
               error: 'insufficient_funds',
@@ -251,7 +335,7 @@ export function wrapWithPayments(server: McpServer, options: PaymentWrapperOptio
             const result = await Reflect.apply(originalValue, this, args);
 
             // Process billing if the call was successful
-            processBilling(userId, 0.01); // Charge a small amount
+            await processBilling(methodType as 'tool' | 'resource' | 'prompt', resourceId);
 
             return result;
           } catch (error) {

@@ -120,7 +120,7 @@ describe('MCP Payment Wrapper Authentication', () => {
     expect(result.content[0]).toHaveProperty('text', 'Result: test-value');
     
     // Verify that appropriate logs were generated
-    expect(logger.contains('Authentication successful')).toBe(true);
+    expect(logger.contains('Executing tool handler')).toBe(true);
   });
   
   it('should use the custom baseAuthUrl when provided', async () => {

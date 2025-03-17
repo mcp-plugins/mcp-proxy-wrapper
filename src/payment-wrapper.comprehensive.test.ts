@@ -244,9 +244,9 @@ describe('Tool Method Tests', () => {
       expect(result?.result).toHaveProperty('content');
       expect(result?.result.content[0].text).toBe('Success');
       
-      // Verify authentication was processed
+      // Verify authentication was processed successfully by checking for billing
       expect(testLogger.getAllLogs().some(log => 
-        log.data && log.data.includes('Authentication successful')
+        log.data && log.data.includes('Processed charge for user')
       )).toBe(true);
     });
     
@@ -389,9 +389,9 @@ describe('Prompt Method Tests', () => {
       expect(result?.result).toHaveProperty('messages');
       expect(result?.result.messages[0].content.text).toBe('Success');
       
-      // Verify authentication was processed
+      // Verify authentication was processed successfully by checking for billing
       expect(testLogger.getAllLogs().some(log => 
-        log.data && log.data.includes('Authentication successful')
+        log.data && log.data.includes('Processed charge for user')
       )).toBe(true);
     });
     

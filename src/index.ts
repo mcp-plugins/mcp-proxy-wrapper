@@ -15,6 +15,7 @@
  * - Main export for the payment wrapper
  * - Type definitions
  * - Utility exports
+ * - Hook interfaces and implementations
  */
 
 // Export main function and types
@@ -34,6 +35,32 @@ export { MockAuthService } from './services/mock-auth-service.js';
 // Export utilities
 export { createLogger, LoggerOptions } from './utils/logger.js';
 
+// Export hook interfaces
+export {
+  IAuthProvider,
+  AuthProviderOptions
+} from './hooks/interfaces/auth-provider.js';
+
+export {
+  IPaymentProvider,
+  PaymentProviderOptions,
+  PaymentMetadata,
+  UserBalance
+} from './hooks/interfaces/payment-provider.js';
+
+export {
+  IPricingStrategy,
+  PricingStrategyOptions,
+  PricingOptions,
+  PricingResult,
+  ResourcePricing
+} from './hooks/interfaces/pricing-strategy.js';
+
+// Export default hook implementations
+export { DefaultAuthProvider } from './hooks/providers/default-auth-provider.js';
+export { DefaultPaymentProvider } from './hooks/providers/default-payment-provider.js';
+export { DefaultPricingStrategy } from './hooks/providers/default-pricing-strategy.js';
+
 /**
  * @description
  * 
@@ -47,6 +74,7 @@ export { createLogger, LoggerOptions } from './utils/logger.js';
  * - **User JWT Verification**: Authenticates users with JWT tokens
  * - **Billing Checks**: Verifies user has sufficient funds
  * - **Payment Tools**: Provides authentication and balance tools
+ * - **Extensible Hooks**: Supports custom authentication, payment, and pricing implementations
  * 
  * ## Payment Tools
  * 
@@ -55,6 +83,14 @@ export { createLogger, LoggerOptions } from './utils/logger.js';
  * - **payment_authenticate**: Initiates the authentication process
  * - **payment_check_auth_status**: Checks the status of authentication
  * - **payment_get_balance**: Gets the user's current balance
+ * 
+ * ## Hook System
+ * 
+ * The wrapper provides a flexible hook system that allows you to customize:
+ * 
+ * - **Authentication**: Implement your own authentication provider
+ * - **Payment Processing**: Implement your own payment provider
+ * - **Pricing**: Implement your own pricing strategy
  * 
  * ## Usage Example
  * 
@@ -76,5 +112,38 @@ export { createLogger, LoggerOptions } from './utils/logger.js';
  * 
  * // Use the wrapped server as normal
  * // It now has payment tools and verification
+ * ```
+ * 
+ * ## Custom Hooks Example
+ * 
+ * ```typescript
+ * import { 
+ *   McpServer 
+ * } from '@modelcontextprotocol/sdk/server/mcp.js';
+ * import { 
+ *   wrapWithPayments,
+ *   IAuthProvider,
+ *   IPaymentProvider,
+ *   IPricingStrategy
+ * } from '@modelcontextprotocol/payment-wrapper';
+ * 
+ * // Create your custom hook implementations
+ * class MyAuthProvider implements IAuthProvider { /* ... */ }
+ * class MyPaymentProvider implements IPaymentProvider { /* ... */ }
+ * class MyPricingStrategy implements IPricingStrategy { /* ... */ }
+ * 
+ * // Create your MCP server
+ * const server = new McpServer({ 
+ *   name: "My MCP Server",
+ *   version: "1.0.0"
+ * });
+ * 
+ * // Wrap with payment functionality using custom hooks
+ * const paymentServer = wrapWithPayments(server, { 
+ *   apiKey: 'YOUR_API_KEY',
+ *   authProvider: new MyAuthProvider(),
+ *   paymentProvider: new MyPaymentProvider(),
+ *   pricingStrategy: new MyPricingStrategy()
+ * });
  * ```
  */ 

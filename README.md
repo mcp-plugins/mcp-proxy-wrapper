@@ -16,17 +16,18 @@ npm install @modelcontextprotocol/payment-wrapper
   
 2. **Developer API Key Verification:**  
    - ✅ Validates that a valid developer API key is provided as part of the options.
-   - ⚠️ Currently uses a mock implementation for verification.
+   - ✅ Supports custom authentication providers through the hook system.
 
 3. **User JWT Verification:**  
    - ✅ Accepts user JWT tokens for authentication.
-   - ⚠️ Currently uses a mock service that simulates JWT verification.
-   - 🔄 Real JWT verification would require integration with an authentication backend.
+   - ✅ Supports custom authentication providers through the hook system.
+   - 🔄 Default implementation uses a mock service that simulates JWT verification.
 
 4. **Billing Check:**  
    - ✅ Before forwarding the MCP call, performs a billing check.
-   - ⚠️ Currently simulates the check using random success/failure or test overrides.
-   - 🔄 Real implementation would require integration with a billing service.
+   - ✅ Supports custom payment providers through the hook system.
+   - ✅ Supports custom pricing strategies through the hook system.
+   - 🔄 Default implementation uses a mock service that simulates billing checks.
 
 5. **Call Forwarding:**  
    - ✅ If the billing check passes, forwards the call to the underlying MCP server.
@@ -78,7 +79,7 @@ The MCP Payment Wrapper uses a proxy-based architecture to intercept calls to th
 └─────────────────┘     │  │  │  │                 │    │                │    │                            │   │  │
                         │  │  │  │  Authentication ├───▶│  Funds Check   ├───▶│ Original Method Execution  │   │  │
                         │  │  │  │                 │    │                │    │                            │   │  │
-                        │  │  │  └────────┬────────┘    └────────┬───────┘    └─────────────┬──────────────┘   │  │
+                        │  │  │  │                 │    │                │    │                            │   │  │
                         │  │  │           │                      │                          │                  │  │
                         │  │  │           │                      │                          │                  │  │
                         │  │  │           ▼                      ▼                          ▼                  │  │
@@ -504,3 +505,181 @@ Contributions are welcome! Please feel free to submit a Pull Request to [GitHub 
 ## License
 
 MIT 
+
+## Extensible Hook System
+
+The MCP Payment Wrapper includes a flexible hook system that allows you to customize authentication, payment processing, and pricing without requiring an external API backend. This makes it easy to get started with a proof of concept or to integrate with your existing systems.
+
+### Available Hooks
+
+1. **Authentication Provider**
+   - Handles user authentication and token verification
+   - Interface: `IAuthProvider`
+   - Default: `MockAuthService`
+
+2. **Payment Provider**
+   - Manages funds verification and transaction processing
+   - Interface: `IPaymentProvider`
+   - Default: `DefaultPaymentProvider`
+
+3. **Pricing Strategy**
+   - Determines the cost of operations based on resource type and usage
+   - Interface: `IPricingStrategy`
+   - Default: `DefaultPricingStrategy`
+
+### Using Custom Hooks
+
+To use custom hooks, simply pass your implementations to the `wrapWithPayments` function:
+
+```typescript
+import { wrapWithPayments } from '@modelcontextprotocol/payment-wrapper';
+import { MyCustomAuthProvider } from './my-auth-provider';
+import { MyCustomPaymentProvider } from './my-payment-provider';
+import { MyCustomPricingStrategy } from './my-pricing-strategy';
+
+// Create your custom hook implementations
+const authProvider = new MyCustomAuthProvider({
+  apiKey: 'your-api-key'
+});
+
+const paymentProvider = new MyCustomPaymentProvider({
+  apiKey: 'your-api-key'
+});
+
+const pricingStrategy = new MyCustomPricingStrategy({
+  defaultBasePrice: 50, // $0.50
+  currency: 'USD'
+});
+
+// Wrap your MCP server with custom hooks
+const wrappedServer = wrapWithPayments(mcpServer, {
+  apiKey: 'your-api-key',
+  userToken: 'user-jwt-token',
+  // Use your custom hook implementations
+  authProvider,
+  paymentProvider,
+  pricingStrategy
+});
+```
+
+### Creating Custom Hook Implementations
+
+#### Custom Authentication Provider
+
+```typescript
+import { IAuthProvider } from '@modelcontextprotocol/payment-wrapper';
+import { VerifyResponse } from '@modelcontextprotocol/payment-wrapper';
+
+class MyCustomAuthProvider implements IAuthProvider {
+  constructor(options) {
+    // Initialize your provider
+  }
+  
+  generateAuthUrl(options?: Record<string, unknown>): string {
+    // Return a URL for user authentication
+    return 'https://your-auth-service.com/auth';
+  }
+  
+  async verifyToken(token: string, resourceType: 'tool' | 'prompt' | 'resource', resourceId: string): Promise<VerifyResponse> {
+    // Verify the token and return a response
+    // This could integrate with your existing auth system
+    return {
+      valid: true,
+      userId: 'user-123',
+      permissions: {
+        canAccess: true
+      }
+    };
+  }
+  
+  generateToken(userId?: string): string {
+    // Generate a token for testing
+    return 'test-token';
+  }
+}
+```
+
+#### Custom Payment Provider
+
+```typescript
+import { 
+  IPaymentProvider, 
+  PaymentMetadata, 
+  UserBalance 
+} from '@modelcontextprotocol/payment-wrapper';
+
+class MyCustomPaymentProvider implements IPaymentProvider {
+  constructor(options) {
+    // Initialize your provider
+  }
+  
+  async verifyFunds(userId: string, amount: number, metadata?: PaymentMetadata): Promise<boolean> {
+    // Check if the user has sufficient funds
+    // This could integrate with your existing payment system
+    return true;
+  }
+  
+  async processCharge(userId: string, amount: number, metadata: PaymentMetadata): Promise<string> {
+    // Process a charge and return a transaction ID
+    return 'txn-123';
+  }
+  
+  async getBalance(userId: string): Promise<UserBalance> {
+    // Get the user's balance
+    return {
+      available: 10000, // $100.00
+      pending: 0,
+      currency: 'USD',
+      lastUpdated: new Date().toISOString()
+    };
+  }
+  
+  async verifyApiKey(apiKey: string): Promise<boolean> {
+    // Verify the API key
+    return true;
+  }
+}
+```
+
+#### Custom Pricing Strategy
+
+```typescript
+import { 
+  IPricingStrategy, 
+  PricingOptions, 
+  PricingResult, 
+  ResourcePricing 
+} from '@modelcontextprotocol/payment-wrapper';
+
+class MyCustomPricingStrategy implements IPricingStrategy {
+  constructor(options) {
+    // Initialize your strategy
+  }
+  
+  async calculatePrice(options: PricingOptions): Promise<PricingResult> {
+    // Calculate the price for an operation
+    return {
+      amount: 50, // $0.50
+      currency: 'USD'
+    };
+  }
+  
+  async getPricingInfo(resourceId: string, resourceType: 'tool' | 'prompt' | 'resource'): Promise<ResourcePricing> {
+    // Get pricing information for a resource
+    return {
+      basePrice: 50, // $0.50
+      currency: 'USD',
+      pricingModel: 'flat'
+    };
+  }
+  
+  async isApplicable(resourceId: string, resourceType: 'tool' | 'prompt' | 'resource'): Promise<boolean> {
+    // Check if this pricing strategy applies to the resource
+    return true;
+  }
+}
+```
+
+### Example with In-Memory Implementations
+
+For a complete example of using custom hooks with in-memory implementations (no external API required), see the `example-custom-hooks-usage.ts` file in the source code.
