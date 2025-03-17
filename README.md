@@ -1,6 +1,6 @@
 # MCP Proxy Wrapper
 
-A lightweight wrapper for MCP Server that allows intercepting and modifying tool calls.
+A lightweight wrapper for the Model Context Protocol (MCP) server that allows intercepting and modifying tool calls.
 
 ## Features
 
@@ -13,14 +13,17 @@ A lightweight wrapper for MCP Server that allows intercepting and modifying tool
 ## Installation
 
 ```bash
-npm install @modelcontextprotocol/mcp-proxy-wrapper
+npm install mcp-proxy-wrapper
 ```
 
 ## Usage
 
+### TypeScript
+
 ```typescript
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { wrapWithProxy } from '@modelcontextprotocol/mcp-proxy-wrapper';
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { z } from 'zod';
 
 // Create an MCP server
 const server = new McpServer({
@@ -28,51 +31,58 @@ const server = new McpServer({
   version: '1.0.0'
 });
 
-// Wrap the server with the proxy
-const proxy = wrapWithProxy(server, {
-  debug: true, // Enable debug logging
+// Wrap the server with a proxy
+const proxiedServer = wrapWithProxy(server, {
   hooks: {
-    // Hook that runs before a tool call
+    // Hook for before a tool is called
     beforeToolCall: async (context) => {
-      console.log(`Before calling ${context.toolName}`);
+      console.log(`Tool called: ${context.toolName}`);
+      console.log(`Arguments: ${JSON.stringify(context.args)}`);
       
       // You can modify the arguments
-      context.args.modified = true;
+      if (context.toolName === 'greet' && context.args.name) {
+        context.args.name = `${context.args.name} (modified)`;
+      }
       
-      // Or return a result to short-circuit the tool call
-      // return { result: { short: 'circuit' } };
+      // You can also short-circuit the call by returning a result
+      if (context.toolName === 'blocked') {
+        return {
+          content: [{ type: 'text', text: 'This tool is blocked!' }]
+        };
+      }
     },
     
-    // Hook that runs after a tool call
+    // Hook for after a tool is called
     afterToolCall: async (context, result) => {
-      console.log(`After calling ${context.toolName}`);
+      console.log(`Tool result: ${JSON.stringify(result.result)}`);
       
       // You can modify the result
-      return {
-        result: { ...result.result, modified: true },
-        metadata: result.metadata
-      };
+      if (context.toolName === 'greet' && result.result.content) {
+        result.result.content[0].text += ' (modified result)';
+      }
+      
+      return result;
     }
-  }
+  },
+  debug: true // Enable debug logging
 });
 
-// Register a tool with the proxy
-proxy.tool('greet', async (args) => {
-  return { greeting: `Hello, ${args.name}!` };
+// Register tools as usual with the proxied server
+proxiedServer.tool('greet', { name: z.string() }, async (args) => {
+  return {
+    content: [{ type: 'text', text: `Hello, ${args.name}!` }]
+  };
 });
 
-// Call the tool
-const result = await server.callTool('greet', { name: 'World' });
-console.log(result); // { greeting: 'Hello, World!', modified: true }
+// Start the server
+server.connect(transport);
 ```
 
-## JavaScript Implementation
-
-For projects not using TypeScript, a pure JavaScript implementation is also available:
+### JavaScript
 
 ```javascript
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { wrapWithProxy } from '@modelcontextprotocol/mcp-proxy-wrapper/dist/proxy-wrapper.simple.js';
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
 
 // Create an MCP server
 const server = new McpServer({
@@ -80,121 +90,112 @@ const server = new McpServer({
   version: '1.0.0'
 });
 
-// Wrap the server with the proxy
-const proxy = wrapWithProxy(server, {
-  debug: true,
+// Wrap the server with a proxy
+const proxiedServer = wrapWithProxy(server, {
   hooks: {
+    // Hook for before a tool is called
     beforeToolCall: async (context) => {
-      console.log(`Before calling ${context.toolName}`);
-      context.args.modified = true;
+      console.log(`Tool called: ${context.toolName}`);
+      
+      // You can modify the arguments
+      if (context.args.name) {
+        context.args.name = `${context.args.name} (modified)`;
+      }
     },
+    
+    // Hook for after a tool is called
     afterToolCall: async (context, result) => {
-      console.log(`After calling ${context.toolName}`);
-      return { ...result, modified: true };
+      console.log(`Tool result:`, result.result);
+      
+      // You can modify the result
+      if (result.result.content && result.result.content[0]) {
+        result.result.content[0].text += ' (modified result)';
+      }
+      
+      return result;
     }
   }
 });
 
-// Register a tool with the proxy
-proxy.tool('greet', (args) => {
-  return { greeting: `Hello, ${args.name}!` };
+// Register tools as usual with the proxied server
+proxiedServer.tool('greet', { name: 'string' }, async (args) => {
+  return {
+    content: [{ type: 'text', text: `Hello, ${args.name}!` }]
+  };
 });
 
-// Call the tool
-const result = await server.callTool('greet', { name: 'World' });
-console.log(result); // { greeting: 'Hello, World!', modified: true }
+// Start the server
+server.connect(transport);
 ```
+
+## API
+
+### `wrapWithProxy(server, options)`
+
+Wraps an MCP server with a proxy that allows for intercepting and modifying tool calls.
+
+#### Parameters
+
+- `server`: The MCP server to wrap.
+- `options`: Configuration options for the proxy wrapper.
+  - `hooks`: Hook functions to execute before and after tool calls.
+    - `beforeToolCall`: Called before a tool is executed.
+    - `afterToolCall`: Called after a tool is executed.
+  - `debug`: Enable debug logging.
+
+#### Returns
+
+A proxied MCP server that has the same API as the original server.
+
+### Hook Context
+
+Both hook functions receive a context object with the following properties:
+
+- `toolName`: The name of the tool being called.
+- `args`: The arguments passed to the tool.
+- `requestId`: A unique ID for the request.
+- `metadata`: Additional metadata about the tool and request.
+
+### Intercepting and Modifying
+
+The hooks allow for:
+
+1. **Argument Modification**: Modify the arguments before they're passed to the tool.
+2. **Result Modification**: Modify the result before it's returned to the caller.
+3. **Short-Circuiting**: Return a result directly from the `beforeToolCall` hook to skip the tool execution.
+4. **Logging and Monitoring**: Log or monitor tool calls without modifying them.
 
 ## Testing
 
-The MCP Proxy Wrapper has been thoroughly tested using both TypeScript and JavaScript tests:
+The MCP Proxy Wrapper is extensively tested to ensure its functionality and compatibility with the MCP Server.
 
-### TypeScript Tests
+### Test Suite
 
-The TypeScript tests use Jest and mock the MCP Server to test the proxy wrapper functionality. The tests verify:
+The test suite includes:
 
-1. Tool registration
-2. Execution of beforeToolCall hooks
-3. Execution of afterToolCall hooks
-4. Short-circuiting of tool calls
-5. Error handling in tool handlers and hooks
+1. **Basic Unit Tests**: Verify core functionality with mock servers
+2. **Example Tests**: Demonstrate usage with simplified examples
+3. **Edge Case Tests**: Test handling of null/undefined values, complex objects, etc.
+4. **Integration Tests**: Test integration with real MCP Server and Client
+5. **JavaScript Tests**: Verify the JavaScript implementation works as expected
 
-To run the TypeScript tests:
+### Running Tests
+
+```bash
+npm test
+```
+
+For specific test files:
 
 ```bash
 npm test -- src/proxy-wrapper.test.ts
 ```
 
-### JavaScript Tests
-
-The JavaScript tests use a simple test runner without complex dependencies. They test the same functionality as the TypeScript tests.
-
-To run the JavaScript tests:
+To run JavaScript tests separately:
 
 ```bash
 node src/proxy-wrapper.simple.test.js
 ```
-
-## API Reference
-
-### wrapWithProxy(server, options)
-
-Wraps an MCP server with a proxy that allows intercepting tool calls.
-
-#### Parameters
-
-- `server` (McpServer): The MCP server to wrap
-- `options` (ProxyWrapperOptions): Options for the proxy wrapper
-
-#### Returns
-
-- (McpServer): A new MCP server with the proxy functionality
-
-### ProxyWrapperOptions
-
-Options for the proxy wrapper.
-
-#### Properties
-
-- `metadata` (Record<string, any>): Additional metadata to include with every tool call
-- `hooks` (ProxyHooks): Hooks for the proxy
-- `debug` (boolean): Enable debug mode for detailed logging
-
-### ProxyHooks
-
-Hooks for the proxy wrapper.
-
-#### Properties
-
-- `beforeToolCall` (function): Hook that runs before a tool call
-- `afterToolCall` (function): Hook that runs after a tool call
-
-### ToolCallContext
-
-Context for a tool call.
-
-#### Properties
-
-- `toolName` (string): Name of the tool being called
-- `args` (Record<string, any>): Arguments passed to the tool
-- `metadata` (Record<string, any>): Additional metadata
-
-### ToolCallResult
-
-Result of a tool call.
-
-#### Properties
-
-- `result` (any): Result returned by the tool
-- `metadata` (Record<string, any>): Additional metadata
-
-## Important Notes
-
-- The proxy wrapper is designed to be a lightweight wrapper around an MCP Server.
-- It does not modify the original server's behavior, only intercepts tool calls.
-- The hooks are executed in the order: beforeToolCall -> tool handler -> afterToolCall.
-- If beforeToolCall returns a result, the tool handler is not called.
-- Errors in hooks and tool handlers are caught and formatted as error responses.
 
 ## License
 
