@@ -1,18 +1,15 @@
 {
-  "name": "@modelcontextprotocol/payment-wrapper",
+  "name": "@modelcontextprotocol/proxy-wrapper",
   "version": "1.0.0",
-  "description": "Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality",
+  "description": "Lightweight proxy wrapper for Model Context Protocol (MCP) servers that provides a hook system for intercepting and modifying tool calls",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "example": "ts-node-esm src/example-payment-wrapper-usage.ts",
+    "example": "ts-node-esm src/example-proxy-wrapper-usage.ts",
     "test": "jest",
     "test:integration": "jest --config=jest.integration.config.js",
-    "test:integration:with-server": "node --loader ts-node/esm scripts/run-integration-tests.js",
-    "test:integration:simple": "node --loader ts-node/esm scripts/simple-test-runner.js",
-    "test:integration:improved": "node --loader ts-node/esm scripts/improved-test-runner.js",
     "lint": "eslint src/**/*.ts",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
@@ -21,23 +18,22 @@
     "version:minor": "npm version minor",
     "version:major": "npm version major",
     "publish": "npm publish --access public",
-    "start:mock-backend": "node --loader ts-node/esm src/mock-backend/start.ts",
     "docs": "typedoc --options typedoc.json",
     "docs:serve": "cd docs && jekyll serve"
   },
   "keywords": [
     "mcp",
     "modelcontextprotocol",
-    "payment",
+    "proxy",
     "llm",
     "ai",
-    "billing"
+    "hooks"
   ],
   "author": "Dennison Bertram and Anthropic Claude 3.7",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/crazyrabbitltc/mcp-payment-wrapper"
+    "url": "https://github.com/crazyrabbitltc/mcp-proxy-wrapper"
   },
   "files": [
     "dist",
@@ -52,19 +48,13 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@fastify/cors": "^9.0.1",
     "@types/jest": "^29.5.12",
-    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20.10.5",
     "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^7.1.1",
     "@typescript-eslint/parser": "^7.1.1",
     "eslint": "^8.57.0",
-    "fastify": "^4.29.0",
-    "fastify-cli": "^6.1.0",
     "jest": "^29.7.0",
-    "jsonwebtoken": "^9.0.2",
-    "pino-pretty": "^10.3.1",
     "supertest": "^6.3.4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
