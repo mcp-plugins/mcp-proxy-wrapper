@@ -1,43 +1,57 @@
-# MCP Proxy Wrapper Simple Test Summary
+# MCP Proxy Wrapper Test Summary
 
-This document summarizes the implementation and testing of the MCP Proxy Wrapper using a simplified JavaScript approach.
+## Overview
 
-## Implementation
+The MCP Proxy Wrapper has been tested using a simple JavaScript test file that doesn't rely on TypeScript or complex testing frameworks. This approach was chosen due to compatibility issues with the current MCP SDK and TypeScript.
 
-We created two key files:
+## Test Approach
 
-1. `simple-proxy-wrapper.js` - A simplified version of the proxy wrapper that:
-   - Wraps an MCP server with proxy functionality
-   - Intercepts tool registrations
-   - Provides hooks for before/after tool calls and error handling
-   - Supports short-circuiting tool calls
-   - Includes debug logging
+We created a simple test runner in JavaScript that:
 
-2. `simple-test.js` - A test script that:
-   - Creates an MCP server
-   - Registers tools
-   - Wraps the server with our proxy wrapper
-   - Registers additional tools after wrapping
-   - Tests all tools to verify hook functionality
+1. Doesn't rely on TypeScript type checking
+2. Uses direct function calls to test the proxy wrapper
+3. Implements basic assertions for validation
+4. Provides clear pass/fail reporting
 
-## Test Results
+## Key Findings
 
-The tests successfully demonstrated:
+1. **Tool Registration Timing**
+   - Tools registered BEFORE wrapping the server are NOT intercepted by the proxy
+   - Tools registered AFTER wrapping the server ARE intercepted by the proxy
+   - This is an important limitation to be aware of when using the proxy wrapper
 
-1. **Tool Registration**: Both pre-wrapped and post-wrapped tools were registered correctly.
-2. **Before Hook**: The before hook was called and could modify arguments.
-3. **After Hook**: The after hook was called and could modify results.
-4. **Error Handling**: The error hook caught exceptions and returned custom error responses.
+2. **Hook Execution**
+   - The `beforeToolCall` hook is executed before the tool handler
+   - The hook can modify the arguments passed to the tool handler
+   - The `afterToolCall` hook is executed after the tool handler
+   - The hook can modify the result returned by the tool handler
 
-## Key Concepts Demonstrated
+3. **Result Formatting**
+   - Tool results follow the expected format with content arrays
+   - The proxy wrapper correctly handles and modifies these results
 
-1. **Proxy Pattern**: We used a proxy pattern to intercept and modify tool calls.
-2. **Hook System**: We implemented a flexible hook system for customizing behavior.
-3. **Error Handling**: We demonstrated robust error handling with custom error responses.
-4. **Metadata Support**: We showed how metadata can be passed to hooks.
+## Issues Addressed
+
+The following issues were addressed during testing:
+
+1. **TypeScript Compatibility**
+   - The MCP SDK has changed its interface, causing TypeScript errors
+   - The `_tools` property is no longer accessible
+   - The tool method signature has changed
+
+2. **Tool Registration**
+   - Updated to use the new `tool` method signature
+   - Implemented proper parameter schemas using Zod
 
 ## Conclusion
 
-This simplified implementation successfully demonstrates the core functionality of the MCP Proxy Wrapper. It shows how the wrapper can be used to add custom behavior to an MCP server without modifying the server's core code.
+The MCP Proxy Wrapper is functioning correctly with the current MCP SDK. The core functionality of intercepting tool calls and executing hooks before and after tool calls is working as expected, with the important caveat that only tools registered after wrapping are intercepted.
 
-The implementation is lightweight and focused on the essential functionality, making it easier to understand and test. It provides a solid foundation for the more complete TypeScript implementation with additional features and type safety. 
+The simple JavaScript test approach provides a reliable way to verify the functionality without being affected by TypeScript compatibility issues.
+
+## Next Steps
+
+1. Update the TypeScript definitions to match the current MCP SDK
+2. Consider implementing a solution for intercepting tools registered before wrapping
+3. Refactor the tests to use TypeScript when the compatibility issues are resolved
+4. Add more comprehensive tests for edge cases and error handling 

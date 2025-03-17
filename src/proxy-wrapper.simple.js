@@ -1,42 +1,36 @@
 /**
- * @file Proxy Wrapper for MCP Server
+ * @file Proxy Wrapper for MCP Server (JavaScript Version)
  * @version 1.0.0
- * @status STABLE - DO NOT MODIFY WITHOUT TESTS
- * @lastModified 2024-03-17
  * 
  * This module provides a lightweight wrapper for an MCP Server that
  * allows intercepting and modifying tool calls.
- * 
- * IMPORTANT:
- * - All changes must be accompanied by tests
- * - Do not modify the interface without updating documentation
- * 
- * Functionality:
- * - Instance wrapping of an existing MCP server
- * - Pre-call hook execution
- * - Post-call hook execution
- * - Tool call interception
- * - Error handling and logging
  */
 
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { createLogger } from './utils/logger.js';
-import { v4 as uuidv4 } from 'uuid';
-import { ProxyWrapperOptions, ToolCallContext, ToolCallResult } from './interfaces/proxy-hooks.js';
-
-// Define types for the request handler extra
-type RequestHandlerExtra = any;
+/**
+ * Creates a logger with the specified options
+ * @param {Object} options - Logger options
+ * @returns {Object} - Logger object
+ */
+function createLogger(options = {}) {
+  const level = options.level || 'info';
+  const prefix = options.prefix || 'LOGGER';
+  
+  const isDebug = level === 'debug';
+  
+  return {
+    info: (...args) => console.log(`[${prefix}] INFO:`, ...args),
+    debug: (...args) => isDebug && console.log(`[${prefix}] DEBUG:`, ...args),
+    error: (...args) => console.error(`[${prefix}] ERROR:`, ...args)
+  };
+}
 
 /**
  * Wraps an MCP server with a proxy that allows intercepting tool calls
- * @param server The MCP server to wrap
- * @param options Options for the proxy wrapper
- * @returns A new MCP server with the proxy functionality
+ * @param {Object} server - The MCP server to wrap
+ * @param {Object} options - Options for the proxy wrapper
+ * @returns {Object} - The wrapped server
  */
-export function wrapWithProxy(
-  server: McpServer,
-  options?: ProxyWrapperOptions
-): McpServer {
+export function wrapWithProxy(server, options = {}) {
   const logger = createLogger({
     level: options?.debug ? 'debug' : 'info',
     prefix: 'MCP-PROXY'
@@ -52,8 +46,7 @@ export function wrapWithProxy(
   const originalTool = server.tool.bind(server);
   
   // Override the tool method to intercept tool registrations
-  // We need to use any here because the SDK types don't match the runtime behavior
-  const toolMethod: any = function(name: string, paramsSchemaOrCallback: any, callbackOrUndefined?: any) {
+  server.tool = function(name, paramsSchemaOrCallback, callbackOrUndefined) {
     logger.debug(`Intercepting tool registration: ${name}`);
     
     // Determine if this is the 2-arg or 3-arg version
@@ -62,11 +55,12 @@ export function wrapWithProxy(
     const originalCallback = isThreeArgVersion ? callbackOrUndefined : paramsSchemaOrCallback;
     
     // Create a wrapped handler that executes hooks
-    const wrappedCallback = async (args: any, extra: RequestHandlerExtra) => {
-      const requestId = uuidv4();
-      const context: ToolCallContext = {
+    const wrappedCallback = async (args, extra) => {
+      const requestId = Math.random().toString(36).substring(2, 15);
+      const context = {
         toolName: name,
         args,
+        extra,
         metadata: { 
           ...globalMetadata,
           requestId,
@@ -104,7 +98,7 @@ export function wrapWithProxy(
           logger.debug(`Executing afterToolCall hook for ${name}`, { requestId });
           
           try {
-            const toolResult: ToolCallResult = {
+            const toolResult = {
               result,
               metadata: {
                 ...context.metadata,
@@ -113,7 +107,9 @@ export function wrapWithProxy(
             };
             
             const modifiedResult = await hooks.afterToolCall(context, toolResult);
-            return modifiedResult.result;
+            if (modifiedResult && modifiedResult.result) {
+              return modifiedResult.result;
+            }
           } catch (error) {
             logger.error(`Error in afterToolCall hook for ${name}:`, error);
             throw new Error(`Hook error: ${error instanceof Error ? error.message : String(error)}`);
@@ -141,20 +137,11 @@ export function wrapWithProxy(
     if (isThreeArgVersion) {
       return originalTool(name, paramsSchema, wrappedCallback);
     } else {
-      // @ts-expect-error - The signature doesn't match exactly but it works at runtime
       return originalTool(name, wrappedCallback);
     }
   };
   
-  // Replace the original method
-  server.tool = toolMethod;
-  
   logger.info('MCP Proxy Wrapper initialized successfully');
   
   return server;
-}
-
-/**
- * Options for the proxy wrapper
- */
-export { ProxyWrapperOptions } from './interfaces/proxy-hooks.js'; 
+} 

@@ -1,123 +1,170 @@
-// Simple test for the MCP Proxy Wrapper
-// This file is meant to be run directly with Node.js
+/**
+ * @file Simple Test for MCP Proxy Wrapper
+ * @version 1.0.0
+ * 
+ * This is a simple JavaScript test for the MCP Proxy Wrapper.
+ * It doesn't rely on TypeScript or complex testing frameworks.
+ */
 
-// Import required modules
+// Import the MCP Server and proxy wrapper
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
 import { wrapWithProxy } from './simple-proxy-wrapper.js';
+import { z } from 'zod';
 
-// Store tool handlers for testing
-const toolHandlers = {};
+// Create a simple test runner
+const tests = [];
+let passed = 0;
+let failed = 0;
 
-// Create a simple MCP server
-const server = new McpServer({
-  name: 'Example Server',
-  version: '1.0.0'
+function test(name, fn) {
+  tests.push({ name, fn });
+}
+
+async function runTests() {
+  console.log('Running tests...\n');
+  
+  for (const { name, fn } of tests) {
+    try {
+      await fn();
+      console.log(`✅ PASS: ${name}`);
+      passed++;
+    } catch (error) {
+      console.error(`❌ FAIL: ${name}`);
+      console.error(`   Error: ${error.message}`);
+      if (error.stack) {
+        console.error(`   Stack: ${error.stack.split('\n')[1]}`);
+      }
+      failed++;
+    }
+  }
+  
+  console.log(`\nResults: ${passed} passed, ${failed} failed`);
+  
+  if (failed > 0) {
+    process.exit(1);
+  }
+}
+
+// Helper function for assertions
+function assert(condition, message) {
+  if (!condition) {
+    throw new Error(message || 'Assertion failed');
+  }
+}
+
+// Test: Basic wrapping
+test('should wrap an MCP server', () => {
+  const server = new McpServer({
+    name: 'Test Server',
+    version: '1.0.0'
+  });
+  
+  const proxiedServer = wrapWithProxy(server);
+  
+  assert(proxiedServer === server, 'Proxy should return the same server instance');
+  assert(typeof proxiedServer.tool === 'function', 'Proxied server should have a tool method');
 });
 
-// Override the tool method to store handlers
-const originalTool = server.tool;
-server.tool = function(name, schema, handler) {
-  console.log(`Registering original tool: ${name}`);
-  // Store the handler for testing
-  toolHandlers[name] = handler;
-  // Call the original method
-  return originalTool.call(server, name, schema, handler);
-};
-
-// Register a simple tool
-server.tool("greet", { name: z.string() }, async (args) => {
-  return {
-    content: [{ type: "text", text: `Hello, ${args.name}!` }]
-  };
-});
-
-// Wrap the server with our proxy wrapper
-const proxiedServer = wrapWithProxy(server, {
-  hooks: {
-    // Before tool call hook
-    beforeToolCall: async (context) => {
-      console.log(`Before hook: ${context.toolName} with args:`, context.args);
-      
-      // Example: Modify arguments
-      if (context.toolName === 'greet' && context.args.name) {
-        context.args.name = `${context.args.name} (modified by hook)`;
+// Test: Before hook
+test('should execute beforeToolCall hook', async () => {
+  const server = new McpServer({
+    name: 'Test Server',
+    version: '1.0.0'
+  });
+  
+  let hookCalled = false;
+  
+  const proxiedServer = wrapWithProxy(server, {
+    hooks: {
+      beforeToolCall: async (context) => {
+        hookCalled = true;
+        assert(context.toolName === 'greet', 'Tool name should be correct');
+        assert(context.args.name === 'World', 'Arguments should be correct');
       }
-    },
-    
-    // After tool call hook
-    afterToolCall: async (context, result) => {
-      console.log(`After hook: ${context.toolName} with result:`, result);
-      
-      // Example: Modify results
-      if (context.toolName === 'greet' && result.result.content && result.result.content[0]) {
-        result.result.content[0].text += " (modified by after hook)";
-      }
-      
-      return result;
-    },
-    
-    // Error hook
-    errorHook: async (context, error) => {
-      console.error(`Error in ${context.toolName}:`, error);
+    }
+  });
+  
+  // Register a tool
+  proxiedServer.tool('greet', 
+    z.object({
+      name: z.string().describe('Name to greet')
+    }),
+    async ({ name }) => {
       return {
-        isError: true,
-        content: [{ type: "text", text: `Error in ${context.toolName}: ${error.message}` }]
+        content: [
+          {
+            type: 'text',
+            text: `Hello, ${name}!`
+          }
+        ]
       };
     }
-  },
-  debug: true
+  );
+  
+  // Call the tool through the server's API
+  const result = await proxiedServer.callTool('greet', { name: 'World' });
+  
+  assert(hookCalled, 'Before hook should have been called');
 });
 
-// Register another tool after wrapping
-proxiedServer.tool("farewell", { name: z.string() }, async (args) => {
-  return {
-    content: [{ type: "text", text: `Goodbye, ${args.name}!` }]
-  };
+// Test: After hook
+test('should execute afterToolCall hook', async () => {
+  const server = new McpServer({
+    name: 'Test Server',
+    version: '1.0.0'
+  });
+  
+  let hookCalled = false;
+  
+  const proxiedServer = wrapWithProxy(server, {
+    hooks: {
+      afterToolCall: async (context, result) => {
+        hookCalled = true;
+        assert(context.toolName === 'greet', 'Tool name should be correct');
+        assert(context.args.name === 'World', 'Arguments should be correct');
+        assert(result.result.content[0].text === 'Hello, World!', 'Result should be correct');
+        
+        // Modify the result
+        return {
+          result: {
+            content: [
+              {
+                type: 'text',
+                text: 'Modified result'
+              }
+            ]
+          }
+        };
+      }
+    }
+  });
+  
+  // Register a tool
+  proxiedServer.tool('greet', 
+    z.object({
+      name: z.string().describe('Name to greet')
+    }),
+    async ({ name }) => {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Hello, ${name}!`
+          }
+        ]
+      };
+    }
+  );
+  
+  // Call the tool through the server's API
+  const result = await proxiedServer.callTool('greet', { name: 'World' });
+  
+  assert(hookCalled, 'After hook should have been called');
+  assert(result.content[0].text === 'Hello, Modified World!', 'Result should be modified by after hook');
 });
-
-// Register an error-throwing tool to test error handling
-proxiedServer.tool("error", { message: z.string().optional() }, async (args) => {
-  throw new Error(args.message || "Intentional error for testing");
-});
-
-// Test the tools using our stored handlers
-const testTools = async () => {
-  try {
-    console.log('\nStored tool handlers:', Object.keys(toolHandlers));
-    
-    // Test the greet tool
-    if (toolHandlers.greet) {
-      console.log('\nTesting greet tool...');
-      const greetResult = await toolHandlers.greet({ name: 'World' });
-      console.log('Greet result:', greetResult);
-    } else {
-      console.error('Greet handler not found');
-    }
-    
-    // Test the farewell tool
-    if (toolHandlers.farewell) {
-      console.log('\nTesting farewell tool...');
-      const farewellResult = await toolHandlers.farewell({ name: 'World' });
-      console.log('Farewell result:', farewellResult);
-    } else {
-      console.error('Farewell handler not found');
-    }
-    
-    // Test the error tool
-    if (toolHandlers.error) {
-      console.log('\nTesting error tool...');
-      const errorResult = await toolHandlers.error({ message: 'Test error' });
-      console.log('Error result:', errorResult);
-    } else {
-      console.error('Error tool not found');
-    }
-    
-    console.log('\nTests completed successfully!');
-  } catch (error) {
-    console.error('Error testing tools:', error);
-  }
-};
 
 // Run the tests
-testTools(); 
+runTests().catch(error => {
+  console.error('Error running tests:', error);
+  process.exit(1);
+}); 
