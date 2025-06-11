@@ -1,10 +1,10 @@
-# MCP Payment Wrapper Documentation
+# MCP Proxy Wrapper Documentation
 
-This directory contains the documentation for the MCP Payment Wrapper project. The documentation is built using GitHub Pages with Jekyll and includes both manually written guides and automatically generated API reference documentation.
+This directory contains the documentation for the MCP Proxy Wrapper project. The documentation is built using GitHub Pages with Jekyll and includes both manually written guides and automatically generated API reference documentation.
 
 ## Documentation Structure
 
-- **Home**: Overview of the MCP Payment Wrapper project
+- **Home**: Overview of the MCP Proxy Wrapper project
 - **Getting Started**: Guide to help you start using the library
 - **API Reference**: Detailed documentation of the library's API
 - **Examples**: Code examples showing how to use the library in different scenarios

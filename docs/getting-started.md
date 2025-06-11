@@ -3,16 +3,16 @@ layout: default
 title: Getting Started
 ---
 
-# Getting Started with MCP Payment Wrapper
+# Getting Started with MCP Proxy Wrapper
 
-This guide will help you get started with integrating the MCP Payment Wrapper into your project.
+This guide will help you get started with integrating the MCP Proxy Wrapper into your project.
 
 ## Installation
 
 Install the package using npm:
 
 ```bash
-npm install @modelcontextprotocol/payment-wrapper
+npm install mcp-proxy-wrapper
 ```
 
 Or using yarn:

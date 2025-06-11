@@ -1,5 +1,5 @@
-title: MCP Payment Wrapper
-description: Payment wrapper for Model Context Protocol (MCP) servers that adds payment verification and billing functionality
+title: MCP Proxy Wrapper
+description: Proxy wrapper for Model Context Protocol (MCP) servers that provides a comprehensive hook system for intercepting and modifying tool calls
 theme: jekyll-theme-cayman
 markdown: kramdown
 highlighter: rouge
@@ -8,7 +8,7 @@ plugins:
   - jekyll-sitemap
 
 # Additional settings for Notion-like design
-repository: crazyrabbitltc/mcp-payment-wrapper
+repository: crazyrabbitltc/mcp-proxy-wrapper
 show_downloads: false
 google_analytics: 
 
@@ -27,7 +27,7 @@ nav:
     url: /examples
     icon: fa-lightbulb
   - title: GitHub
-    url: https://github.com/crazyrabbitltc/mcp-payment-wrapper
+    url: https://github.com/crazyrabbitltc/mcp-proxy-wrapper
     icon: fa-github
 
 # Defaults for all pages
