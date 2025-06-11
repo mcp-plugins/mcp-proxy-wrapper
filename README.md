@@ -10,8 +10,10 @@ A lightweight, powerful wrapper for Model Context Protocol (MCP) servers that pr
 
 - **🔧 Zero-Modification Wrapping**: Wrap existing MCP servers without changing their code
 - **🪝 Powerful Hook System**: Execute custom logic before and after tool calls
+- **🔌 Plugin Architecture**: Extensible plugin system for reusable functionality
 - **🔄 Argument & Result Modification**: Transform inputs and outputs on-the-fly
 - **⚡ Short-Circuit Capability**: Skip tool execution with custom responses
+- **🧠 Smart Plugins Included**: LLM summarization and chat memory plugins
 - **📊 Comprehensive Logging**: Built-in monitoring and debugging support
 - **🧪 Fully Tested**: 100% test coverage with real MCP client-server validation
 - **📘 TypeScript First**: Complete TypeScript support with full type safety
@@ -39,7 +41,7 @@ const server = new McpServer({
 });
 
 // Wrap it with proxy functionality
-const proxiedServer = wrapWithProxy(server, {
+const proxiedServer = await wrapWithProxy(server, {
   hooks: {
     // Monitor all tool calls
     beforeToolCall: async (context) => {
@@ -61,6 +63,148 @@ proxiedServer.tool('greet', { name: z.string() }, async (args) => {
   return {
     content: [{ type: 'text', text: `Hello, ${args.name}!` }]
   };
+});
+```
+
+## 🔌 Plugin System
+
+The MCP Proxy Wrapper includes a powerful plugin architecture that allows you to create reusable, composable functionality.
+
+### Using Built-in Plugins
+
+```typescript
+import { LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper/plugins';
+
+const summarizationPlugin = new LLMSummarizationPlugin();
+const memoryPlugin = new ChatMemoryPlugin();
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [
+    summarizationPlugin,
+    memoryPlugin
+  ]
+});
+```
+
+### LLM Summarization Plugin
+
+Automatically summarizes long tool responses using AI:
+
+```typescript
+import { LLMSummarizationPlugin } from 'mcp-proxy-wrapper/plugins';
+
+const plugin = new LLMSummarizationPlugin();
+plugin.updateConfig({
+  options: {
+    provider: 'openai', // or 'mock' for testing
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o-mini',
+    minContentLength: 500,
+    summarizeTools: ['research', 'analyze', 'fetch-data'],
+    saveOriginal: true // Store original responses for retrieval
+  }
+});
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [plugin]
+});
+
+// Tool responses are automatically summarized
+const result = await client.callTool({
+  name: 'research',
+  arguments: { topic: 'artificial intelligence' }
+});
+
+console.log(result._meta.summarized); // true
+console.log(result._meta.originalLength); // 2000
+console.log(result._meta.summaryLength); // 200
+console.log(result.content[0].text); // "Summary: ..."
+```
+
+### Chat Memory Plugin
+
+Provides conversational interface for saved tool responses:
+
+```typescript
+import { ChatMemoryPlugin } from 'mcp-proxy-wrapper/plugins';
+
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 1000
+  }
+});
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [memoryPlugin]
+});
+
+// Tool responses are automatically saved
+await client.callTool({
+  name: 'research',
+  arguments: { topic: 'climate change', userId: 'user123' }
+});
+
+// Chat with your saved data
+const sessionId = await memoryPlugin.startChatSession('user123');
+const response = await memoryPlugin.chatWithMemory(
+  sessionId,
+  "What did I research about climate change?",
+  'user123'
+);
+console.log(response); // AI response based on saved research
+```
+
+### Creating Custom Plugins
+
+```typescript
+import { BasePlugin, PluginContext, ToolCallResult } from 'mcp-proxy-wrapper';
+
+class MyCustomPlugin extends BasePlugin {
+  name = 'my-custom-plugin';
+  version = '1.0.0';
+  
+  async afterToolCall(context: PluginContext, result: ToolCallResult): Promise<ToolCallResult> {
+    // Add custom metadata
+    return {
+      ...result,
+      result: {
+        ...result.result,
+        _meta: {
+          ...result.result._meta,
+          processedBy: this.name,
+          customField: 'custom value'
+        }
+      }
+    };
+  }
+}
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [new MyCustomPlugin()]
+});
+```
+
+### Plugin Configuration
+
+```typescript
+const plugin = new LLMSummarizationPlugin();
+
+// Runtime configuration updates
+plugin.updateConfig({
+  enabled: true,
+  priority: 10,
+  options: {
+    minContentLength: 200,
+    provider: 'openai'
+  },
+  includeTools: ['research', 'analyze'], // Only these tools
+  excludeTools: ['chat'], // Skip these tools
+  debug: true
 });
 ```
 
@@ -214,13 +358,15 @@ Wraps an MCP server instance with proxy functionality.
 - `options` (ProxyWrapperOptions): Configuration options
 
 **Returns:** 
-A new `McpServer` instance with proxy capabilities
+`Promise<McpServer>` - A new MCP server instance with proxy capabilities
 
 ### ProxyWrapperOptions
 
 ```typescript
 interface ProxyWrapperOptions {
   hooks?: ProxyHooks;              // Hook functions
+  plugins?: ProxyPlugin[];         // Plugin instances
+  pluginConfig?: Record<string, any>; // Global plugin configuration
   metadata?: Record<string, any>;  // Global metadata
   debug?: boolean;                 // Enable debug logging
 }
@@ -254,8 +400,9 @@ npm test -- --testNamePattern="Protocol Compliance"
 
 ### Test Coverage
 
-- ✅ **45 comprehensive tests** covering all functionality
+- ✅ **65+ comprehensive tests** covering all functionality
 - ✅ **Real MCP client-server communication** using InMemoryTransport
+- ✅ **Plugin system validation** with integration tests
 - ✅ **Edge cases** including concurrency, large data, Unicode handling
 - ✅ **Protocol compliance** validation
 - ✅ **Error scenarios** and stress testing
@@ -280,7 +427,10 @@ server.tool('myTool', schema, handler);
 
 // After  
 const server = new McpServer(config);
-const proxiedServer = wrapWithProxy(server, { hooks: myHooks });
+const proxiedServer = await wrapWithProxy(server, { 
+  hooks: myHooks,
+  plugins: [new LLMSummarizationPlugin()]
+});
 proxiedServer.tool('myTool', schema, handler); // Same API!
 ```
 
@@ -340,7 +490,7 @@ const cachedProxy = wrapWithProxy(server, {
 ### 4. Analytics & Monitoring
 
 ```typescript
-const monitoredProxy = wrapWithProxy(server, {
+const monitoredProxy = await wrapWithProxy(server, {
   hooks: {
     beforeToolCall: async (context) => {
       await metrics.increment('tool_calls_total', { tool: context.toolName });
@@ -353,6 +503,36 @@ const monitoredProxy = wrapWithProxy(server, {
     }
   }
 });
+```
+
+### 5. AI-Powered Enhancement
+
+```typescript
+import { LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper/plugins';
+
+const aiEnhancedProxy = await wrapWithProxy(server, {
+  plugins: [
+    new LLMSummarizationPlugin({
+      options: {
+        provider: 'openai',
+        openaiApiKey: process.env.OPENAI_API_KEY,
+        summarizeTools: ['research', 'analyze', 'fetch-data'],
+        minContentLength: 500
+      }
+    }),
+    new ChatMemoryPlugin({
+      options: {
+        provider: 'openai',
+        openaiApiKey: process.env.OPENAI_API_KEY,
+        saveResponses: true,
+        enableChat: true
+      }
+    })
+  ]
+});
+
+// Long research responses are automatically summarized
+// All responses are saved for conversational querying
 ```
 
 ## 🤝 Contributing

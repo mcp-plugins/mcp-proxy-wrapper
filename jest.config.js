@@ -13,6 +13,7 @@ export default {
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^(\\.{1,2}/.*)/proxy-wrapper\\.js$': '$1/proxy-wrapper.ts',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(@modelcontextprotocol)/)'

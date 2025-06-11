@@ -179,14 +179,14 @@ export class ChatMemoryPlugin extends BasePlugin {
     }
   };
 
-  private chatProvider: ChatLLMProvider;
+  private chatProvider!: ChatLLMProvider;
   
   // In-memory storage
   private conversationDb = new Map<string, ConversationEntry>();
   private chatSessions = new Map<string, ChatSession>();
   
   // Statistics
-  private stats = {
+  private customStats = {
     totalEntries: 0,
     totalSessions: 0,
     totalChatMessages: 0,
@@ -238,7 +238,7 @@ export class ChatMemoryPlugin extends BasePlugin {
         },
         response: {
           content,
-          metadata: result.result._metadata,
+          metadata: result.result._meta,
           timestamp: Date.now()
         },
         context: {
@@ -256,14 +256,14 @@ export class ChatMemoryPlugin extends BasePlugin {
         ...result,
         result: {
           ...result.result,
-          _metadata: {
-            ...result.result._metadata,
+          _meta: {
+            ...result.result._meta,
             savedToMemory: true,
             memoryId: entry.id,
             chatAvailable: this.config.options?.enableChat,
             memoryStats: {
-              totalEntries: this.stats.totalEntries,
-              storageSize: this.stats.storageSize
+              totalEntries: this.customStats.totalEntries,
+              storageSize: this.customStats.storageSize
             }
           }
         }
@@ -332,8 +332,8 @@ export class ChatMemoryPlugin extends BasePlugin {
 
   private async saveEntry(entry: ConversationEntry): Promise<void> {
     this.conversationDb.set(entry.id, entry);
-    this.stats.totalEntries++;
-    this.stats.storageSize += JSON.stringify(entry).length;
+    this.customStats.totalEntries++;
+    this.customStats.storageSize += JSON.stringify(entry).length;
 
     // Cleanup old entries if limit exceeded
     await this.cleanupEntries();
@@ -391,7 +391,7 @@ export class ChatMemoryPlugin extends BasePlugin {
       };
       
       this.chatSessions.set(id, session);
-      this.stats.totalSessions++;
+      this.customStats.totalSessions++;
     }
     
     return id;
@@ -452,7 +452,7 @@ export class ChatMemoryPlugin extends BasePlugin {
     };
     
     session.messages.push(assistantMsg);
-    this.stats.totalChatMessages += 2; // User + assistant
+    this.customStats.totalChatMessages += 2; // User + assistant
 
     return response;
   }
@@ -565,14 +565,14 @@ export class ChatMemoryPlugin extends BasePlugin {
     return {
       ...baseStats,
       customMetrics: {
-        totalEntries: this.stats.totalEntries,
-        totalSessions: this.stats.totalSessions,
-        totalChatMessages: this.stats.totalChatMessages,
-        storageSize: this.stats.storageSize,
+        totalEntries: this.customStats.totalEntries,
+        totalSessions: this.customStats.totalSessions,
+        totalChatMessages: this.customStats.totalChatMessages,
+        storageSize: this.customStats.storageSize,
         activeSessions: this.chatSessions.size,
         provider: this.config.options?.provider || 'mock',
-        memoryUsage: `${Math.round(this.stats.storageSize / 1024)} KB`,
-        averageEntrySize: Math.round(this.stats.storageSize / this.stats.totalEntries) || 0
+        memoryUsageKB: Math.round(this.customStats.storageSize / 1024),
+        averageEntrySize: Math.round(this.customStats.storageSize / this.customStats.totalEntries) || 0
       }
     };
   }

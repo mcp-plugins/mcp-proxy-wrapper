@@ -92,15 +92,15 @@ describe('Chat Memory Plugin Integration', () => {
       });
       
       // Verify memory metadata is added
-      expect((result as any)._metadata?.savedToMemory).toBe(true);
-      expect((result as any)._metadata?.memoryId).toBeDefined();
-      expect((result as any)._metadata?.chatAvailable).toBe(true);
+      expect((result as any)._meta?.savedToMemory).toBe(true);
+      expect((result as any)._meta?.memoryId).toBeDefined();
+      expect((result as any)._meta?.chatAvailable).toBe(true);
       
       // Verify content is preserved
       expect(result.content[0].text).toContain('Research findings on AI automation');
       
       // Verify entry was saved to memory
-      const memoryId = (result as any)._metadata?.memoryId as string;
+      const memoryId = (result as any)._meta?.memoryId as string;
       const entry = chatMemoryPlugin.getConversationEntry(memoryId);
       
       expect(entry).toBeDefined();
@@ -136,7 +136,7 @@ describe('Chat Memory Plugin Integration', () => {
       });
       
       // Should not be saved to memory
-      expect((result as any)._metadata?.savedToMemory).toBeUndefined();
+      expect((result as any)._meta?.savedToMemory).toBeUndefined();
       expect(result.content[0].text).toBe('Chat response: Hello');
     });
   });
@@ -193,7 +193,7 @@ describe('Chat Memory Plugin Integration', () => {
             type: 'text',
             text: response
           }],
-          _metadata: {
+          _meta: {
             sessionId,
             chatResponse: true
           }
@@ -226,8 +226,8 @@ describe('Chat Memory Plugin Integration', () => {
       });
       
       expect(chatResult.content[0].text).toContain('2'); // Should mention 2 saved conversations
-      expect((chatResult as any)._metadata?.sessionId).toBeDefined();
-      expect((chatResult as any)._metadata?.chatResponse).toBe(true);
+      expect((chatResult as any)._meta?.sessionId).toBeDefined();
+      expect((chatResult as any)._meta?.chatResponse).toBe(true);
     });
     
     it('should provide context-aware responses', async () => {
@@ -466,7 +466,7 @@ describe('Chat Memory Plugin Integration', () => {
       
       // Error should not be saved to memory
       expect(result.isError).toBe(true);
-      expect((result as any)._metadata?.savedToMemory).toBeUndefined();
+      expect((result as any)._meta?.savedToMemory).toBeUndefined();
       
       // But plugin should still work for successful calls
       const successResult = await client.callTool({
@@ -474,7 +474,7 @@ describe('Chat Memory Plugin Integration', () => {
         arguments: { shouldFail: false }
       });
       
-      expect((successResult as any)._metadata?.savedToMemory).toBe(true);
+      expect((successResult as any)._meta?.savedToMemory).toBe(true);
     });
     
     it('should handle chat session errors', async () => {
@@ -555,7 +555,7 @@ describe('Chat Memory Plugin Integration', () => {
         
         return {
           content: [{ type: 'text', text: response }],
-          _metadata: { sessionId }
+          _meta: { sessionId }
         };
       });
       
@@ -593,7 +593,7 @@ describe('Chat Memory Plugin Integration', () => {
       expect(chatResult1.content[0].text).toContain('2'); // Should reference 2 saved studies
       
       // Step 4: Ask specific questions
-      const sessionId = (chatResult1 as any)._metadata?.sessionId;
+      const sessionId = (chatResult1 as any)._meta?.sessionId;
       const chatResult2 = await client.callTool({
         name: 'research-chat',
         arguments: {

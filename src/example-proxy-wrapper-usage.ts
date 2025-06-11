@@ -73,7 +73,7 @@ async function main() {
   });
 
   // Wrap the demo server with proxy functionality
-  const proxiedServer = wrapWithProxy(demoServer, {
+  const proxiedServer = await wrapWithProxy(demoServer, {
     hooks: {
       // Before tool call hook
       beforeToolCall: async (context) => {

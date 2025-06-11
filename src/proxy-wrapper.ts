@@ -43,6 +43,8 @@ export async function wrapWithProxy(
     prefix: 'MCP-PROXY'
   });
   
+  // TypeScript version with plugin support
+  
   const hooks = options?.hooks || {};
   const globalMetadata = options?.metadata || {};
   
@@ -158,7 +160,22 @@ export async function wrapWithProxy(
           logger.debug(`No plugin manager available for ${name}`, { requestId });
         }
         
-        return toolResult.result;
+        // Merge metadata from proxy wrapper and plugins into MCP standard _meta field
+        const finalResult = {
+          ...toolResult.result,
+          _meta: {
+            ...toolResult.metadata,
+            ...toolResult.result._meta
+          }
+        };
+        
+        logger.debug(`Returning final result for ${name}`, { 
+          requestId, 
+          hasMetadata: !!finalResult._meta,
+          metadataKeys: finalResult._meta ? Object.keys(finalResult._meta) : []
+        });
+        
+        return finalResult;
       } catch (error) {
         logger.error(`Error processing tool call ${name}:`, error);
         

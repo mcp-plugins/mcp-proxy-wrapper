@@ -84,7 +84,7 @@ describe('LLMSummarizationPlugin', () => {
       const result = await plugin.afterToolCall(mockContext, mockResult);
       
       // Should be summarized since it meets criteria
-      expect(result.result._metadata?.summarized).toBe(true);
+      expect(result.result._meta?.summarized).toBe(true);
       expect(result.result.content).toHaveLength(1);
       expect(result.result.content[0].type).toBe('text');
     });
@@ -93,16 +93,16 @@ describe('LLMSummarizationPlugin', () => {
       const multiContentResult: ToolCallResult = {
         result: {
           content: [
-            { type: 'text', text: 'First part of the content. ' },
-            { type: 'text', text: 'Second part with more details. ' },
-            { type: 'text', text: 'Third part with conclusions.' }
+            { type: 'text', text: 'First part of the content with extensive details about the research findings and methodology used. ' },
+            { type: 'text', text: 'Second part with more comprehensive analysis and detailed explanations of the results. ' },
+            { type: 'text', text: 'Third part with thorough conclusions and recommendations for future work.' }
           ]
         }
       };
       
       const result = await plugin.afterToolCall(mockContext, multiContentResult);
       
-      expect(result.result._metadata?.summarized).toBe(true);
+      expect(result.result._meta?.summarized).toBe(true);
       expect(result.result.content[0].text).toContain('Summary:');
     });
     
@@ -118,9 +118,9 @@ describe('LLMSummarizationPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, mixedContentResult);
       
-      expect(result.result._metadata?.summarized).toBe(true);
+      expect(result.result._meta?.summarized).toBe(true);
       // Should only process the text content
-      expect(result.result._metadata?.originalLength).toBeLessThan(200);
+      expect(result.result._meta?.originalLength).toBeLessThan(200);
     });
   });
   
@@ -128,10 +128,10 @@ describe('LLMSummarizationPlugin', () => {
     it('should summarize content that meets criteria', async () => {
       const result = await plugin.afterToolCall(mockContext, mockResult);
       
-      expect(result.result._metadata?.summarized).toBe(true);
-      expect(result.result._metadata?.originalLength).toBeGreaterThan(0);
-      expect(result.result._metadata?.summaryLength).toBeGreaterThan(0);
-      expect(result.result._metadata?.compressionRatio).toBeLessThan(1);
+      expect(result.result._meta?.summarized).toBe(true);
+      expect(result.result._meta?.originalLength).toBeGreaterThan(0);
+      expect(result.result._meta?.summaryLength).toBeGreaterThan(0);
+      expect(result.result._meta?.compressionRatio).toBeLessThan(1);
       expect(result.result.content[0].text).toContain('Summary:');
     });
     
@@ -144,7 +144,7 @@ describe('LLMSummarizationPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, shortResult);
       
-      expect(result.result._metadata?.summarized).toBeUndefined();
+      expect(result.result._meta?.summarized).toBeUndefined();
       expect(result.result.content[0].text).toBe('Short text.');
     });
     
@@ -158,7 +158,7 @@ describe('LLMSummarizationPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, errorResult);
       
-      expect(result.result._metadata?.summarized).toBeUndefined();
+      expect(result.result._meta?.summarized).toBeUndefined();
       expect(result.result.isError).toBe(true);
     });
     
@@ -169,7 +169,7 @@ describe('LLMSummarizationPlugin', () => {
       const result = await plugin.afterToolCall(mockContext, mockResult);
       
       // Should not summarize 'research' tool since it's not in the list
-      expect(result.result._metadata?.summarized).toBeUndefined();
+      expect(result.result._meta?.summarized).toBeUndefined();
     });
     
     it('should respect user preferences for original content', async () => {
@@ -180,7 +180,7 @@ describe('LLMSummarizationPlugin', () => {
       
       const result = await plugin.afterToolCall(contextWithOriginal, mockResult);
       
-      expect(result.result._metadata?.summarized).toBeUndefined();
+      expect(result.result._meta?.summarized).toBeUndefined();
     });
   });
   
@@ -190,9 +190,9 @@ describe('LLMSummarizationPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, mockResult);
       
-      expect(result.result._metadata?.originalStorageKey).toBeDefined();
+      expect(result.result._meta?.originalStorageKey).toBeDefined();
       
-      const storageKey = result.result._metadata?.originalStorageKey as string;
+      const storageKey = result.result._meta?.originalStorageKey as string;
       const stored = await plugin.getOriginalResult(storageKey);
       
       expect(stored).toBeDefined();
@@ -212,7 +212,7 @@ describe('LLMSummarizationPlugin', () => {
     
     it('should retrieve stored results by key', async () => {
       const result = await plugin.afterToolCall(mockContext, mockResult);
-      const storageKey = result.result._metadata?.originalStorageKey as string;
+      const storageKey = result.result._meta?.originalStorageKey as string;
       
       const stored = await plugin.getOriginalResult(storageKey);
       
@@ -262,9 +262,9 @@ describe('LLMSummarizationPlugin', () => {
     it('should track compression ratios correctly', async () => {
       const result = await plugin.afterToolCall(mockContext, mockResult);
       
-      const originalLength = result.result._metadata?.originalLength as number;
-      const summaryLength = result.result._metadata?.summaryLength as number;
-      const compressionRatio = result.result._metadata?.compressionRatio as number;
+      const originalLength = result.result._meta?.originalLength as number;
+      const summaryLength = result.result._meta?.summaryLength as number;
+      const compressionRatio = result.result._meta?.compressionRatio as number;
       
       expect(compressionRatio).toBeCloseTo(summaryLength / originalLength, 3);
       expect(compressionRatio).toBeLessThan(1);
@@ -283,8 +283,8 @@ describe('LLMSummarizationPlugin', () => {
       const result = await plugin.afterToolCall(mockContext, mockResult);
       
       // Should fallback to original result
-      expect(result.result._metadata?.summarizationError).toBe('LLM API error');
-      expect(result.result._metadata?.fallbackToOriginal).toBe(true);
+      expect(result.result._meta?.summarizationError).toBe('LLM API error');
+      expect(result.result._meta?.fallbackToOriginal).toBe(true);
       expect(result.result.content).toEqual(mockResult.result.content);
     });
     
@@ -326,7 +326,7 @@ describe('LLMSummarizationPlugin', () => {
       
       const result = await plugin.afterToolCall(searchContext, mockResult);
       
-      expect(result.result._metadata?.summarized).toBe(true);
+      expect(result.result._meta?.summarized).toBe(true);
       // The mock provider includes the tool name in the summary
       expect(result.result.content[0].text).toContain('Summary:');
     });
@@ -390,10 +390,10 @@ describe('LLMSummarizationPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, researchResult);
       
-      expect(result.result._metadata?.summarized).toBe(true);
-      expect(result.result._metadata?.originalLength).toBeGreaterThan(1000);
-      expect(result.result._metadata?.summaryLength).toBeLessThan(300);
-      expect(result.result._metadata?.compressionRatio).toBeLessThan(0.4);
+      expect(result.result._meta?.summarized).toBe(true);
+      expect(result.result._meta?.originalLength).toBeGreaterThan(1000);
+      expect(result.result._meta?.summaryLength).toBeLessThan(300);
+      expect(result.result._meta?.compressionRatio).toBeLessThan(0.4);
     });
     
     it('should handle empty or malformed content gracefully', async () => {
@@ -405,7 +405,7 @@ describe('LLMSummarizationPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, emptyResult);
       
-      expect(result.result._metadata?.summarized).toBeUndefined();
+      expect(result.result._meta?.summarized).toBeUndefined();
       expect(result.result.content).toEqual([]);
     });
     
@@ -413,7 +413,7 @@ describe('LLMSummarizationPlugin', () => {
       const resultWithMetadata: ToolCallResult = {
         result: {
           content: [{ type: 'text', text: mockResult.result.content[0].text }],
-          _metadata: {
+          _meta: {
             originalSource: 'test-api',
             timestamp: '2024-01-01T00:00:00Z',
             version: '1.0'
@@ -423,10 +423,10 @@ describe('LLMSummarizationPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, resultWithMetadata);
       
-      expect(result.result._metadata?.originalSource).toBe('test-api');
-      expect(result.result._metadata?.timestamp).toBe('2024-01-01T00:00:00Z');
-      expect(result.result._metadata?.version).toBe('1.0');
-      expect(result.result._metadata?.summarized).toBe(true);
+      expect(result.result._meta?.originalSource).toBe('test-api');
+      expect(result.result._meta?.timestamp).toBe('2024-01-01T00:00:00Z');
+      expect(result.result._meta?.version).toBe('1.0');
+      expect(result.result._meta?.summarized).toBe(true);
     });
   });
   

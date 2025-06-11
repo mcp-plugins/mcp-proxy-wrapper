@@ -90,15 +90,15 @@ describe('ChatMemoryPlugin', () => {
       const result = await plugin.afterToolCall(mockContext, mockResult);
       
       // Should add memory metadata
-      expect(result.result._metadata?.savedToMemory).toBe(true);
-      expect(result.result._metadata?.memoryId).toBeDefined();
-      expect(result.result._metadata?.chatAvailable).toBe(true);
+      expect(result.result._meta?.savedToMemory).toBe(true);
+      expect(result.result._meta?.memoryId).toBeDefined();
+      expect(result.result._meta?.chatAvailable).toBe(true);
       
       // Should preserve original content
       expect(result.result.content).toEqual(mockResult.result.content);
       
       // Check if entry was saved
-      const memoryId = result.result._metadata?.memoryId as string;
+      const memoryId = result.result._meta?.memoryId as string;
       const entry = plugin.getConversationEntry(memoryId);
       
       expect(entry).toBeDefined();
@@ -112,7 +112,7 @@ describe('ChatMemoryPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, mockResult);
       
-      expect(result.result._metadata?.savedToMemory).toBeUndefined();
+      expect(result.result._meta?.savedToMemory).toBeUndefined();
       expect(result.result.content).toEqual(mockResult.result.content);
     });
     
@@ -126,7 +126,7 @@ describe('ChatMemoryPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, errorResult);
       
-      expect(result.result._metadata?.savedToMemory).toBeUndefined();
+      expect(result.result._meta?.savedToMemory).toBeUndefined();
       expect(result.result.isError).toBe(true);
     });
     
@@ -135,7 +135,7 @@ describe('ChatMemoryPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, mockResult);
       
-      expect(result.result._metadata?.savedToMemory).toBeUndefined();
+      expect(result.result._meta?.savedToMemory).toBeUndefined();
     });
     
     it('should respect tool inclusions', async () => {
@@ -144,13 +144,13 @@ describe('ChatMemoryPlugin', () => {
       const result = await plugin.afterToolCall(mockContext, mockResult);
       
       // Should not save because 'research-data' is not in saveTools list
-      expect(result.result._metadata?.savedToMemory).toBeUndefined();
+      expect(result.result._meta?.savedToMemory).toBeUndefined();
       
       // Test with included tool
       const includedContext = { ...mockContext, toolName: 'analyze-data' };
       const result2 = await plugin.afterToolCall(includedContext, mockResult);
       
-      expect(result2.result._metadata?.savedToMemory).toBe(true);
+      expect(result2.result._meta?.savedToMemory).toBe(true);
     });
   });
   
@@ -204,7 +204,7 @@ describe('ChatMemoryPlugin', () => {
     
     it('should get specific conversation entry', async () => {
       const result = await plugin.afterToolCall(mockContext, mockResult);
-      const memoryId = result.result._metadata?.memoryId as string;
+      const memoryId = result.result._meta?.memoryId as string;
       
       const entry = plugin.getConversationEntry(memoryId);
       
@@ -346,7 +346,7 @@ describe('ChatMemoryPlugin', () => {
       
       const stats = await plugin.getStats();
       
-      expect(stats.customMetrics?.memoryUsage).toMatch(/\d+ KB/);
+      expect(stats.customMetrics?.memoryUsageKB).toBeGreaterThanOrEqual(0);
       expect(stats.customMetrics?.averageEntrySize).toBeGreaterThan(0);
     });
   });
@@ -359,7 +359,7 @@ describe('ChatMemoryPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, emptyResult);
       
-      expect(result.result._metadata?.savedToMemory).toBeUndefined();
+      expect(result.result._meta?.savedToMemory).toBeUndefined();
       expect(result.result.content).toEqual([]);
     });
     
@@ -370,7 +370,7 @@ describe('ChatMemoryPlugin', () => {
       
       const result = await plugin.afterToolCall(mockContext, invalidResult);
       
-      expect(result.result._metadata?.savedToMemory).toBeUndefined();
+      expect(result.result._meta?.savedToMemory).toBeUndefined();
     });
     
     it('should fallback gracefully on chat errors', async () => {
@@ -450,7 +450,7 @@ describe('ChatMemoryPlugin', () => {
       
       const result = await plugin.afterToolCall(context, realisticResult);
       
-      expect(result.result._metadata?.savedToMemory).toBe(true);
+      expect(result.result._meta?.savedToMemory).toBe(true);
       
       // Test chat interaction
       const sessionId = await plugin.startChatSession('analyst123');

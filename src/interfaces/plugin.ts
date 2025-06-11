@@ -316,4 +316,11 @@ export abstract class BasePlugin implements ProxyPlugin {
     
     return true;
   }
+  
+  public updateConfig(newConfig: PluginConfig): void {
+    this.config = {
+      ...this.config,
+      ...newConfig
+    };
+  }
 }

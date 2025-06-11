@@ -42,12 +42,13 @@ export interface ToolCallResult {
  */
 export class McpClientServerTest {
   public server: McpServer;
-  public proxiedServer: McpServer;
+  public proxiedServer?: McpServer;
   public client: Client;
   
   private serverTransport: InMemoryTransport;
   private clientTransport: InMemoryTransport;
   private connected: boolean = false;
+  private proxyOptions?: ProxyWrapperOptions;
   
   constructor(config: TestConfig = {}) {
     // Create server
@@ -56,8 +57,8 @@ export class McpClientServerTest {
       version: '1.0.0'
     });
     
-    // Wrap server with proxy
-    this.proxiedServer = wrapWithProxy(this.server, config.proxyOptions);
+    // Initialize the proxy server in the async init method
+    this.proxyOptions = config.proxyOptions;
     
     // Create client
     this.client = new Client({
@@ -85,6 +86,11 @@ export class McpClientServerTest {
     if (this.connected) return;
     
     try {
+      // Initialize proxy server if not done yet
+      if (!this.proxiedServer) {
+        this.proxiedServer = await wrapWithProxy(this.server, this.proxyOptions);
+      }
+      
       // Connect server first
       await this.proxiedServer.connect(this.serverTransport);
       
@@ -116,7 +122,7 @@ export class McpClientServerTest {
    * Register a tool on the server
    * Using Zod schema to ensure arguments are passed correctly
    */
-  registerTool(name: string, handler: (args: any, extra?: any) => Promise<any>): void {
+  async registerTool(name: string, handler: (args: any, extra?: any) => Promise<any>): Promise<void> {
     // Use a comprehensive Zod schema that accepts all common test properties
     const testSchema = {
       // Basic test properties
@@ -161,6 +167,9 @@ export class McpClientServerTest {
       largeText: z.string().optional(),
       largeArray: z.array(z.any()).optional(),
     };
+    if (!this.proxiedServer) {
+      this.proxiedServer = await wrapWithProxy(this.server, this.proxyOptions);
+    }
     this.proxiedServer.tool(name, testSchema, handler);
   }
   

@@ -179,8 +179,8 @@ export class LLMSummarizationPlugin extends BasePlugin {
             type: 'text',
             text: summary
           }],
-          _metadata: {
-            ...result.result._metadata,
+          _meta: {
+            ...result.result._meta,
             summarized: true,
             originalLength: originalContent.length,
             summaryLength: summary.length,
@@ -211,8 +211,8 @@ export class LLMSummarizationPlugin extends BasePlugin {
         ...result,
         result: {
           ...result.result,
-          _metadata: {
-            ...result.result._metadata,
+          _meta: {
+            ...result.result._meta,
             summarizationError: error instanceof Error ? error.message : String(error),
             fallbackToOriginal: true
           }

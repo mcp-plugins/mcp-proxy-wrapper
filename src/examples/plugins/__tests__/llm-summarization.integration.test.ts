@@ -138,19 +138,19 @@ describe('LLM Summarization Plugin Integration', () => {
       });
       
       // Verify summarization occurred
-      expect((result as any)._metadata?.summarized).toBe(true);
-      expect((result as any)._metadata?.originalLength).toBeGreaterThan(1000);
-      expect((result as any)._metadata?.summaryLength).toBeLessThan(300);
-      expect((result as any)._metadata?.compressionRatio).toBeLessThan(0.5);
-      expect((result as any)._metadata?.originalStorageKey).toBeDefined();
-      expect((result as any)._metadata?.provider).toBe('mock');
+      expect((result as any)._meta?.summarized).toBe(true);
+      expect((result as any)._meta?.originalLength).toBeGreaterThan(1000);
+      expect((result as any)._meta?.summaryLength).toBeLessThan(350);
+      expect((result as any)._meta?.compressionRatio).toBeLessThan(0.5);
+      expect((result as any)._meta?.originalStorageKey).toBeDefined();
+      expect((result as any)._meta?.provider).toBe('mock');
       
       // Verify summary content
       expect((result as any).content[0].text).toContain('Summary:');
       expect((result as any).content[0].text).toContain('artificial intelligence');
       
       // Verify original can be retrieved
-      const storageKey = (result as any)._metadata?.originalStorageKey as string;
+      const storageKey = (result as any)._meta?.originalStorageKey as string;
       const originalData = await summarizationPlugin.getOriginalResult(storageKey);
       
       expect(originalData).toBeDefined();
@@ -184,7 +184,7 @@ describe('LLM Summarization Plugin Integration', () => {
       });
       
       // Should not be summarized due to short length
-      expect((result as any)._metadata?.summarized).toBeUndefined();
+      expect((result as any)._meta?.summarized).toBeUndefined();
       expect((result as any).content[0].text).toBe('Found 3 results for "test".');
     });
     
@@ -215,7 +215,7 @@ describe('LLM Summarization Plugin Integration', () => {
       });
       
       // Should not be summarized because 'calculate' is not in summarizeTools list
-      expect((result as any)._metadata?.summarized).toBeUndefined();
+      expect((result as any)._meta?.summarized).toBeUndefined();
       expect((result as any).content[0].text).toContain('The result is 8');
     });
     
@@ -265,7 +265,7 @@ describe('LLM Summarization Plugin Integration', () => {
       });
       
       // Should not be summarized due to user preference
-      expect((result as any)._metadata?.summarized).toBeUndefined();
+      expect((result as any)._meta?.summarized).toBeUndefined();
       expect((result as any).content[0].text).toContain('Data Analysis Report');
       expect((result as any).content[0].text).toContain('Statistical Summary');
     });
@@ -293,7 +293,7 @@ describe('LLM Summarization Plugin Integration', () => {
       
       // Should receive error without summarization attempt
       expect(result.isError).toBe(true);
-      expect((result as any)._metadata?.summarized).toBeUndefined();
+      expect((result as any)._meta?.summarized).toBeUndefined();
       expect((result as any).content[0].text).toContain('Research API is temporarily unavailable');
     });
     
@@ -317,11 +317,10 @@ describe('LLM Summarization Plugin Integration', () => {
         logger: { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} }
       });
       
-      // Mock the LLM provider to fail
-      (failingPlugin as any).llmProvider = {
-        generateSummary: async () => {
-          throw new Error('LLM service unavailable');
-        }
+      // Mock the LLM provider to fail  
+      const originalGenerateSummary = (failingPlugin as any).generateSummary;
+      (failingPlugin as any).generateSummary = async () => {
+        throw new Error('LLM service unavailable');
       };
       
       proxiedServer = await wrapWithProxy(server, {
@@ -348,8 +347,8 @@ describe('LLM Summarization Plugin Integration', () => {
       });
       
       // Should fallback to original content
-      expect((result as any)._metadata?.summarizationError).toBe('LLM service unavailable');
-      expect((result as any)._metadata?.fallbackToOriginal).toBe(true);
+      expect((result as any)._meta?.summarizationError).toBe('LLM service unavailable');
+      expect((result as any)._meta?.fallbackToOriginal).toBe(true);
       expect((result as any).content[0].text).toContain('Long research content about quantum computing');
     });
   });
@@ -398,8 +397,8 @@ describe('LLM Summarization Plugin Integration', () => {
       });
       
       // Both should be summarized
-      expect((result1 as any)._metadata?.summarized).toBe(true);
-      expect((result2 as any)._metadata?.summarized).toBe(true);
+      expect((result1 as any)._meta?.summarized).toBe(true);
+      expect((result2 as any)._meta?.summarized).toBe(true);
       
       // Check plugin statistics
       const stats = await summarizationPlugin.getStats();
@@ -450,11 +449,11 @@ describe('LLM Summarization Plugin Integration', () => {
       });
       
       // Verify summarization
-      expect((result as any)._metadata?.summarized).toBe(true);
+      expect((result as any)._meta?.summarized).toBe(true);
       expect((result as any).content[0].text).toContain('Summary:');
       
       // Retrieve original data
-      const storageKey = (result as any)._metadata?.originalStorageKey as string;
+      const storageKey = (result as any)._meta?.originalStorageKey as string;
       const originalData = await summarizationPlugin.getOriginalResult(storageKey);
       
       expect(originalData).toBeDefined();
