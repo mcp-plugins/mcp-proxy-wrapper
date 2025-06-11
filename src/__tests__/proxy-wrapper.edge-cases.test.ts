@@ -167,20 +167,20 @@ describe('MCP Proxy Wrapper - Edge Cases and Stress Tests', () => {
     it('should handle concurrent tool calls correctly', async () => {
       let callCount = 0;
       
-      testEnv.registerTool('counter', async () => {
-        const currentCount = ++callCount;
+      testEnv.registerTool('counter', async (args) => {
+        callCount++;
         // Small delay to simulate work
         await new Promise(resolve => setTimeout(resolve, 10));
         return {
-          content: [{ type: 'text', text: `Call ${currentCount}` }]
+          content: [{ type: 'text', text: `Call ${args.id} completed` }]
         };
       });
       
       await testEnv.connect();
       
-      // Make 20 concurrent calls
-      const promises = Array.from({ length: 20 }, () => 
-        testEnv.callTool('counter', {})
+      // Make 20 concurrent calls with unique IDs
+      const promises = Array.from({ length: 20 }, (_, i) => 
+        testEnv.callTool('counter', { id: i + 1 })
       );
       
       const results = await Promise.all(promises);
@@ -188,12 +188,12 @@ describe('MCP Proxy Wrapper - Edge Cases and Stress Tests', () => {
       expect(results).toHaveLength(20);
       expect(callCount).toBe(20);
       
-      // Each result should have a unique call number
-      const callNumbers = results.map(r => 
+      // Each result should have its unique ID
+      const callIds = results.map(r => 
         parseInt(r.content[0].text?.split(' ')[1] || '0')
       );
       
-      expect(callNumbers.sort()).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
+      expect(callIds.sort((a, b) => a - b)).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
     });
     
     it('should handle concurrent different tool calls', async () => {
@@ -248,13 +248,15 @@ describe('MCP Proxy Wrapper - Edge Cases and Stress Tests', () => {
       for (let i = 0; i < 5; i++) {
         try {
           const result = await testEnv.callTool('flaky-hook', {});
-          results.push({ success: true, result });
+          // Check if the result is an error response
+          const isError = result.isError || (result.content && result.content[0] && result.content[0].text?.startsWith('Error:'));
+          results.push({ success: !isError, result });
         } catch (error) {
           results.push({ success: false, error });
         }
       }
       
-      // Calls 3 should have failed (error), others should succeed
+      // Call 3 should have failed (error), others should succeed
       expect(results[2].success).toBe(false); // 3rd call (index 2)
       expect(results[0].success).toBe(true);   // 1st call
       expect(results[1].success).toBe(true);   // 2nd call

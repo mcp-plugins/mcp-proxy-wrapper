@@ -11,6 +11,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { wrapWithProxy } from '../proxy-wrapper.js';
 import { ProxyWrapperOptions } from '../interfaces/proxy-hooks.js';
+import { z } from 'zod';
 
 /**
  * Configuration for test client-server setup
@@ -113,11 +114,54 @@ export class McpClientServerTest {
   
   /**
    * Register a tool on the server
-   * Using the simple 2-arg version (name + handler) to avoid Zod schema requirements
+   * Using Zod schema to ensure arguments are passed correctly
    */
   registerTool(name: string, handler: (args: any, extra?: any) => Promise<any>): void {
-    // Use the simple 2-arg version: tool(name, handler)
-    this.proxiedServer.tool(name, handler);
+    // Use a comprehensive Zod schema that accepts all common test properties
+    const testSchema = {
+      // Basic test properties
+      name: z.string().optional(),
+      value: z.any().optional(),
+      message: z.string().optional(),
+      operation: z.string().optional(),
+      a: z.number().optional(),
+      b: z.number().optional(),
+      
+      // Collection properties
+      items: z.array(z.any()).optional(),
+      data: z.array(z.any()).optional(),
+      
+      // Text content properties
+      text: z.string().optional(),
+      unicode: z.string().optional(),
+      json: z.string().optional(),
+      
+      // Identifiers
+      id: z.number().optional(),
+      param: z.string().optional(),
+      
+      // Null handling test properties
+      nullValue: z.null().optional(),
+      undefinedValue: z.undefined().optional(),
+      emptyString: z.string().optional(),
+      
+      // Special character test properties
+      specialChars: z.string().optional(),
+      quotes: z.string().optional(),
+      
+      // Performance test properties
+      index: z.number().optional(),
+      callNumber: z.number().optional(),
+      
+      // Hook test properties
+      shouldFail: z.boolean().optional(),
+      failCount: z.number().optional(),
+      
+      // Large data properties
+      largeText: z.string().optional(),
+      largeArray: z.array(z.any()).optional(),
+    };
+    this.proxiedServer.tool(name, testSchema, handler);
   }
   
   /**
