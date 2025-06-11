@@ -23,6 +23,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { createLogger } from './utils/logger.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ProxyWrapperOptions, ToolCallContext, ToolCallResult } from './interfaces/proxy-hooks.js';
+import { DefaultPluginManager } from './utils/plugin-manager.js';
 
 // Define types for the request handler extra
 type RequestHandlerExtra = any;
@@ -33,10 +34,10 @@ type RequestHandlerExtra = any;
  * @param options Options for the proxy wrapper
  * @returns A new MCP server with the proxy functionality
  */
-export function wrapWithProxy(
+export async function wrapWithProxy(
   server: McpServer,
   options?: ProxyWrapperOptions
-): McpServer {
+): Promise<McpServer> {
   const logger = createLogger({
     level: options?.debug ? 'debug' : 'info',
     prefix: 'MCP-PROXY'
@@ -44,6 +45,23 @@ export function wrapWithProxy(
   
   const hooks = options?.hooks || {};
   const globalMetadata = options?.metadata || {};
+  
+  // Initialize plugin manager if plugins are provided
+  let pluginManager: DefaultPluginManager | null = null;
+  if (options?.plugins && options.plugins.length > 0) {
+    const pluginInstances = options.plugins.map(p => 'plugin' in p ? p.plugin : p);
+    logger.info('Initializing plugin manager with plugins:', pluginInstances.map(p => p.name));
+    pluginManager = new DefaultPluginManager('1.0.0', options.pluginConfig || {});
+    
+    // Register and initialize plugins
+    for (const pluginOrReg of options.plugins) {
+      const plugin = 'plugin' in pluginOrReg ? pluginOrReg.plugin : pluginOrReg;
+      const config = 'plugin' in pluginOrReg ? pluginOrReg.config : undefined;
+      await pluginManager.register(plugin, config);
+    }
+    
+    await pluginManager.initializeAll();
+  }
   
   logger.info('Initializing MCP Proxy Wrapper');
   logger.debug('Options:', options);
@@ -104,28 +122,43 @@ export function wrapWithProxy(
           ? await originalCallback(args, actualExtra)
           : await originalCallback(actualExtra);
         
-        // Execute post-call hook if defined
+        let toolResult: ToolCallResult = {
+          result,
+          metadata: {
+            ...context.metadata,
+            completedAt: new Date().toISOString()
+          }
+        };
+        
+        // Execute user-defined post-call hook first
         if (hooks.afterToolCall) {
           logger.debug(`Executing afterToolCall hook for ${name}`, { requestId });
           
           try {
-            const toolResult: ToolCallResult = {
-              result,
-              metadata: {
-                ...context.metadata,
-                completedAt: new Date().toISOString()
-              }
-            };
-            
-            const modifiedResult = await hooks.afterToolCall(context, toolResult);
-            return modifiedResult.result;
+            toolResult = await hooks.afterToolCall(context, toolResult);
           } catch (error) {
             logger.error(`Error in afterToolCall hook for ${name}:`, error);
             throw new Error(`Hook error: ${error instanceof Error ? error.message : String(error)}`);
           }
         }
         
-        return result;
+        // Execute plugin after hooks
+        logger.debug(`Checking plugin manager for ${name}`, { hasPluginManager: !!pluginManager, requestId });
+        if (pluginManager) {
+          logger.info(`Executing plugin afterToolCall hooks for ${name}`, { requestId });
+          
+          try {
+            toolResult = await pluginManager.executeAfterHooks(context, toolResult);
+            logger.info(`Plugin hooks completed for ${name}`, { requestId });
+          } catch (error) {
+            logger.error(`Error in plugin afterToolCall hooks for ${name}:`, error);
+            throw new Error(`Plugin error: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        } else {
+          logger.debug(`No plugin manager available for ${name}`, { requestId });
+        }
+        
+        return toolResult.result;
       } catch (error) {
         logger.error(`Error processing tool call ${name}:`, error);
         

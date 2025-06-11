@@ -1,10 +1,10 @@
 /**
  * @file Proxy Hooks Interfaces
- * @version 1.0.0
+ * @version 1.1.0
  * @status STABLE - DO NOT MODIFY WITHOUT TESTS
  * @lastModified 2024-03-17
  * 
- * Defines the interfaces for the proxy hook system.
+ * Defines the interfaces for the proxy hook system and plugin support.
  * 
  * IMPORTANT:
  * - All changes must be accompanied by tests
@@ -14,8 +14,11 @@
  * - Tool call context definition
  * - Tool call result definition
  * - Hook interfaces for pre and post processing
+ * - Plugin system integration
  * - Configuration options
  */
+
+import type { ProxyPlugin, PluginConfig } from './plugin.js';
 
 /**
  * Context for a tool call
@@ -63,6 +66,17 @@ export interface ProxyHooks {
 }
 
 /**
+ * Plugin registration configuration
+ */
+export interface PluginRegistration {
+  /** The plugin instance */
+  plugin: ProxyPlugin;
+  
+  /** Plugin-specific configuration */
+  config?: PluginConfig;
+}
+
+/**
  * Options for the proxy wrapper
  */
 export interface ProxyWrapperOptions {
@@ -72,6 +86,27 @@ export interface ProxyWrapperOptions {
   /** Hooks for the proxy */
   hooks?: ProxyHooks;
   
+  /** Plugins to register with the proxy wrapper */
+  plugins?: (ProxyPlugin | PluginRegistration)[];
+  
   /** Enable debug mode for detailed logging */
   debug?: boolean;
+  
+  /** Global plugin configuration */
+  pluginConfig?: {
+    /** Enable plugin system */
+    enabled?: boolean;
+    
+    /** Default execution timeout for plugins in milliseconds */
+    defaultTimeout?: number;
+    
+    /** Maximum number of plugins allowed */
+    maxPlugins?: number;
+    
+    /** Enable plugin health checks */
+    enableHealthChecks?: boolean;
+    
+    /** Health check interval in milliseconds */
+    healthCheckInterval?: number;
+  };
 } 
