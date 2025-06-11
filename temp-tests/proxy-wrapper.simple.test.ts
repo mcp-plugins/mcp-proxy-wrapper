@@ -1,15 +1,16 @@
 /**
- * @file Proxy Wrapper Test (JavaScript)
+ * @file Proxy Wrapper Simple Test
  * @version 1.0.0
  * 
- * A simple test for the proxy wrapper using JavaScript to bypass TypeScript errors.
+ * A very simple test that verifies the proxy wrapper can be created and doesn't throw errors.
  */
 
-const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
-const { wrapWithProxy } = require('./proxy-wrapper.js');
-const { z } = require('zod');
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { wrapWithProxy } from './proxy-wrapper.js';
+import { z } from 'zod';
+import { describe, test, expect } from '@jest/globals';
 
-describe('MCP Proxy Wrapper Test', () => {
+describe('MCP Proxy Wrapper Simple Test', () => {
   test('should create a proxy wrapper without errors', () => {
     // Create a simple MCP server
     const server = new McpServer({

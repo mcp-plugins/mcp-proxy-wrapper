@@ -62,7 +62,10 @@ export function wrapWithProxy(
     const originalCallback = isThreeArgVersion ? callbackOrUndefined : paramsSchemaOrCallback;
     
     // Create a wrapped handler that executes hooks
-    const wrappedCallback = async (args: any, extra: RequestHandlerExtra) => {
+    const wrappedCallback = async (argsOrExtra: any, extra?: RequestHandlerExtra) => {
+      // Handle both 1-arg and 2-arg callback signatures
+      const args = isThreeArgVersion ? argsOrExtra : {};
+      const actualExtra = isThreeArgVersion ? extra : argsOrExtra;
       const requestId = uuidv4();
       const context: ToolCallContext = {
         toolName: name,
@@ -97,7 +100,9 @@ export function wrapWithProxy(
         
         // Call the original handler
         logger.debug(`Calling original handler for ${name}`, { requestId });
-        const result = await originalCallback(args, extra);
+        const result = isThreeArgVersion 
+          ? await originalCallback(args, actualExtra)
+          : await originalCallback(actualExtra);
         
         // Execute post-call hook if defined
         if (hooks.afterToolCall) {
@@ -141,7 +146,6 @@ export function wrapWithProxy(
     if (isThreeArgVersion) {
       return originalTool(name, paramsSchema, wrappedCallback);
     } else {
-      // @ts-expect-error - The signature doesn't match exactly but it works at runtime
       return originalTool(name, wrappedCallback);
     }
   };

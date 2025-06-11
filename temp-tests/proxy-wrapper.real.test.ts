@@ -6,10 +6,19 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { Client } from '@modelcontextprotocol/sdk/client/client.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { wrapWithProxy } from './proxy-wrapper.js';
 import { z } from 'zod';
 import { MemoryTransport } from './test-utils/memory-transport.js';
+import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+
+// Add this to debug problems with the client and server
+let debugLogging = true;
+function log(...args: any[]) {
+  if (debugLogging) {
+    console.log(...args);
+  }
+}
 
 describe('MCP Proxy Wrapper Real Tests', () => {
   let server: McpServer;
@@ -20,20 +29,33 @@ describe('MCP Proxy Wrapper Real Tests', () => {
   beforeEach(async () => {
     // Create a pair of memory transports
     const transportPair = MemoryTransport.createPair();
-    serverTransport = transportPair.server;
-    clientTransport = transportPair.client;
+    serverTransport = transportPair.serverTransport;
+    clientTransport = transportPair.clientTransport;
     
     // Create and start the server
     server = new McpServer({
       name: 'Test Server',
       version: '1.0.0'
+    }, {
+      capabilities: {
+        tools: {}
+      }
     });
     
     await server.connect(serverTransport);
+    log('Server connected');
     
     // Create and start the client
-    client = new Client();
+    client = new Client({
+      name: 'Test Client',
+      version: '1.0.0'
+    }, {
+      capabilities: {
+        tools: {}
+      }
+    });
     await client.connect(clientTransport);
+    log('Client connected');
   });
   
   afterEach(async () => {
@@ -42,6 +64,8 @@ describe('MCP Proxy Wrapper Real Tests', () => {
   });
   
   test('should successfully call a tool', async () => {
+    log('Starting tool call test');
+    
     // Wrap the server with a proxy
     const proxiedServer = wrapWithProxy(server, {
       hooks: {}
@@ -51,14 +75,20 @@ describe('MCP Proxy Wrapper Real Tests', () => {
     proxiedServer.tool('echo', { message: z.string() }, async (args) => ({
       content: [{ type: 'text', text: args.message }]
     }));
+    log('Tool registered');
     
-    // Call the tool via the client
-    const result = await client.callTool('echo', { message: 'Hello, world!' });
+    // Call the tool via the client - use the correct callTool signature
+    const result = await client.callTool({
+      name: 'echo',
+      arguments: { message: 'Hello, world!' }
+    });
+    log('Tool call result:', result);
     
     // Verify the result
-    expect(result).toEqual({
-      content: [{ type: 'text', text: 'Hello, world!' }]
-    });
+    expect(result).toHaveProperty('content');
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0]).toHaveProperty('type', 'text');
+    expect(result.content[0]).toHaveProperty('text', 'Hello, world!');
   });
   
   test('should modify arguments with beforeToolCall hook', async () => {
@@ -80,8 +110,11 @@ describe('MCP Proxy Wrapper Real Tests', () => {
       content: [{ type: 'text', text: args.message }]
     }));
     
-    // Call the tool via the client
-    const result = await client.callTool('echo', { message: 'Hello, world!' });
+    // Call the tool via the client - use the correct callTool signature
+    const result = await client.callTool({
+      name: 'echo',
+      arguments: { message: 'Hello, world!' }
+    });
     
     // Verify the hook was called and the result contains the modified message
     expect(hookCalled).toBe(true);
@@ -111,7 +144,10 @@ describe('MCP Proxy Wrapper Real Tests', () => {
     }));
     
     // Call the tool via the client
-    const result = await client.callTool('echo', { message: 'Hello, world!' });
+    const result = await client.callTool({
+      name: 'echo',
+      arguments: { message: 'Hello, world!' }
+    });
     
     // Verify the hook was called and the result was modified
     expect(hookCalled).toBe(true);
@@ -144,7 +180,10 @@ describe('MCP Proxy Wrapper Real Tests', () => {
     });
     
     // Call the tool via the client
-    const result = await client.callTool('echo', { message: 'Hello, world!' });
+    const result = await client.callTool({
+      name: 'echo',
+      arguments: { message: 'Hello, world!' }
+    });
     
     // Verify the tool handler was not called and the result is from the hook
     expect(toolHandlerCalled).toBe(false);
@@ -165,7 +204,10 @@ describe('MCP Proxy Wrapper Real Tests', () => {
     });
     
     // Call the tool via the client and expect it to throw
-    await expect(client.callTool('error', { message: 'Hello, world!' }))
+    await expect(client.callTool({
+      name: 'error',
+      arguments: { message: 'Hello, world!' }
+    }))
       .rejects.toThrow();
   });
   
@@ -185,7 +227,10 @@ describe('MCP Proxy Wrapper Real Tests', () => {
     }));
     
     // Call the tool via the client and expect it to throw
-    await expect(client.callTool('echo', { message: 'Hello, world!' }))
+    await expect(client.callTool({
+      name: 'echo',
+      arguments: { message: 'Hello, world!' }
+    }))
       .rejects.toThrow();
   });
   
@@ -205,7 +250,10 @@ describe('MCP Proxy Wrapper Real Tests', () => {
     }));
     
     // Call the tool via the client and expect it to throw
-    await expect(client.callTool('echo', { message: 'Hello, world!' }))
+    await expect(client.callTool({
+      name: 'echo',
+      arguments: { message: 'Hello, world!' }
+    }))
       .rejects.toThrow();
   });
   
@@ -234,7 +282,10 @@ describe('MCP Proxy Wrapper Real Tests', () => {
     );
     
     // Call the tool via the client
-    await client.callTool('metadata', { message: 'Hello, world!' });
+    await client.callTool({
+      name: 'metadata',
+      arguments: { message: 'Hello, world!' }
+    });
     
     // Verify the metadata was received by the hook
     expect(metadataReceived).toBe(true);
@@ -276,8 +327,14 @@ describe('MCP Proxy Wrapper Real Tests', () => {
     });
     
     // Call both tools
-    const result1 = await client.callTool('tool1', { message: 'Hello from tool1' });
-    const result2 = await client.callTool('tool2', { message: 'Hello from tool2' });
+    const result1 = await client.callTool({
+      name: 'tool1',
+      arguments: { message: 'Hello from tool1' }
+    });
+    const result2 = await client.callTool({
+      name: 'tool2',
+      arguments: { message: 'Hello from tool2' }
+    });
     
     // Verify the results
     expect(toolResults.tool1).toBe('Tool1 Modified: Hello from tool1');

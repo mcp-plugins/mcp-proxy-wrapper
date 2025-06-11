@@ -18,36 +18,17 @@
  */
 
 // Export the proxy wrapper
-export { wrapWithProxy } from './proxy-wrapper';
+export { wrapWithProxy } from './proxy-wrapper.js';
 
 // Export hook interfaces
 export {
-  BeforeHook,
-  AfterHook,
-  ErrorHook,
-  ProxyOptions,
-  HookContext,
-  HookResult,
-  ToolCallMetadata
-} from './interfaces/hooks';
+  ProxyHooks,
+  ProxyWrapperOptions,
+  ToolCallContext,
+  ToolCallResult
+} from './interfaces/proxy-hooks.js';
 
-// Export utility types
-export {
-  ToolCallArgs,
-  ToolCallResult,
-  ProxiedMcpServer
-} from './interfaces/types';
-
-// Export error types
-export {
-  ProxyWrapperError,
-  HookExecutionError,
-  InvalidOptionsError,
-  ToolCallError
-} from './interfaces/errors';
-
-// Export example usage
-export { default as exampleUsage } from './example-proxy-wrapper-usage';
+// Example usage is available in example-proxy-wrapper-usage.ts file
 
 /*
  * The MCP Proxy Wrapper adds a hook system to an existing MCP server.

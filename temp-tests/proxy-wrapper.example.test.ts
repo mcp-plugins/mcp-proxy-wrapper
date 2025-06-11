@@ -11,6 +11,7 @@
 
 // @ts-nocheck - Disable TypeScript checks for this example test
 import { wrapWithProxy } from './proxy-wrapper.js';
+import { jest, describe, test, expect } from '@jest/globals';
 
 // Simple response type for our mock server
 interface Response {
@@ -59,7 +60,7 @@ describe('MCP Proxy Wrapper Example', () => {
     }));
 
     // Register the tool
-    proxiedServer.tool('greet', {}, originalHandler);
+    proxiedServer.tool('greet', 'A greeting tool', originalHandler);
 
     // Get the wrapped handler
     const wrappedHandler = mockServer.tools.get('greet').handler;

@@ -5,8 +5,9 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { wrapWithProxy } from './proxy-wrapper';
-import { createToolResult } from './utils/test-helpers';
+import { wrapWithProxy } from './proxy-wrapper.js';
+import { createToolResult } from './utils/test-helpers.js';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 
 // Mock the McpServer class
 jest.mock('@modelcontextprotocol/sdk/server/mcp.js', () => {

@@ -6,6 +6,7 @@
  */
 
 import { createLogger } from './mcp-logger.js';
+import { describe, test, expect, jest } from '@jest/globals';
 
 describe('MCP Logger', () => {
   test('creates a logger with default options', () => {

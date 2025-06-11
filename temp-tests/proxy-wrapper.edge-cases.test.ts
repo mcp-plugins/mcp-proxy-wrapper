@@ -8,6 +8,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy } from './proxy-wrapper.js';
 import { z } from 'zod';
+import { describe, test, expect, beforeEach } from '@jest/globals';
 
 describe('MCP Proxy Wrapper Edge Cases', () => {
   let server: McpServer;

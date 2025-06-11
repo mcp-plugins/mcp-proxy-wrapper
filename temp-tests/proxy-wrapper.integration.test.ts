@@ -9,7 +9,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy } from './proxy-wrapper.js';
 import { z } from 'zod';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { MemoryTransport } from './test-utils/memory-transport';
+import { MemoryTransport } from './test-utils/memory-transport.js';
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 
 describe('MCP Proxy Wrapper Integration', () => {
   let server: McpServer;

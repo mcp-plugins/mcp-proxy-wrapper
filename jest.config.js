@@ -4,7 +4,7 @@ export default {
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
-    '^.+\\.tsx?$': [
+    '^.+\\.(ts|js)x?$': [
       'ts-jest',
       {
         useESM: true,
@@ -14,4 +14,11 @@ export default {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@modelcontextprotocol)/)'
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/'
+  ],
 }; 
