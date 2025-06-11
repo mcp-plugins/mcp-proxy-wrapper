@@ -97,7 +97,7 @@ describe('Chat Memory Plugin Integration', () => {
       expect((result as any)._meta?.chatAvailable).toBe(true);
       
       // Verify content is preserved
-      expect(result.content[0].text).toContain('Research findings on AI automation');
+      expect((result.content as any)[0].text).toContain('Research findings on AI automation');
       
       // Verify entry was saved to memory
       const memoryId = (result as any)._meta?.memoryId as string;
@@ -137,7 +137,7 @@ describe('Chat Memory Plugin Integration', () => {
       
       // Should not be saved to memory
       expect((result as any)._meta?.savedToMemory).toBeUndefined();
-      expect(result.content[0].text).toBe('Chat response: Hello');
+      expect((result.content as any)[0].text).toBe('Chat response: Hello');
     });
   });
   
@@ -225,7 +225,7 @@ describe('Chat Memory Plugin Integration', () => {
         }
       });
       
-      expect(chatResult.content[0].text).toContain('2'); // Should mention 2 saved conversations
+      expect((chatResult.content as any)[0].text).toContain('2'); // Should mention 2 saved conversations
       expect((chatResult as any)._meta?.sessionId).toBeDefined();
       expect((chatResult as any)._meta?.chatResponse).toBe(true);
     });
@@ -246,8 +246,8 @@ describe('Chat Memory Plugin Integration', () => {
         }
       });
       
-      expect(searchResult.content[0].text).toContain('Found');
-      expect(searchResult.content[0].text).toContain('analyze-data');
+      expect((searchResult.content as any)[0].text).toContain('Found');
+      expect((searchResult.content as any)[0].text).toContain('analyze-data');
       
       // Ask for analysis
       const analysisResult = await client.callTool({
@@ -258,7 +258,7 @@ describe('Chat Memory Plugin Integration', () => {
         }
       });
       
-      expect(analysisResult.content[0].text).toContain('analyzed');
+      expect((analysisResult.content as any)[0].text).toContain('analyzed');
     });
     
     it('should maintain separate user contexts', async () => {
@@ -293,9 +293,9 @@ describe('Chat Memory Plugin Integration', () => {
       });
       
       // Both should see only their own data
-      expect(user1Chat.content[0].text).toContain('1'); // User1 has 1 entry
-      expect(user2Chat.content[0].text).toContain('1'); // User2 has 1 entry
-      expect(user1Chat.content[0].text).not.toBe(user2Chat.content[0].text);
+      expect((user1Chat.content as any)[0].text).toContain('1'); // User1 has 1 entry
+      expect((user2Chat.content as any)[0].text).toContain('1'); // User2 has 1 entry
+      expect((user1Chat.content as any)[0].text).not.toBe((user2Chat.content as any)[0].text);
     });
   });
   
@@ -371,7 +371,7 @@ describe('Chat Memory Plugin Integration', () => {
         arguments: { userId: 'manager1', limit: 10 }
       });
       
-      const historyData = JSON.parse(historyResult.content[0].text);
+      const historyData = JSON.parse((historyResult.content as any)[0].text);
       expect(historyData).toHaveLength(2);
       expect(historyData[0].toolName).toBe('generate-data');
       
@@ -381,7 +381,7 @@ describe('Chat Memory Plugin Integration', () => {
         arguments: { query: 'sales', userId: 'manager1' }
       });
       
-      expect(searchResult.content[0].text).toContain('Found 1 matching entries');
+      expect((searchResult.content as any)[0].text).toContain('Found 1 matching entries');
     });
     
     it('should handle statistics and monitoring', async () => {
@@ -430,7 +430,7 @@ describe('Chat Memory Plugin Integration', () => {
         arguments: {}
       });
       
-      const stats = JSON.parse(statsResult.content[0].text);
+      const stats = JSON.parse((statsResult.content as any)[0].text);
       expect(stats.totalEntries).toBe(1);
       expect(stats.totalSessions).toBe(1);
       expect(stats.totalChatMessages).toBe(2);
@@ -513,7 +513,7 @@ describe('Chat Memory Plugin Integration', () => {
       });
       
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Chat session non-existent not found');
+      expect((result.content as any)[0].text).toContain('Chat session non-existent not found');
     });
   });
   
@@ -590,7 +590,7 @@ describe('Chat Memory Plugin Integration', () => {
         }
       });
       
-      expect(chatResult1.content[0].text).toContain('2'); // Should reference 2 saved studies
+      expect((chatResult1.content as any)[0].text).toContain('2'); // Should reference 2 saved studies
       
       // Step 4: Ask specific questions
       const sessionId = (chatResult1 as any)._meta?.sessionId;
@@ -603,7 +603,7 @@ describe('Chat Memory Plugin Integration', () => {
         }
       });
       
-      expect(chatResult2.content[0].text).toContain('Found');
+      expect((chatResult2.content as any)[0].text).toContain('Found');
       
       // Verify conversation history
       const history = chatMemoryPlugin.getConversationHistory(researcherId);

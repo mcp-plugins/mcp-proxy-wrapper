@@ -28,6 +28,21 @@ export {
   ToolCallResult
 } from './interfaces/proxy-hooks.js';
 
+// Export plugin system
+export {
+  ProxyPlugin,
+  BasePlugin,
+  PluginContext,
+  PluginConfig,
+  PluginMetadata,
+  PluginStats,
+  PluginManager
+} from './interfaces/plugin.js';
+
+// Export plugins
+export { LLMSummarizationPlugin } from './examples/plugins/llm-summarization.js';
+export { ChatMemoryPlugin } from './examples/plugins/chat-memory.js';
+
 // Example usage is available in example-proxy-wrapper-usage.ts file
 
 /*

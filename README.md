@@ -73,7 +73,7 @@ The MCP Proxy Wrapper includes a powerful plugin architecture that allows you to
 ### Using Built-in Plugins
 
 ```typescript
-import { LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper/plugins';
+import { LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
 
 const summarizationPlugin = new LLMSummarizationPlugin();
 const memoryPlugin = new ChatMemoryPlugin();
@@ -91,7 +91,7 @@ const proxiedServer = await wrapWithProxy(server, {
 Automatically summarizes long tool responses using AI:
 
 ```typescript
-import { LLMSummarizationPlugin } from 'mcp-proxy-wrapper/plugins';
+import { LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 
 const plugin = new LLMSummarizationPlugin();
 plugin.updateConfig({
@@ -126,7 +126,7 @@ console.log(result.content[0].text); // "Summary: ..."
 Provides conversational interface for saved tool responses:
 
 ```typescript
-import { ChatMemoryPlugin } from 'mcp-proxy-wrapper/plugins';
+import { ChatMemoryPlugin } from 'mcp-proxy-wrapper';
 
 const memoryPlugin = new ChatMemoryPlugin();
 memoryPlugin.updateConfig({
@@ -508,7 +508,7 @@ const monitoredProxy = await wrapWithProxy(server, {
 ### 5. AI-Powered Enhancement
 
 ```typescript
-import { LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper/plugins';
+import { LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
 
 const aiEnhancedProxy = await wrapWithProxy(server, {
   plugins: [
@@ -542,7 +542,7 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 ### Development Setup
 
 ```bash
-git clone https://github.com/your-username/mcp-proxy-wrapper.git
+git clone https://github.com/crazyrabbitLTC/mcp-proxy-wrapper.git
 cd mcp-proxy-wrapper
 npm install
 npm run build
@@ -557,11 +557,12 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 - [Model Context Protocol](https://modelcontextprotocol.io/)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-- [Documentation Site](https://your-username.github.io/mcp-proxy-wrapper/)
-- [API Reference](https://your-username.github.io/mcp-proxy-wrapper/api/)
+- [GitHub Repository](https://github.com/crazyrabbitLTC/mcp-proxy-wrapper)
+- [Issues & Support](https://github.com/crazyrabbitLTC/mcp-proxy-wrapper/issues)
 
 ---
 
 <div align="center">
-  <strong>Built with ❤️ for the MCP ecosystem</strong>
+  <strong>Built with ❤️ for the MCP ecosystem</strong><br>
+  <em>Created by <a href="mailto:dennison@dennisonbertram.com">Dennison Bertram</a></em>
 </div>

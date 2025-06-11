@@ -1,7 +1,7 @@
 {
   "name": "mcp-proxy-wrapper",
   "version": "1.0.0",
-  "description": "A proxy wrapper for MCP servers that provides a hook system for intercepting tool calls",
+  "description": "A powerful proxy wrapper for Model Context Protocol (MCP) servers with hooks and plugin system for intercepting, monitoring, and modifying tool calls",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -22,13 +22,17 @@
   },
   "keywords": [
     "mcp",
+    "model-context-protocol",
     "proxy",
     "wrapper",
     "hooks",
-    "tool",
-    "calls"
+    "plugins",
+    "tool-calls",
+    "ai",
+    "llm",
+    "middleware"
   ],
-  "author": "Your Name",
+  "author": "Dennison Bertram <dennison@dennisonbertram.com>",
   "license": "MIT",
   "repository": {
     "type": "git",

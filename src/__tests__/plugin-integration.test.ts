@@ -3,13 +3,13 @@
  * @description End-to-end tests for plugin system integration with actual tool calls
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { wrapWithProxy } from '../proxy-wrapper.js';
 import { BasePlugin, PluginContext } from '../interfaces/plugin.js';
-import { ToolCallContext, ToolCallResult } from '../interfaces/proxy-hooks.js';
+import { ToolCallResult } from '../interfaces/proxy-hooks.js';
 import { z } from 'zod';
 
 // Real-world plugin examples for testing
@@ -225,7 +225,7 @@ describe('Plugin Integration Tests', () => {
       });
       
       // Verify result
-      expect(result.content[0].text).toBe('Hello, World!');
+      expect((result.content as any)[0].text).toBe('Hello, World!');
       
       // Verify plugin was executed
       expect(loggingPlugin.logs).toHaveLength(2);
@@ -261,7 +261,7 @@ describe('Plugin Integration Tests', () => {
       });
       
       expect(unauthorizedResult.isError).toBe(true);
-      expect(unauthorizedResult.content[0].text).toContain('Authentication required');
+      expect((unauthorizedResult.content as any)[0].text).toContain('Authentication required');
       
       // Test with invalid API key
       const invalidResult = await client.callTool({
@@ -270,7 +270,7 @@ describe('Plugin Integration Tests', () => {
       });
       
       expect(invalidResult.isError).toBe(true);
-      expect(invalidResult.content[0].text).toContain('Authentication failed');
+      expect((invalidResult.content as any)[0].text).toContain('Authentication failed');
       
       // Test with valid API key
       const validResult = await client.callTool({
@@ -279,7 +279,7 @@ describe('Plugin Integration Tests', () => {
       });
       
       expect(validResult.isError).toBeFalsy();
-      expect(validResult.content[0].text).toBe('Secure data: secret');
+      expect((validResult.content as any)[0].text).toBe('Secure data: secret');
     });
     
     it('should enhance responses with metadata plugin', async () => {
@@ -305,11 +305,11 @@ describe('Plugin Integration Tests', () => {
         arguments: { input: 'test data' }
       });
       
-      expect(result.content[0].text).toBe('Processed: test data');
+      expect((result.content as any)[0].text).toBe('Processed: test data');
       expect(result._metadata).toBeDefined();
-      expect(result._metadata.processedBy).toBe('metadata-plugin');
-      expect(result._metadata.toolName).toBe('test-tool');
-      expect(result._metadata.version).toBe('1.0.0');
+      expect((result._metadata as any).processedBy).toBe('metadata-plugin');
+      expect((result._metadata as any).toolName).toBe('test-tool');
+      expect((result._metadata as any).version).toBe('1.0.0');
     });
   });
   
@@ -345,7 +345,7 @@ describe('Plugin Integration Tests', () => {
       // Both plugins should have executed
       expect(loggingPlugin.logs).toHaveLength(2);
       expect(result._metadata).toBeDefined();
-      expect(result._metadata.processedBy).toBe('metadata-plugin');
+      expect((result._metadata as any).processedBy).toBe('metadata-plugin');
     });
     
     it('should handle authentication and rate limiting together', async () => {
@@ -381,7 +381,7 @@ describe('Plugin Integration Tests', () => {
         });
         
         expect(result.isError).toBeFalsy();
-        expect(result.content[0].text).toBe(`Action: action-${i}`);
+        expect((result.content as any)[0].text).toBe(`Action: action-${i}`);
       }
       
       // 4th call should be rate limited
@@ -395,7 +395,7 @@ describe('Plugin Integration Tests', () => {
       });
       
       expect(rateLimitedResult.isError).toBe(true);
-      expect(rateLimitedResult.content[0].text).toContain('Rate limit exceeded');
+      expect((rateLimitedResult.content as any)[0].text).toContain('Rate limit exceeded');
     });
   });
   
@@ -429,7 +429,7 @@ describe('Plugin Integration Tests', () => {
         arguments: { operation: 'add', a: 2, b: 3 }
       });
       
-      expect(result1.content[0].text).toBe('Result: 5');
+      expect((result1.content as any)[0].text).toBe('Result: 5');
       expect(result1._cached).toBeUndefined();
       expect(callCount).toBe(1);
       
@@ -439,7 +439,7 @@ describe('Plugin Integration Tests', () => {
         arguments: { operation: 'add', a: 2, b: 3 }
       });
       
-      expect(result2.content[0].text).toBe('Result: 5');
+      expect((result2.content as any)[0].text).toBe('Result: 5');
       expect(result2._cached).toBe(true);
       expect(callCount).toBe(1); // Tool not called again
       
@@ -449,7 +449,7 @@ describe('Plugin Integration Tests', () => {
         arguments: { operation: 'add', a: 5, b: 7 }
       });
       
-      expect(result3.content[0].text).toBe('Result: 12');
+      expect((result3.content as any)[0].text).toBe('Result: 12');
       expect(result3._cached).toBeUndefined();
       expect(callCount).toBe(2);
     });
@@ -486,7 +486,7 @@ describe('Plugin Integration Tests', () => {
       });
       
       // Tool call should succeed despite plugin error
-      expect(result.content[0].text).toBe('Processed: test');
+      expect((result.content as any)[0].text).toBe('Processed: test');
       
       // Working plugin should still execute
       expect(workingPlugin.logs).toHaveLength(2);
@@ -520,7 +520,7 @@ describe('Plugin Integration Tests', () => {
       
       // Should receive error response
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Tool execution failed');
+      expect((result.content as any)[0].text).toContain('Tool execution failed');
       
       // Plugin should still log the attempt
       expect(loggingPlugin.logs).toHaveLength(1); // Only beforeToolCall
