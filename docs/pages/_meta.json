@@ -1,0 +1,11 @@
+{
+  "index": "Introduction",
+  "getting-started": "Getting Started",
+  "core-concepts": "Core Concepts",
+  "api-reference": "API Reference",
+  "plugins": "Plugins",
+  "examples": "Examples",
+  "deployment": "Deployment",
+  "troubleshooting": "Troubleshooting",
+  "contributing": "Contributing"
+}

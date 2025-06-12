@@ -1,0 +1,698 @@
+import { Callout, Steps, Tabs, Tab } from 'nextra/components'
+
+# 💰 Stripe Monetization Plugin
+
+Transform your MCP tools into revenue-generating services with enterprise-grade billing, multiple payment models, and Stripe's battle-tested payment infrastructure.
+
+<Callout type="success" emoji="🎉">
+  **Backend-Only Solution**: No custom frontend needed! Uses Stripe's hosted checkout pages, customer portal, and payment links.
+</Callout>
+
+## Overview
+
+The Stripe Monetization Plugin enables instant monetization of any MCP server with:
+
+- 💳 **Multiple Billing Models**: Per-call, subscriptions, credits, freemium
+- 🏦 **Stripe Integration**: Hosted checkout, customer portal, webhooks
+- 🔒 **Enterprise Security**: PCI compliance, fraud protection, secure authentication
+- 📊 **Analytics**: Revenue tracking, usage analytics, customer insights
+- 🚀 **Transport Agnostic**: Works with STDIO, WebSocket, SSE, HTTP, InMemory
+
+## Quick Start
+
+<Steps>
+### Install the Plugin
+
+```bash
+npm install mcp-proxy-wrapper
+```
+
+### Get Stripe API Keys
+
+1. Sign up at [stripe.com](https://stripe.com) (free)
+2. Go to **Developers → API keys**
+3. Copy your test keys (`pk_test_...` and `sk_test_...`)
+
+### Configure Monetization
+
+```typescript
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { createStripeMonetizationPlugin, createBasicSetup } from 'mcp-proxy-wrapper/plugins/stripe-monetization';
+
+const plugin = createStripeMonetizationPlugin(createBasicSetup({
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  defaultPrice: 100, // $1.00 per call
+  toolPrices: {
+    'ai-analysis': 250,     // $2.50
+    'data-processing': 150, // $1.50
+    'simple-lookup': 50     // $0.50
+  }
+}));
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [plugin]
+});
+```
+
+### Your Tools Are Now Monetized!
+
+```typescript
+// Register tools as usual - billing happens automatically
+proxiedServer.tool('ai-analysis', {
+  text: z.string(),
+  analysisType: z.enum(['sentiment', 'summary', 'keywords']).optional()
+}, async (args) => {
+  // Your AI analysis logic here
+  return await performAIAnalysis(args.text, args.analysisType);
+});
+```
+</Steps>
+
+## Billing Models
+
+### 1. Per-Call Billing (Pay-as-you-go)
+
+Perfect for APIs and tools with variable usage patterns.
+
+<Tabs items={['Configuration', 'Features', 'Use Cases']}>
+  <Tab>
+    ```typescript
+    const config = createBasicSetup({
+      stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      defaultPrice: 100, // $1.00 default
+      toolPrices: {
+        'gpt-4-analysis': 500,      // $5.00
+        'image-generation': 200,    // $2.00
+        'basic-search': 25          // $0.25
+      },
+      volumeDiscounts: [
+        { threshold: 100, discountPercent: 10 }, // 10% off after 100 calls
+        { threshold: 500, discountPercent: 20 }  // 20% off after 500 calls
+      ]
+    });
+    ```
+  </Tab>
+  <Tab>
+    - ✅ **Flexible Pricing**: Different prices per tool
+    - ✅ **Volume Discounts**: Automatic discounts for high usage
+    - ✅ **No Commitment**: Users pay only for what they use
+    - ✅ **Instant Revenue**: Get paid for every tool call
+  </Tab>
+  <Tab>
+    - **AI APIs**: ChatGPT-style services
+    - **Data Processing**: Analysis and transformation tools
+    - **Image/Video Tools**: Generation and editing services
+    - **Development APIs**: Code analysis, testing tools
+  </Tab>
+</Tabs>
+
+### 2. Subscription Billing
+
+Recurring revenue with predictable pricing for users.
+
+<Tabs items={['Configuration', 'Features', 'Use Cases']}>
+  <Tab>
+    ```typescript
+    const config = createSubscriptionSetup({
+      stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      plans: [
+        {
+          id: 'starter',
+          name: 'Starter Plan',
+          price: 999,  // $9.99/month
+          interval: 'month',
+          includedCalls: 1000,
+          overagePrice: 10 // $0.10 per additional call
+        },
+        {
+          id: 'professional',
+          name: 'Professional Plan',
+          price: 4999, // $49.99/month
+          interval: 'month',
+          includedCalls: 10000,
+          overagePrice: 5  // $0.05 per additional call
+        }
+      ]
+    });
+    ```
+  </Tab>
+  <Tab>
+    - ✅ **Predictable Revenue**: Monthly recurring income
+    - ✅ **Included Allowances**: Free calls up to plan limits
+    - ✅ **Overage Billing**: Automatic billing for excess usage
+    - ✅ **Plan Upgrades**: Easy plan changes via customer portal
+  </Tab>
+  <Tab>
+    - **SaaS Platforms**: Multi-tenant AI services
+    - **Enterprise Tools**: B2B AI solutions
+    - **Developer Platforms**: API-as-a-Service offerings
+    - **Content Tools**: Writing, design, productivity apps
+  </Tab>
+</Tabs>
+
+### 3. Credit System
+
+Pre-purchase credits for flexible, user-controlled spending.
+
+<Tabs items={['Configuration', 'Features', 'Use Cases']}>
+  <Tab>
+    ```typescript
+    const config = createCreditSystemSetup({
+      stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      creditPackages: [
+        { credits: 100, price: 999, name: 'Starter Pack' },    // $9.99
+        { credits: 500, price: 3999, name: 'Power Pack' },     // $39.99  
+        { credits: 1000, price: 6999, name: 'Enterprise' }     // $69.99
+      ],
+      toolPrices: {
+        'ai-analysis': 5,       // 5 credits per call
+        'data-processing': 3,   // 3 credits per call
+        'simple-search': 1      // 1 credit per call
+      }
+    });
+    ```
+  </Tab>
+  <Tab>
+    - ✅ **Bulk Discounts**: Better value for larger purchases
+    - ✅ **User Control**: Users manage their spending
+    - ✅ **No Surprises**: Clear credit costs upfront
+    - ✅ **Flexible Usage**: Credits work across all tools
+  </Tab>
+  <Tab>
+    - **Gaming/Entertainment**: Virtual currencies
+    - **Design Tools**: Credits for generations/exports
+    - **Educational Platforms**: Learning credit systems
+    - **Creative Apps**: Art, music, writing tools
+  </Tab>
+</Tabs>
+
+### 4. Freemium Model
+
+Free tier with paid upgrades to drive adoption.
+
+<Tabs items={['Configuration', 'Features', 'Use Cases']}>
+  <Tab>
+    ```typescript
+    const config = createFreemiumSetup({
+      stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      freeAllowance: {
+        callsPerMonth: 100,        // 100 free calls per month
+        resetDay: 1,               // Reset on 1st of each month
+        freeTools: ['basic-search', 'simple-analysis']
+      },
+      premiumPlans: [
+        {
+          id: 'premium',
+          price: 1999, // $19.99/month
+          unlimitedTools: true,
+          additionalFeatures: ['priority-support', 'advanced-analytics']
+        }
+      ]
+    });
+    ```
+  </Tab>
+  <Tab>
+    - ✅ **User Acquisition**: Free tier drives signups
+    - ✅ **Conversion**: Natural upgrade path to paid
+    - ✅ **Feature Gating**: Premium tools behind paywall
+    - ✅ **Monthly Resets**: Fresh free allowances
+  </Tab>
+  <Tab>
+    - **Developer Tools**: Free tier for hobbyists
+    - **Content Platforms**: Free basic features
+    - **Productivity Apps**: Free limited usage
+    - **API Services**: Free tier with rate limits
+  </Tab>
+</Tabs>
+
+## Payment Flow (Zero Frontend Code!)
+
+The plugin uses Stripe's hosted UI components, eliminating the need for custom payment forms:
+
+### 1. Customer Wants Credits
+
+```typescript
+// Backend: Create Stripe checkout session
+const stripeEndpoints = plugin.getStripeEndpoints();
+
+const { checkoutUrl } = await stripeEndpoints.createCheckoutSession({
+  customerId: 'user_123',
+  items: [{ toolName: 'ai-analysis', quantity: 10 }],
+  successUrl: 'https://your-app.com/success',
+  cancelUrl: 'https://your-app.com/cancel'
+});
+
+// Frontend: Just redirect (no forms needed!)
+window.location.href = checkoutUrl;
+```
+
+### 2. Customer Manages Billing
+
+```typescript
+// Backend: Create customer portal session
+const { portalUrl } = await stripeEndpoints.createCustomerPortalSession({
+  customerId: 'user_123',
+  returnUrl: 'https://your-app.com/dashboard'
+});
+
+// Frontend: Redirect to Stripe's customer portal
+window.open(portalUrl, '_blank');
+```
+
+### 3. Tool Calls Are Automatically Billed
+
+```typescript
+// Your tool - no billing code needed!
+proxiedServer.tool('ai-analysis', schema, async (args) => {
+  // Plugin automatically:
+  // 1. Checks if user has credits/subscription
+  // 2. Blocks call if payment required
+  // 3. Processes billing after successful call
+  // 4. Tracks usage and analytics
+  
+  return await performAnalysis(args);
+});
+```
+
+## Web Application Integration
+
+### Express.js Example
+
+```typescript
+import express from 'express';
+import { createStripeRoutes } from 'mcp-proxy-wrapper/plugins/stripe-monetization';
+
+const app = express();
+
+// Get Stripe endpoints from plugin
+const stripeEndpoints = plugin.getStripeEndpoints();
+
+// Mount pre-built Stripe routes
+const stripeRoutes = createStripeRoutes(stripeEndpoints);
+app.post('/api/stripe/checkout', stripeRoutes.createCheckout);
+app.post('/api/stripe/portal', stripeRoutes.createPortal);
+app.post('/api/stripe/webhooks', stripeRoutes.handleWebhook);
+
+// Custom payment endpoint
+app.post('/api/buy-credits', async (req, res) => {
+  const { userId, toolName, quantity } = req.body;
+  
+  const { checkoutUrl } = await stripeEndpoints.createCheckoutSession({
+    customerId: userId,
+    items: [{ toolName, quantity }],
+    successUrl: `${req.headers.origin}/success`,
+    cancelUrl: `${req.headers.origin}/pricing`
+  });
+  
+  res.json({ checkoutUrl });
+});
+```
+
+### Next.js Example
+
+```typescript
+// app/api/buy-credits/route.ts
+import { createStripeMonetizationPlugin } from 'mcp-proxy-wrapper/plugins/stripe-monetization';
+
+const plugin = createStripeMonetizationPlugin(config);
+const stripeEndpoints = plugin.getStripeEndpoints();
+
+export async function POST(request: Request) {
+  const { userId, toolName, quantity } = await request.json();
+  
+  const { checkoutUrl } = await stripeEndpoints.createCheckoutSession({
+    customerId: userId,
+    items: [{ toolName, quantity }],
+    successUrl: `${request.headers.origin}/success`,
+    cancelUrl: `${request.headers.origin}/pricing`
+  });
+  
+  return Response.json({ checkoutUrl });
+}
+```
+
+## Transport Compatibility
+
+The monetization plugin works with **ALL** MCP transport methods:
+
+### STDIO (Command Line)
+
+```typescript
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [stripePlugin]
+});
+
+const transport = new StdioServerTransport();
+await proxiedServer.connect(transport);
+```
+
+### WebSocket (Real-time Web)
+
+```typescript
+import { WebSocketServerTransport } from '@modelcontextprotocol/sdk/server/websocket.js';
+
+wss.on('connection', async (ws) => {
+  const transport = new WebSocketServerTransport(ws);
+  await proxiedServer.connect(transport);
+});
+```
+
+### SSE (Server-Sent Events)
+
+```typescript
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+
+const transport = new SSEServerTransport('/api/sse', server);
+app.use('/api/sse', transport.createHandler());
+```
+
+### HTTP (REST APIs)
+
+```typescript
+app.post('/api/tools/:toolName', async (req, res) => {
+  try {
+    const result = await callMonetizedTool(req.params.toolName, req.body);
+    res.json(result);
+  } catch (error) {
+    if (error.code === 'PAYMENT_REQUIRED') {
+      res.status(402).json({
+        error: 'Payment required',
+        checkoutUrl: `/checkout?tool=${req.params.toolName}`
+      });
+    }
+  }
+});
+```
+
+## Analytics & Monitoring
+
+The plugin includes built-in analytics for business intelligence:
+
+```typescript
+// Get comprehensive analytics
+const analytics = await plugin.getAnalytics({
+  timeframe: 'month',
+  groupBy: ['tool', 'customer', 'plan']
+});
+
+console.log({
+  totalRevenue: analytics.totalRevenue,    // $12,450.00
+  totalCalls: analytics.totalCalls,        // 15,230 calls
+  averageRevenue: analytics.averageRevenue, // $0.82 per call
+  topTools: analytics.popularTools,        // Most used tools
+  churnRate: analytics.churnRate           // 3.2%
+});
+```
+
+### Business Metrics
+
+- **Revenue Tracking**: Real-time revenue across all tools and customers
+- **Usage Analytics**: Tool popularity, user behavior, peak times
+- **Customer Insights**: Lifetime value, churn prediction, upgrade patterns
+- **Financial Reporting**: MRR, ARR, growth rates, cohort analysis
+
+### Operational Metrics
+
+- **Performance**: Tool call latency, success rates, error tracking
+- **Billing Health**: Payment success rates, failed charges, retry logic
+- **Security**: Fraud detection, unusual usage patterns, access logs
+
+## Testing
+
+### Get Stripe Test Keys
+
+1. Sign up at [stripe.com](https://stripe.com) (completely free)
+2. Go to **Developers → API keys** 
+3. Copy test keys (start with `pk_test_` and `sk_test_`)
+
+### Test Credit Cards
+
+```bash
+# Successful payments
+4242424242424242   # Visa
+5555555555554444   # Mastercard
+
+# Failed payments
+4000000000000002   # Card declined
+4000000000000069   # Expired card
+
+# Special scenarios
+4000000000003220   # 3D Secure required
+```
+
+### Live Testing Example
+
+```typescript
+// Set test environment variables
+process.env.STRIPE_SECRET_KEY = 'sk_test_your_key_here';
+process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_your_key_here';
+
+// Test the complete flow
+const plugin = createStripeMonetizationPlugin(config);
+const proxiedServer = await wrapWithProxy(server, { plugins: [plugin] });
+
+// 1. Tool call should be blocked (no credits)
+await expect(callTool('expensive-ai', { text: 'test' }))
+  .rejects.toThrow('Payment required');
+
+// 2. Purchase credits via Stripe checkout
+const { checkoutUrl } = await stripeEndpoints.createCheckoutSession({
+  customerId: 'test_user',
+  items: [{ toolName: 'expensive-ai', quantity: 1 }],
+  successUrl: 'http://localhost:3000/success',
+  cancelUrl: 'http://localhost:3000/cancel'
+});
+
+// 3. Complete payment with test card: 4242424242424242
+
+// 4. Tool call should now work
+const result = await callTool('expensive-ai', { text: 'test' });
+expect(result.content[0].text).toContain('AI analysis complete');
+```
+
+## Configuration Reference
+
+### Basic Setup Options
+
+```typescript
+interface BasicSetupConfig {
+  // Required Stripe credentials
+  stripeSecretKey: string;
+  stripePublishableKey: string;
+  webhookSecret: string;
+  
+  // Pricing configuration
+  defaultPrice: number;                    // Default price in cents
+  currency?: string;                       // ISO currency code (default: 'usd')
+  toolPrices?: Record<string, number>;     // Tool-specific pricing
+  
+  // Volume discounts
+  volumeDiscounts?: Array<{
+    threshold: number;                     // Number of calls required
+    discountPercent: number;               // Discount percentage (0-100)
+  }>;
+  
+  // Authentication
+  authentication?: {
+    type: 'api-key' | 'jwt' | 'oauth';
+    required: boolean;
+  };
+  
+  // Database
+  database?: {
+    type: 'sqlite' | 'postgresql' | 'mysql';
+    connectionString?: string;
+  };
+}
+```
+
+### Advanced Configuration
+
+```typescript
+interface AdvancedConfig {
+  // Environment settings
+  environment: 'development' | 'staging' | 'production';
+  debug: boolean;
+  
+  // Rate limiting
+  rateLimiting: {
+    enabled: boolean;
+    windowMs: number;                      // Time window in milliseconds
+    maxCalls: number;                      // Max calls per window
+  };
+  
+  // Analytics
+  analytics: {
+    enabled: boolean;
+    retentionDays: number;                 // Data retention period
+    exportFormats: ('json' | 'csv')[];
+  };
+  
+  // Security
+  security: {
+    encryptData: boolean;
+    auditLogs: boolean;
+    ipWhitelist?: string[];
+  };
+  
+  // Webhooks
+  webhooks: {
+    retryAttempts: number;
+    retryDelay: number;
+    timeout: number;
+  };
+}
+```
+
+## Production Deployment
+
+### Environment Variables
+
+```bash
+# Production Stripe keys
+STRIPE_SECRET_KEY=sk_live_your_live_key_here
+STRIPE_PUBLISHABLE_KEY=pk_live_your_live_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_live_webhook_secret
+
+# Database (recommended: PostgreSQL for production)
+DATABASE_URL=postgresql://user:pass@host:5432/db
+
+# Security
+JWT_SECRET=your_super_secure_jwt_secret
+ENCRYPTION_KEY=your_32_byte_encryption_key
+
+# Monitoring
+LOG_LEVEL=info
+SENTRY_DSN=your_sentry_dsn
+```
+
+### Security Checklist
+
+- ✅ Use live Stripe keys in production
+- ✅ Enable webhook signature verification
+- ✅ Use HTTPS for all endpoints
+- ✅ Implement rate limiting
+- ✅ Enable audit logging
+- ✅ Use PostgreSQL for production database
+- ✅ Set up monitoring and alerts
+- ✅ Regular security updates
+
+### Scaling Considerations
+
+- **Database**: Use connection pooling for high-traffic applications
+- **Webhooks**: Implement idempotency for webhook processing
+- **Caching**: Cache customer data and pricing information
+- **Monitoring**: Set up alerts for failed payments and errors
+- **Backup**: Regular database backups and disaster recovery
+
+## API Reference
+
+### Plugin Methods
+
+```typescript
+class StripeMonetizationPlugin {
+  // Get Stripe endpoints for payment integration
+  getStripeEndpoints(): StripeAPIEndpoints;
+  
+  // Analytics and reporting
+  getAnalytics(options?: AnalyticsOptions): Promise<BillingAnalytics>;
+  getCustomerInfo(customerId: string): Promise<CustomerInfo>;
+  getUsageReport(customerId: string, period: string): Promise<UsageReport>;
+  
+  // Credit management
+  addCredits(customerId: string, amount: number): Promise<void>;
+  getCredits(customerId: string): Promise<CreditBalance>;
+  
+  // Subscription management
+  createSubscription(customerId: string, planId: string): Promise<Subscription>;
+  cancelSubscription(subscriptionId: string): Promise<void>;
+  
+  // Health and monitoring
+  healthCheck(): Promise<boolean>;
+  getStats(): Promise<PluginStats>;
+}
+```
+
+### Stripe Endpoints
+
+```typescript
+class StripeAPIEndpoints {
+  // Checkout and payment
+  createCheckoutSession(params: CheckoutParams): Promise<CheckoutSession>;
+  createCustomerPortalSession(params: PortalParams): Promise<PortalSession>;
+  processPayment(params: PaymentParams): Promise<PaymentResult>;
+  
+  // Customer management
+  ensureStripeCustomer(customerInfo: CustomerInfo): Promise<StripeCustomer>;
+  getCustomerPaymentMethods(customerId: string): Promise<PaymentMethod[]>;
+  
+  // Webhooks
+  handleWebhook(payload: string, signature: string): Promise<WebhookResult>;
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+<Callout type="warning">
+  **"Invalid API key"**: Make sure you're using the correct Stripe keys. Test keys start with `sk_test_` and `pk_test_`, live keys start with `sk_live_` and `pk_live_`.
+</Callout>
+
+<Callout type="warning">
+  **"Webhook signature verification failed"**: Ensure your webhook secret matches the one in your Stripe dashboard and that you're sending the raw request body.
+</Callout>
+
+<Callout type="warning">
+  **"Tool call blocked unexpectedly"**: Check the customer's credit balance and subscription status. Enable debug logging to see detailed billing checks.
+</Callout>
+
+### Debug Mode
+
+```typescript
+const plugin = createStripeMonetizationPlugin({
+  ...config,
+  debug: true,
+  logLevel: 'debug'
+});
+
+// Enable detailed logging
+process.env.DEBUG = 'stripe-monetization:*';
+```
+
+### Health Checks
+
+```bash
+# Check plugin health
+curl http://localhost:3000/api/health
+
+# Check Stripe connectivity  
+curl -H "Authorization: Bearer $STRIPE_SECRET_KEY" \
+  https://api.stripe.com/v1/customers
+
+# Check database connectivity
+curl http://localhost:3000/api/db/health
+```
+
+## Support
+
+- 📖 **Documentation**: [Full API Reference](/api-reference)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/crazyrabbitltc/mcp-proxy-wrapper/issues)
+- 💬 **Community**: [Discord Server](https://discord.gg/mcp-community)
+- 📧 **Enterprise**: [Contact Sales](mailto:sales@mcp-proxy-wrapper.com)
+
+---
+
+Ready to start monetizing your MCP tools? Get your Stripe keys and start earning revenue in minutes! 🚀
