@@ -80,6 +80,15 @@ export class McpClientServerTest {
   }
   
   /**
+   * Ensure proxy server is initialized (called by both connect and registerTool)
+   */
+  private async ensureProxyInitialized(): Promise<void> {
+    if (!this.proxiedServer) {
+      this.proxiedServer = await wrapWithProxy(this.server, this.proxyOptions);
+    }
+  }
+
+  /**
    * Connect client and server
    */
   async connect(): Promise<void> {
@@ -87,12 +96,10 @@ export class McpClientServerTest {
     
     try {
       // Initialize proxy server if not done yet
-      if (!this.proxiedServer) {
-        this.proxiedServer = await wrapWithProxy(this.server, this.proxyOptions);
-      }
+      await this.ensureProxyInitialized();
       
       // Connect server first
-      await this.proxiedServer.connect(this.serverTransport);
+      await this.proxiedServer!.connect(this.serverTransport);
       
       // Then connect client
       await this.client.connect(this.clientTransport);
@@ -167,10 +174,9 @@ export class McpClientServerTest {
       largeText: z.string().optional(),
       largeArray: z.array(z.any()).optional(),
     };
-    if (!this.proxiedServer) {
-      this.proxiedServer = await wrapWithProxy(this.server, this.proxyOptions);
-    }
-    this.proxiedServer.tool(name, testSchema, handler);
+    // Ensure proxy is initialized before registering tools
+    await this.ensureProxyInitialized();
+    this.proxiedServer!.tool(name, testSchema, handler);
   }
   
   /**

@@ -38,6 +38,10 @@ export async function wrapWithProxy(
   server: McpServer,
   options?: ProxyWrapperOptions
 ): Promise<McpServer> {
+  // Check if server is already wrapped to prevent double wrapping
+  if ((server as any)._isProxyWrapped) {
+    return server;
+  }
   const logger = createLogger({
     level: options?.debug ? 'debug' : 'info',
     prefix: 'MCP-PROXY'
@@ -100,28 +104,48 @@ export async function wrapWithProxy(
       logger.debug(`Tool call: ${name}`, { requestId, args });
       
       try {
-        // Execute pre-call hook if defined
+        // Execute plugin before hooks first
+        logger.debug(`Checking plugin manager beforeToolCall for ${name}`, { hasPluginManager: !!pluginManager, requestId });
+        if (pluginManager) {
+          logger.info(`Executing plugin beforeToolCall hooks for ${name}`, { requestId });
+          
+          try {
+            const pluginShortCircuit = await pluginManager.executeBeforeHooks(context);
+            if (pluginShortCircuit) {
+              logger.info(`Plugin short-circuited tool call for ${name}`, { requestId });
+              return pluginShortCircuit.result;
+            }
+            logger.info(`Plugin beforeToolCall hooks completed for ${name}`, { requestId });
+          } catch (error) {
+            logger.error(`Error in plugin beforeToolCall hooks for ${name}:`, error);
+            throw new Error(`Plugin error: ${error instanceof Error ? error.message : String(error)}`);
+          }
+        } else {
+          logger.debug(`No plugin manager available for beforeToolCall ${name}`, { requestId });
+        }
+
+        // Execute user-defined pre-call hook after plugins
         if (hooks.beforeToolCall) {
-          logger.debug(`Executing beforeToolCall hook for ${name}`, { requestId });
+          logger.debug(`Executing user beforeToolCall hook for ${name}`, { requestId });
           
           try {
             const hookResult = await hooks.beforeToolCall(context);
             
             // If the hook returns a result, short-circuit the tool call
             if (hookResult) {
-              logger.debug(`Short-circuiting tool call for ${name} with hook result`, { requestId });
+              logger.debug(`Short-circuiting tool call for ${name} with user hook result`, { requestId });
               return hookResult.result;
             }
           } catch (error) {
-            logger.error(`Error in beforeToolCall hook for ${name}:`, error);
+            logger.error(`Error in user beforeToolCall hook for ${name}:`, error);
             throw new Error(`Hook error: ${error instanceof Error ? error.message : String(error)}`);
           }
         }
         
-        // Call the original handler
+        // Call the original handler with potentially modified args from hooks
         logger.debug(`Calling original handler for ${name}`, { requestId });
         const result = isThreeArgVersion 
-          ? await originalCallback(args, actualExtra)
+          ? await originalCallback(context.args, actualExtra)
           : await originalCallback(actualExtra);
         
         let toolResult: ToolCallResult = {
@@ -202,6 +226,9 @@ export async function wrapWithProxy(
   
   // Replace the original method
   server.tool = toolMethod;
+  
+  // Mark server as wrapped to prevent double wrapping
+  (server as any)._isProxyWrapped = true;
   
   logger.info('MCP Proxy Wrapper initialized successfully');
   

@@ -496,7 +496,8 @@ export class DefaultPluginManager extends EventEmitter implements PluginManager 
     // Define what constitutes a critical error that should stop processing
     return error.message.includes('critical') || 
            error.message.includes('fatal') ||
-           error.message.includes('security');
+           error.message.includes('security') ||
+           error.message.includes('timed out');
   }
   
   private resolveDependencyOrder(): ProxyPlugin[] {

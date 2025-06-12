@@ -492,15 +492,37 @@ describe('DefaultPluginManager', () => {
       expect(healthStatus.get('error-plugin')).toBe(false);
     });
     
-    it('should emit error events', (done) => {
-      manager.on('plugin:error', (error) => {
-        expect(error.pluginName).toBe('error-plugin');
-        expect(error.phase).toBe('beforeToolCall');
-        expect(error.error.message).toBe('Plugin error');
-        done();
+    it('should emit error events', async () => {
+      // Set up a promise to wait for the event
+      const errorEventPromise = new Promise<void>((resolve) => {
+        manager.on('plugin:error', (error) => {
+          expect(error.pluginName).toBe('error-plugin');
+          expect(error.phase).toBe('beforeToolCall');
+          expect(error.error.message).toBe('Plugin error');
+          resolve();
+        });
       });
       
-      // Test will be completed by the event handler
+      // Create an error plugin and trigger the error
+      const errorPlugin: ProxyPlugin = {
+        name: 'error-plugin',
+        version: '1.0.0',
+        beforeToolCall: async () => { throw new Error('Plugin error'); }
+      };
+      
+      await manager.register(errorPlugin);
+      await manager.initializeAll();
+      
+      const context: ToolCallContext = {
+        toolName: 'test-tool',
+        args: {}
+      };
+      
+      // This should trigger the error event
+      await manager.executeBeforeHooks(context);
+      
+      // Wait for the event to be emitted
+      await errorEventPromise;
     });
     
     it('should continue processing other plugins after one fails', async () => {

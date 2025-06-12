@@ -101,6 +101,7 @@ describe('MCP Proxy Wrapper - Comprehensive Tests', () => {
     
     it('should allow argument modification in beforeToolCall', async () => {
       testEnv = createTestWithProxy({
+        debug: true,
         hooks: {
           beforeToolCall: async (context: ToolCallContext) => {
             // Modify the name argument
