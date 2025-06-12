@@ -306,7 +306,7 @@ export async function freemiumDeveloperToolsExample() {
       return {
         content: [{
           type: 'text',
-          text: `Invalid JSON ❌: ${error.message}`
+          text: `Invalid JSON ❌: ${error instanceof Error ? error.message : String(error)}`
         }]
       };
     }

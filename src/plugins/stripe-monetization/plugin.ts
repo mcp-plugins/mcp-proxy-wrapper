@@ -53,7 +53,7 @@ export class StripeMonetizationPlugin extends BasePlugin {
     minWrapperVersion: '1.0.0'
   };
 
-  private config!: StripeMonetizationConfig;
+  declare public config: StripeMonetizationConfig;
   private databaseManager!: DatabaseManager;
   private stripeService!: StripeService;
   private authManager!: AuthenticationManager;
@@ -277,7 +277,7 @@ export class StripeMonetizationPlugin extends BasePlugin {
         billing: {
           charged: cost,
           creditsConsumed: credits,
-          paymentMethod: this.getPaymentMethod(customer),
+          paymentMethod: this.getPaymentMethod(customer) as 'subscription' | 'per_call' | 'credits' | 'free_tier',
           transactionId: pluginData.transactionId,
           remainingBalance: await this.getRemainingBalance(customer)
         },

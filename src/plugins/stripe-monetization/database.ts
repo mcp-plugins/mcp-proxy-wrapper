@@ -510,10 +510,23 @@ export class DatabaseManager {
     const payments = paymentResult[0] || {};
 
     return {
+      // Base PluginStats properties
+      callsProcessed: usageResult.reduce((sum: number, row: any) => sum + (row.tool_calls || 0), 0),
+      errorsEncountered: 0, // TODO: Implement error tracking
+      averageProcessingTime: 0, // TODO: Implement processing time tracking
+      lastActivity: Date.now(),
+      
+      // Stripe-specific properties
       revenue: {
         total: revenue.total_revenue || 0,
         thisMonth: revenue.month_revenue || 0,
-        byModel: {}, // TODO: Implement by billing model breakdown
+        byModel: {
+          per_call: 0,
+          subscription: 0,
+          usage_based: 0,
+          freemium: 0,
+          credit_system: 0
+        }, // TODO: Implement by billing model breakdown
         arpu: customers.total_customers > 0 ? 
           (revenue.total_revenue || 0) / customers.total_customers : 0
       },
