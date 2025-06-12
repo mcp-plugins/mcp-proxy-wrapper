@@ -47,7 +47,7 @@ describe('Chat Memory Plugin Integration', () => {
         saveResponses: true,
         enableChat: true,
         maxEntries: 100,
-        excludeTools: ['chat-with-memory', 'get-memory-stats']
+        excludeTools: ['chat-with-memory', 'get-memory-stats', 'get-conversation-history', 'search-memory']
       }
     };
   });
@@ -519,6 +519,14 @@ describe('Chat Memory Plugin Integration', () => {
   
   describe('Real-world Scenarios', () => {
     it('should handle a complete research workflow', async () => {
+      // Configure plugin to exclude research-chat for this test
+      chatMemoryPlugin.updateConfig({
+        options: {
+          ...chatMemoryPlugin.config!.options,
+          excludeTools: ['chat-with-memory', 'get-memory-stats', 'research-chat']
+        }
+      });
+      
       proxiedServer = await wrapWithProxy(server, {
         plugins: [chatMemoryPlugin]
       });

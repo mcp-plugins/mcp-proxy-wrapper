@@ -159,10 +159,19 @@ describe('ChatMemoryPlugin', () => {
       // Save some test entries
       await plugin.afterToolCall(mockContext, mockResult);
       
+      // Add small delay to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 2));
+      
       const context2 = {
         ...mockContext,
         toolName: 'analyze-data',
-        requestId: 'test-request-456'
+        requestId: 'test-request-456',
+        startTime: Date.now(), // This ensures a later timestamp
+        args: { 
+          query: 'user data analysis', 
+          userId: 'user123',
+          sessionId: 'session456'
+        }
       };
       await plugin.afterToolCall(context2, {
         result: {
@@ -237,7 +246,13 @@ describe('ChatMemoryPlugin', () => {
     
     it('should handle chat messages', async () => {
       // Save some conversation data first
-      await plugin.afterToolCall(mockContext, mockResult);
+      const saveResult = await plugin.afterToolCall(mockContext, mockResult);
+      expect(saveResult.result._meta?.savedToMemory).toBe(true);
+      
+      // Verify the entry was actually saved
+      const allEntries = plugin.getConversationHistory();
+      expect(allEntries).toHaveLength(1);
+      expect(allEntries[0].context.userId).toBe('user123');
       
       const sessionId = await plugin.startChatSession('user123');
       const response = await plugin.chatWithMemory(
@@ -257,7 +272,8 @@ describe('ChatMemoryPlugin', () => {
     
     it('should provide context-aware chat responses', async () => {
       // Save conversation data
-      await plugin.afterToolCall(mockContext, mockResult);
+      const saveResult = await plugin.afterToolCall(mockContext, mockResult);
+      expect(saveResult.result._meta?.savedToMemory).toBe(true);
       
       const sessionId = await plugin.startChatSession('user123');
       

@@ -93,19 +93,26 @@ class MockChatLLMProvider implements ChatLLMProvider {
     const entryCount = conversation.length;
     const recentEntry = conversation[conversation.length - 1];
     
-    if (userMessage.toLowerCase().includes('what') || userMessage.toLowerCase().includes('show')) {
-      return `Based on your ${entryCount} saved conversations, here's what I found: ${recentEntry?.response.content.substring(0, 100)}... Would you like me to analyze any specific entries?`;
-    }
-    
+    // Check more specific patterns first
     if (userMessage.toLowerCase().includes('analyze') || userMessage.toLowerCase().includes('summary')) {
       return `I've analyzed your ${entryCount} conversations. The most recent was from tool "${recentEntry?.toolName}" which returned information about ${JSON.stringify(recentEntry?.request.args)}. The results show ${recentEntry?.response.content.length} characters of data.`;
     }
     
+    if (userMessage.toLowerCase().includes('what') || userMessage.toLowerCase().includes('show')) {
+      return `Based on your ${entryCount} saved conversations, here's what I found: ${recentEntry?.response.content.substring(0, 100)}... Would you like me to analyze any specific entries?`;
+    }
+    
     if (userMessage.toLowerCase().includes('search') || userMessage.toLowerCase().includes('find')) {
-      const relevantEntries = conversation.filter(entry => 
-        entry.response.content.toLowerCase().includes(userMessage.toLowerCase().split(' ')[1] || '')
-      );
-      return `Found ${relevantEntries.length} relevant entries that match your search. ${relevantEntries.length > 0 ? `The first match is from "${relevantEntries[0].toolName}" tool.` : ''}`;
+      // Extract search term - look for words after 'search' or 'find'
+      const queryWords = userMessage.toLowerCase().split(' ');
+      const searchIndex = Math.max(queryWords.indexOf('search'), queryWords.indexOf('find'));
+      const searchTerm = searchIndex >= 0 && searchIndex < queryWords.length - 1 ? queryWords[searchIndex + 1] : '';
+      
+      const relevantEntries = searchTerm ? conversation.filter(entry => 
+        entry.response.content.toLowerCase().includes(searchTerm)
+      ) : conversation;
+      
+      return `Found ${relevantEntries.length} relevant entries that match your search${searchTerm ? ` for "${searchTerm}"` : ''}. ${relevantEntries.length > 0 ? `The first match is from "${relevantEntries[0].toolName}" tool.` : ''}`;
     }
 
     return `I understand you're asking: "${userMessage}". I have access to ${entryCount} saved conversations. What specific information would you like me to help you find or analyze?`;
@@ -229,17 +236,18 @@ export class ChatMemoryPlugin extends BasePlugin {
       }
 
       // Create conversation entry
+      const now = Date.now();
       const entry: ConversationEntry = {
         id: this.generateEntryId(),
         toolName: context.toolName,
         request: {
           args: context.args,
-          timestamp: context.startTime || Date.now()
+          timestamp: context.startTime || now
         },
         response: {
           content,
           metadata: result.result._meta,
-          timestamp: Date.now()
+          timestamp: now
         },
         context: {
           requestId: context.requestId,
@@ -319,7 +327,10 @@ export class ChatMemoryPlugin extends BasePlugin {
   }
 
   private generateEntryId(): string {
-    return `entry_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Add microsecond precision to avoid ID collisions
+    const timestamp = Date.now();
+    const microseconds = process.hrtime.bigint() % 1000000n;
+    return `entry_${timestamp}_${microseconds}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   private generateSessionId(): string {
@@ -465,14 +476,32 @@ export class ChatMemoryPlugin extends BasePlugin {
       entries = entries.filter(entry => entry.context.userId === userId);
     }
 
-    // Simple relevance filtering based on query
+    // Simple relevance filtering based on query - match keywords rather than exact query
     if (query) {
       const queryLower = query.toLowerCase();
-      entries = entries.filter(entry => 
-        entry.toolName.toLowerCase().includes(queryLower) ||
-        entry.response.content.toLowerCase().includes(queryLower) ||
-        JSON.stringify(entry.request.args).toLowerCase().includes(queryLower)
+      // Extract meaningful keywords (remove common words like 'what', 'do', 'you', 'have', etc.)
+      const keywords = queryLower.split(' ').filter(word => 
+        word.length > 2 && !['what', 'how', 'can', 'you', 'have', 'the', 'and', 'for', 'are', 'get', 'do', 'does', 'query'].includes(word)
       );
+      
+      if (keywords.length > 0) {
+        const filteredEntries = entries.filter(entry => {
+          const toolNameLower = entry.toolName.toLowerCase();
+          const contentLower = entry.response.content.toLowerCase();
+          const argsLower = JSON.stringify(entry.request.args).toLowerCase();
+          
+          // Check if any keyword matches
+          return keywords.some(keyword => 
+            toolNameLower.includes(keyword) ||
+            contentLower.includes(keyword) ||
+            argsLower.includes(keyword)
+          );
+        });
+        
+        // If no entries match the keywords but we have entries, return all entries for the user
+        // This handles cases like "What data do I have?" where user has entries but they don't match "data"
+        entries = filteredEntries.length > 0 ? filteredEntries : entries;
+      }
     }
 
     // Sort by timestamp (most recent first)
@@ -508,11 +537,26 @@ export class ChatMemoryPlugin extends BasePlugin {
       entries = entries.filter(entry => entry.context.userId === userId);
     }
     
-    return entries.filter(entry =>
-      entry.toolName.toLowerCase().includes(queryLower) ||
-      entry.response.content.toLowerCase().includes(queryLower) ||
-      JSON.stringify(entry.request.args).toLowerCase().includes(queryLower)
+    // Extract meaningful keywords for better matching
+    const keywords = queryLower.split(' ').filter(word => 
+      word.length > 2 && !['what', 'how', 'can', 'you', 'have', 'the', 'and', 'for', 'are', 'get', 'do', 'does', 'query'].includes(word)
     );
+    
+    // Filter by keywords - match any keyword in any field
+    const matchingEntries = entries.filter(entry => {
+      const toolNameLower = entry.toolName.toLowerCase();
+      const contentLower = entry.response.content.toLowerCase();
+      const argsLower = JSON.stringify(entry.request.args).toLowerCase();
+      
+      return keywords.some(keyword => 
+        toolNameLower.includes(keyword) ||
+        contentLower.includes(keyword) ||
+        argsLower.includes(keyword)
+      );
+    });
+    
+    // Sort by relevance (most recent first)
+    return matchingEntries.sort((a, b) => b.request.timestamp - a.request.timestamp);
   }
 
   /**
