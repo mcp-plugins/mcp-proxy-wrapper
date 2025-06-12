@@ -1,15 +1,6 @@
-import nextra from 'nextra'
-
-const withNextra = nextra({
-  latex: true,
-  search: {
-    codeblocks: false
-  }
+const withNextra = require('nextra')({
+  theme: 'nextra-theme-docs',
+  themeConfig: './theme.config.tsx'
 })
 
-export default withNextra({
-  // Next.js config
-  experimental: {
-    optimizePackageImports: ['nextra-theme-docs']
-  }
-})
+module.exports = withNextra()

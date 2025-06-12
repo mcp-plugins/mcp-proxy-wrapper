@@ -1,0 +1,80 @@
+import { Cards, Card } from 'nextra/components'
+
+# MCP Proxy Wrapper
+
+Transform any MCP server into a powerful, extensible platform with built-in plugin support, monetization, analytics, and enterprise features.
+
+<Cards>
+  <Card
+    icon="🚀"
+    title="Quick Start"
+    href="/getting-started"
+  >
+    Get up and running in under 5 minutes with our step-by-step guide.
+  </Card>
+  
+  <Card
+    icon="🔌"
+    title="Plugin System"
+    href="/plugins"
+  >
+    Extend your MCP server with powerful plugins for monetization, security, and more.
+  </Card>
+  
+  <Card
+    icon="💰"
+    title="Stripe Monetization"
+    href="/plugins/stripe-monetization"
+  >
+    Start earning revenue from your AI tools with enterprise-grade billing.
+  </Card>
+  
+  <Card
+    icon="📊"
+    title="API Reference"
+    href="/api"
+  >
+    Complete API documentation and reference materials.
+  </Card>
+</Cards>
+
+## What is MCP Proxy Wrapper?
+
+The MCP Proxy Wrapper is a TypeScript library that provides a powerful plugin system for intercepting and enhancing tool calls in Model Context Protocol (MCP) servers. It enables you to add features like monetization, authentication, analytics, and more without modifying your core tool logic.
+
+### Key Features
+
+- **🔌 Plugin Architecture**: Extensible hook system for beforeToolCall and afterToolCall
+- **💰 Built-in Monetization**: Stripe integration with multiple billing models
+- **🔒 Authentication & Security**: JWT, API keys, rate limiting, and access control
+- **📊 Analytics & Monitoring**: Usage tracking, performance metrics, and error reporting
+- **🚀 Transport Agnostic**: Works with STDIO, WebSocket, SSE, HTTP, and InMemory
+- **🛡️ Enterprise Ready**: Robust error handling, logging, and production features
+
+### Quick Example
+
+```typescript
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { createStripeMonetizationPlugin } from 'mcp-proxy-wrapper/plugins/stripe-monetization';
+
+// Create your MCP server
+const server = new McpServer({ name: 'My AI Tools', version: '1.0.0' });
+
+// Add monetization plugin
+const monetizationPlugin = createStripeMonetizationPlugin({
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  defaultPrice: 100 // $1.00 per call
+});
+
+// Wrap with proxy functionality
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [monetizationPlugin]
+});
+
+// Register tools as usual - billing happens automatically
+proxiedServer.tool('ai-analysis', schema, async (args) => {
+  return await performAIAnalysis(args);
+});
+```
+
+Ready to get started? Check out our [Getting Started Guide](/getting-started) or explore the [Plugin System](/plugins).
