@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="129" failures="0" errors="0" time="1.459">
-  <testsuite name="DefaultPluginManager" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:30:22" time="0.947" tests="34">
+<testsuites name="jest tests" tests="129" failures="0" errors="0" time="1.501">
+  <testsuite name="DefaultPluginManager" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:46:59" time="0.957" tests="34">
     <testcase classname="DefaultPluginManager Plugin Registration should register a valid plugin" name="DefaultPluginManager Plugin Registration should register a valid plugin" time="0.013">
     </testcase>
     <testcase classname="DefaultPluginManager Plugin Registration should reject plugin with invalid name" name="DefaultPluginManager Plugin Registration should reject plugin with invalid name" time="0.008">
     </testcase>
-    <testcase classname="DefaultPluginManager Plugin Registration should reject plugin with invalid version" name="DefaultPluginManager Plugin Registration should reject plugin with invalid version" time="0.001">
+    <testcase classname="DefaultPluginManager Plugin Registration should reject plugin with invalid version" name="DefaultPluginManager Plugin Registration should reject plugin with invalid version" time="0">
     </testcase>
     <testcase classname="DefaultPluginManager Plugin Registration should reject duplicate plugin registration" name="DefaultPluginManager Plugin Registration should reject duplicate plugin registration" time="0.001">
     </testcase>
@@ -17,15 +17,15 @@
     </testcase>
     <testcase classname="DefaultPluginManager Plugin Unregistration should call destroy hook when unregistering" name="DefaultPluginManager Plugin Unregistration should call destroy hook when unregistering" time="0.002">
     </testcase>
-    <testcase classname="DefaultPluginManager Plugin Unregistration should throw error when unregistering non-existent plugin" name="DefaultPluginManager Plugin Unregistration should throw error when unregistering non-existent plugin" time="0">
+    <testcase classname="DefaultPluginManager Plugin Unregistration should throw error when unregistering non-existent plugin" name="DefaultPluginManager Plugin Unregistration should throw error when unregistering non-existent plugin" time="0.001">
     </testcase>
     <testcase classname="DefaultPluginManager Plugin Initialization should initialize all enabled plugins" name="DefaultPluginManager Plugin Initialization should initialize all enabled plugins" time="0.001">
     </testcase>
-    <testcase classname="DefaultPluginManager Plugin Initialization should not initialize disabled plugins" name="DefaultPluginManager Plugin Initialization should not initialize disabled plugins" time="0">
+    <testcase classname="DefaultPluginManager Plugin Initialization should not initialize disabled plugins" name="DefaultPluginManager Plugin Initialization should not initialize disabled plugins" time="0.001">
     </testcase>
-    <testcase classname="DefaultPluginManager Plugin Initialization should handle initialization failures" name="DefaultPluginManager Plugin Initialization should handle initialization failures" time="0.002">
+    <testcase classname="DefaultPluginManager Plugin Initialization should handle initialization failures" name="DefaultPluginManager Plugin Initialization should handle initialization failures" time="0.001">
     </testcase>
-    <testcase classname="DefaultPluginManager Plugin Initialization should initialize plugins in dependency order" name="DefaultPluginManager Plugin Initialization should initialize plugins in dependency order" time="0.003">
+    <testcase classname="DefaultPluginManager Plugin Initialization should initialize plugins in dependency order" name="DefaultPluginManager Plugin Initialization should initialize plugins in dependency order" time="0.005">
     </testcase>
     <testcase classname="DefaultPluginManager Dependency Validation should validate dependencies are present" name="DefaultPluginManager Dependency Validation should validate dependencies are present" time="0.001">
     </testcase>
@@ -35,13 +35,13 @@
     </testcase>
     <testcase classname="DefaultPluginManager Plugin Execution Order should return plugins in priority order" name="DefaultPluginManager Plugin Execution Order should return plugins in priority order" time="0.001">
     </testcase>
-    <testcase classname="DefaultPluginManager Plugin Execution Order should handle same priority plugins consistently" name="DefaultPluginManager Plugin Execution Order should handle same priority plugins consistently" time="0">
+    <testcase classname="DefaultPluginManager Plugin Execution Order should handle same priority plugins consistently" name="DefaultPluginManager Plugin Execution Order should handle same priority plugins consistently" time="0.001">
     </testcase>
     <testcase classname="DefaultPluginManager Hook Execution should execute beforeToolCall hooks for enabled plugins" name="DefaultPluginManager Hook Execution should execute beforeToolCall hooks for enabled plugins" time="0.001">
     </testcase>
     <testcase classname="DefaultPluginManager Hook Execution should execute afterToolCall hooks for enabled plugins" name="DefaultPluginManager Hook Execution should execute afterToolCall hooks for enabled plugins" time="0.001">
     </testcase>
-    <testcase classname="DefaultPluginManager Hook Execution should skip disabled plugins during execution" name="DefaultPluginManager Hook Execution should skip disabled plugins during execution" time="0">
+    <testcase classname="DefaultPluginManager Hook Execution should skip disabled plugins during execution" name="DefaultPluginManager Hook Execution should skip disabled plugins during execution" time="0.001">
     </testcase>
     <testcase classname="DefaultPluginManager Hook Execution should respect plugin tool filters" name="DefaultPluginManager Hook Execution should respect plugin tool filters" time="0.003">
     </testcase>
@@ -59,103 +59,135 @@
     </testcase>
     <testcase classname="DefaultPluginManager Error Handling should mark plugins as unhealthy after errors" name="DefaultPluginManager Error Handling should mark plugins as unhealthy after errors" time="0.001">
     </testcase>
-    <testcase classname="DefaultPluginManager Error Handling should emit error events" name="DefaultPluginManager Error Handling should emit error events" time="0.002">
+    <testcase classname="DefaultPluginManager Error Handling should emit error events" name="DefaultPluginManager Error Handling should emit error events" time="0.001">
     </testcase>
     <testcase classname="DefaultPluginManager Error Handling should continue processing other plugins after one fails" name="DefaultPluginManager Error Handling should continue processing other plugins after one fails" time="0.001">
     </testcase>
-    <testcase classname="DefaultPluginManager Event Emission should emit plugin:registered event" name="DefaultPluginManager Event Emission should emit plugin:registered event" time="0.001">
+    <testcase classname="DefaultPluginManager Event Emission should emit plugin:registered event" name="DefaultPluginManager Event Emission should emit plugin:registered event" time="0">
     </testcase>
     <testcase classname="DefaultPluginManager Event Emission should emit plugin:unregistered event" name="DefaultPluginManager Event Emission should emit plugin:unregistered event" time="0.001">
     </testcase>
     <testcase classname="DefaultPluginManager Event Emission should emit plugins:initialized event" name="DefaultPluginManager Event Emission should emit plugins:initialized event" time="0.002">
     </testcase>
   </testsuite>
-  <testsuite name="MCP Proxy Wrapper - Edge Cases and Stress Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:30:23" time="0.241" tests="16">
-    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Null and Undefined Handling should handle null arguments gracefully" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Null and Undefined Handling should handle null arguments gracefully" time="0.017">
+  <testsuite name="MCP Proxy Wrapper - Edge Cases and Stress Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:47:00" time="0.248" tests="16">
+    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Null and Undefined Handling should handle null arguments gracefully" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Null and Undefined Handling should handle null arguments gracefully" time="0.018">
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Null and Undefined Handling should handle empty arguments object" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Null and Undefined Handling should handle empty arguments object" time="0.004">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Large Data Handling should handle large text content" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Large Data Handling should handle large text content" time="0.003">
+    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Large Data Handling should handle large text content" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Large Data Handling should handle large text content" time="0.004">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Large Data Handling should handle large argument objects" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Large Data Handling should handle large argument objects" time="0.003">
+    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Large Data Handling should handle large argument objects" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Large Data Handling should handle large argument objects" time="0.002">
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Large Data Handling should handle multiple large content blocks" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Large Data Handling should handle multiple large content blocks" time="0.002">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Special Characters and Encoding should handle Unicode characters correctly" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Special Characters and Encoding should handle Unicode characters correctly" time="0.001">
+    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Special Characters and Encoding should handle Unicode characters correctly" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Special Characters and Encoding should handle Unicode characters correctly" time="0.002">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Special Characters and Encoding should handle JSON special characters" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Special Characters and Encoding should handle JSON special characters" time="0.002">
+    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Special Characters and Encoding should handle JSON special characters" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Special Characters and Encoding should handle JSON special characters" time="0.001">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Concurrent Operations should handle concurrent tool calls correctly" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Concurrent Operations should handle concurrent tool calls correctly" time="0.019">
+    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Concurrent Operations should handle concurrent tool calls correctly" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Concurrent Operations should handle concurrent tool calls correctly" time="0.02">
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Concurrent Operations should handle concurrent different tool calls" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Concurrent Operations should handle concurrent different tool calls" time="0.004">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Hook Error Scenarios should handle intermittent hook failures" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Hook Error Scenarios should handle intermittent hook failures" time="0.01">
+    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Hook Error Scenarios should handle intermittent hook failures" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Hook Error Scenarios should handle intermittent hook failures" time="0.011">
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Hook Error Scenarios should handle hook errors with complex objects" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Hook Error Scenarios should handle hook errors with complex objects" time="0.002">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Memory and Performance should handle many sequential tool calls without memory leaks" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Memory and Performance should handle many sequential tool calls without memory leaks" time="0.018">
+    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Memory and Performance should handle many sequential tool calls without memory leaks" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Memory and Performance should handle many sequential tool calls without memory leaks" time="0.019">
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Memory and Performance should handle rapid fire tool calls" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Memory and Performance should handle rapid fire tool calls" time="0.009">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Edge Case Tool Scenarios should handle tool that returns empty content array" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Edge Case Tool Scenarios should handle tool that returns empty content array" time="0.001">
+    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Edge Case Tool Scenarios should handle tool that returns empty content array" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Edge Case Tool Scenarios should handle tool that returns empty content array" time="0.002">
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Edge Case Tool Scenarios should handle tool with no return value" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Edge Case Tool Scenarios should handle tool with no return value" time="0.001">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Edge Case Tool Scenarios should handle tool that takes very long to execute" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Edge Case Tool Scenarios should handle tool that takes very long to execute" time="0.102">
+    <testcase classname="MCP Proxy Wrapper - Edge Cases and Stress Tests Edge Case Tool Scenarios should handle tool that takes very long to execute" name="MCP Proxy Wrapper - Edge Cases and Stress Tests Edge Case Tool Scenarios should handle tool that takes very long to execute" time="0.103">
     </testcase>
   </testsuite>
-  <testsuite name="Plugin Integration Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:30:24" time="0.055" tests="9">
-    <testcase classname="Plugin Integration Tests Single Plugin Integration should execute logging plugin with real tool calls" name="Plugin Integration Tests Single Plugin Integration should execute logging plugin with real tool calls" time="0.005">
+  <testsuite name="MCP Protocol Compliance Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:47:01" time="0.053" tests="15">
+    <testcase classname="MCP Protocol Compliance Tests Protocol Equivalence should behave identically to unwrapped server for tool calls" name="MCP Protocol Compliance Tests Protocol Equivalence should behave identically to unwrapped server for tool calls" time="0.005">
     </testcase>
-    <testcase classname="Plugin Integration Tests Single Plugin Integration should handle authentication plugin blocking unauthorized calls" name="Plugin Integration Tests Single Plugin Integration should handle authentication plugin blocking unauthorized calls" time="0.002">
+    <testcase classname="MCP Protocol Compliance Tests Protocol Equivalence should provide identical tool listings" name="MCP Protocol Compliance Tests Protocol Equivalence should provide identical tool listings" time="0.004">
     </testcase>
-    <testcase classname="Plugin Integration Tests Single Plugin Integration should enhance responses with metadata plugin" name="Plugin Integration Tests Single Plugin Integration should enhance responses with metadata plugin" time="0.003">
+    <testcase classname="MCP Protocol Compliance Tests MCP Request Handling should handle initialize request correctly" name="MCP Protocol Compliance Tests MCP Request Handling should handle initialize request correctly" time="0.001">
     </testcase>
-    <testcase classname="Plugin Integration Tests Multiple Plugin Integration should execute multiple plugins in priority order" name="Plugin Integration Tests Multiple Plugin Integration should execute multiple plugins in priority order" time="0.004">
+    <testcase classname="MCP Protocol Compliance Tests MCP Request Handling should handle tools/list request" name="MCP Protocol Compliance Tests MCP Request Handling should handle tools/list request" time="0.002">
     </testcase>
-    <testcase classname="Plugin Integration Tests Multiple Plugin Integration should handle authentication and rate limiting together" name="Plugin Integration Tests Multiple Plugin Integration should handle authentication and rate limiting together" time="0.003">
+    <testcase classname="MCP Protocol Compliance Tests MCP Request Handling should handle tools/call request" name="MCP Protocol Compliance Tests MCP Request Handling should handle tools/call request" time="0.003">
     </testcase>
-    <testcase classname="Plugin Integration Tests Performance and Caching should cache repeated calls with caching plugin" name="Plugin Integration Tests Performance and Caching should cache repeated calls with caching plugin" time="0.003">
+    <testcase classname="MCP Protocol Compliance Tests Error Response Compliance should return proper error format for tool execution errors" name="MCP Protocol Compliance Tests Error Response Compliance should return proper error format for tool execution errors" time="0.009">
     </testcase>
-    <testcase classname="Plugin Integration Tests Error Handling and Resilience should handle plugin errors gracefully without breaking tool calls" name="Plugin Integration Tests Error Handling and Resilience should handle plugin errors gracefully without breaking tool calls" time="0.011">
+    <testcase classname="MCP Protocol Compliance Tests Error Response Compliance should handle non-existent tool calls appropriately" name="MCP Protocol Compliance Tests Error Response Compliance should handle non-existent tool calls appropriately" time="0.001">
+    </testcase>
+    <testcase classname="MCP Protocol Compliance Tests Content Type Handling should handle text content correctly" name="MCP Protocol Compliance Tests Content Type Handling should handle text content correctly" time="0.002">
+    </testcase>
+    <testcase classname="MCP Protocol Compliance Tests Content Type Handling should handle resource content correctly" name="MCP Protocol Compliance Tests Content Type Handling should handle resource content correctly" time="0.001">
+    </testcase>
+    <testcase classname="MCP Protocol Compliance Tests Content Type Handling should handle mixed content types" name="MCP Protocol Compliance Tests Content Type Handling should handle mixed content types" time="0.001">
+    </testcase>
+    <testcase classname="MCP Protocol Compliance Tests Metadata Preservation should preserve tool result metadata" name="MCP Protocol Compliance Tests Metadata Preservation should preserve tool result metadata" time="0.002">
+    </testcase>
+    <testcase classname="MCP Protocol Compliance Tests Metadata Preservation should handle empty metadata gracefully" name="MCP Protocol Compliance Tests Metadata Preservation should handle empty metadata gracefully" time="0.002">
+    </testcase>
+    <testcase classname="MCP Protocol Compliance Tests Connection Lifecycle should handle connection and disconnection properly" name="MCP Protocol Compliance Tests Connection Lifecycle should handle connection and disconnection properly" time="0.002">
+    </testcase>
+    <testcase classname="MCP Protocol Compliance Tests Connection Lifecycle should handle multiple connection attempts gracefully" name="MCP Protocol Compliance Tests Connection Lifecycle should handle multiple connection attempts gracefully" time="0.001">
+    </testcase>
+    <testcase classname="MCP Protocol Compliance Tests Connection Lifecycle should handle disconnection when not connected" name="MCP Protocol Compliance Tests Connection Lifecycle should handle disconnection when not connected" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="Plugin Integration Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:47:01" time="0.059" tests="9">
+    <testcase classname="Plugin Integration Tests Single Plugin Integration should execute logging plugin with real tool calls" name="Plugin Integration Tests Single Plugin Integration should execute logging plugin with real tool calls" time="0.004">
+    </testcase>
+    <testcase classname="Plugin Integration Tests Single Plugin Integration should handle authentication plugin blocking unauthorized calls" name="Plugin Integration Tests Single Plugin Integration should handle authentication plugin blocking unauthorized calls" time="0.003">
+    </testcase>
+    <testcase classname="Plugin Integration Tests Single Plugin Integration should enhance responses with metadata plugin" name="Plugin Integration Tests Single Plugin Integration should enhance responses with metadata plugin" time="0.005">
+    </testcase>
+    <testcase classname="Plugin Integration Tests Multiple Plugin Integration should execute multiple plugins in priority order" name="Plugin Integration Tests Multiple Plugin Integration should execute multiple plugins in priority order" time="0.002">
+    </testcase>
+    <testcase classname="Plugin Integration Tests Multiple Plugin Integration should handle authentication and rate limiting together" name="Plugin Integration Tests Multiple Plugin Integration should handle authentication and rate limiting together" time="0.004">
+    </testcase>
+    <testcase classname="Plugin Integration Tests Performance and Caching should cache repeated calls with caching plugin" name="Plugin Integration Tests Performance and Caching should cache repeated calls with caching plugin" time="0.005">
+    </testcase>
+    <testcase classname="Plugin Integration Tests Error Handling and Resilience should handle plugin errors gracefully without breaking tool calls" name="Plugin Integration Tests Error Handling and Resilience should handle plugin errors gracefully without breaking tool calls" time="0.012">
     </testcase>
     <testcase classname="Plugin Integration Tests Error Handling and Resilience should handle tool execution errors with plugins active" name="Plugin Integration Tests Error Handling and Resilience should handle tool execution errors with plugins active" time="0.002">
     </testcase>
-    <testcase classname="Plugin Integration Tests Plugin Configuration should respect plugin tool filtering" name="Plugin Integration Tests Plugin Configuration should respect plugin tool filtering" time="0.002">
+    <testcase classname="Plugin Integration Tests Plugin Configuration should respect plugin tool filtering" name="Plugin Integration Tests Plugin Configuration should respect plugin tool filtering" time="0.003">
     </testcase>
   </testsuite>
-  <testsuite name="Plugin System" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:30:24" time="0.053" tests="24">
-    <testcase classname="Plugin System Basic Plugin Registration should register a plugin and execute its hooks" name="Plugin System Basic Plugin Registration should register a plugin and execute its hooks" time="0.003">
+  <testsuite name="Plugin System" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:47:01" time="0.065" tests="24">
+    <testcase classname="Plugin System Basic Plugin Registration should register a plugin and execute its hooks" name="Plugin System Basic Plugin Registration should register a plugin and execute its hooks" time="0.002">
     </testcase>
     <testcase classname="Plugin System Basic Plugin Registration should not execute hooks for disabled plugins" name="Plugin System Basic Plugin Registration should not execute hooks for disabled plugins" time="0.001">
     </testcase>
     <testcase classname="Plugin System Basic Plugin Registration should reject plugins with invalid names" name="Plugin System Basic Plugin Registration should reject plugins with invalid names" time="0.007">
     </testcase>
-    <testcase classname="Plugin System Basic Plugin Registration should reject plugins with invalid versions" name="Plugin System Basic Plugin Registration should reject plugins with invalid versions" time="0">
+    <testcase classname="Plugin System Basic Plugin Registration should reject plugins with invalid versions" name="Plugin System Basic Plugin Registration should reject plugins with invalid versions" time="0.001">
     </testcase>
-    <testcase classname="Plugin System Plugin Lifecycle should call initialize on all plugins during startup" name="Plugin System Plugin Lifecycle should call initialize on all plugins during startup" time="0.003">
+    <testcase classname="Plugin System Plugin Lifecycle should call initialize on all plugins during startup" name="Plugin System Plugin Lifecycle should call initialize on all plugins during startup" time="0.002">
     </testcase>
     <testcase classname="Plugin System Plugin Lifecycle should call destroy on plugins during cleanup" name="Plugin System Plugin Lifecycle should call destroy on plugins during cleanup" time="0.001">
     </testcase>
     <testcase classname="Plugin System Plugin Lifecycle should handle initialization errors gracefully" name="Plugin System Plugin Lifecycle should handle initialization errors gracefully" time="0.001">
     </testcase>
-    <testcase classname="Plugin System Plugin Execution Order should execute plugins in priority order (highest first)" name="Plugin System Plugin Execution Order should execute plugins in priority order (highest first)" time="0.002">
+    <testcase classname="Plugin System Plugin Execution Order should execute plugins in priority order (highest first)" name="Plugin System Plugin Execution Order should execute plugins in priority order (highest first)" time="0.009">
     </testcase>
-    <testcase classname="Plugin System Plugin Execution Order should execute after hooks in reverse priority order" name="Plugin System Plugin Execution Order should execute after hooks in reverse priority order" time="0.001">
+    <testcase classname="Plugin System Plugin Execution Order should execute after hooks in reverse priority order" name="Plugin System Plugin Execution Order should execute after hooks in reverse priority order" time="0.004">
     </testcase>
     <testcase classname="Plugin System Plugin Filtering should only execute plugins for included tools" name="Plugin System Plugin Filtering should only execute plugins for included tools" time="0.002">
     </testcase>
-    <testcase classname="Plugin System Plugin Filtering should exclude plugins from excluded tools" name="Plugin System Plugin Filtering should exclude plugins from excluded tools" time="0.002">
+    <testcase classname="Plugin System Plugin Filtering should exclude plugins from excluded tools" name="Plugin System Plugin Filtering should exclude plugins from excluded tools" time="0.001">
     </testcase>
     <testcase classname="Plugin System Plugin Short-Circuiting should allow plugins to short-circuit tool execution" name="Plugin System Plugin Short-Circuiting should allow plugins to short-circuit tool execution" time="0.001">
     </testcase>
-    <testcase classname="Plugin System Plugin Short-Circuiting should continue to original tool when not short-circuited" name="Plugin System Plugin Short-Circuiting should continue to original tool when not short-circuited" time="0.001">
+    <testcase classname="Plugin System Plugin Short-Circuiting should continue to original tool when not short-circuited" name="Plugin System Plugin Short-Circuiting should continue to original tool when not short-circuited" time="0.002">
     </testcase>
-    <testcase classname="Plugin System Plugin Error Handling should handle plugin errors gracefully" name="Plugin System Plugin Error Handling should handle plugin errors gracefully" time="0.001">
+    <testcase classname="Plugin System Plugin Error Handling should handle plugin errors gracefully" name="Plugin System Plugin Error Handling should handle plugin errors gracefully" time="0.002">
     </testcase>
     <testcase classname="Plugin System Plugin Error Handling should mark plugins as unhealthy after errors" name="Plugin System Plugin Error Handling should mark plugins as unhealthy after errors" time="0.001">
     </testcase>
-    <testcase classname="Plugin System Plugin Error Handling should continue processing other plugins after one fails" name="Plugin System Plugin Error Handling should continue processing other plugins after one fails" time="0.001">
+    <testcase classname="Plugin System Plugin Error Handling should continue processing other plugins after one fails" name="Plugin System Plugin Error Handling should continue processing other plugins after one fails" time="0.002">
     </testcase>
     <testcase classname="Plugin System Plugin Dependencies should validate plugin dependencies are available" name="Plugin System Plugin Dependencies should validate plugin dependencies are available" time="0.001">
     </testcase>
@@ -165,7 +197,7 @@
     </testcase>
     <testcase classname="Plugin System Plugin Configuration should apply global plugin configuration" name="Plugin System Plugin Configuration should apply global plugin configuration" time="0.001">
     </testcase>
-    <testcase classname="Plugin System Plugin Configuration should respect maximum plugin limit" name="Plugin System Plugin Configuration should respect maximum plugin limit" time="0.002">
+    <testcase classname="Plugin System Plugin Configuration should respect maximum plugin limit" name="Plugin System Plugin Configuration should respect maximum plugin limit" time="0.001">
     </testcase>
     <testcase classname="Plugin System Plugin Health Checks should perform health checks on plugins" name="Plugin System Plugin Health Checks should perform health checks on plugins" time="0.001">
     </testcase>
@@ -174,42 +206,10 @@
     <testcase classname="Plugin System Plugin Statistics should collect plugin statistics" name="Plugin System Plugin Statistics should collect plugin statistics" time="0.001">
     </testcase>
   </testsuite>
-  <testsuite name="MCP Protocol Compliance Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:30:24" time="0.05" tests="15">
-    <testcase classname="MCP Protocol Compliance Tests Protocol Equivalence should behave identically to unwrapped server for tool calls" name="MCP Protocol Compliance Tests Protocol Equivalence should behave identically to unwrapped server for tool calls" time="0.004">
+  <testsuite name="MCP Proxy Wrapper - Comprehensive Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:47:01" time="0.051" tests="14">
+    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Basic Proxy Functionality should allow normal tool registration and calls" name="MCP Proxy Wrapper - Comprehensive Tests Basic Proxy Functionality should allow normal tool registration and calls" time="0.004">
     </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Protocol Equivalence should provide identical tool listings" name="MCP Protocol Compliance Tests Protocol Equivalence should provide identical tool listings" time="0.003">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests MCP Request Handling should handle initialize request correctly" name="MCP Protocol Compliance Tests MCP Request Handling should handle initialize request correctly" time="0.003">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests MCP Request Handling should handle tools/list request" name="MCP Protocol Compliance Tests MCP Request Handling should handle tools/list request" time="0.002">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests MCP Request Handling should handle tools/call request" name="MCP Protocol Compliance Tests MCP Request Handling should handle tools/call request" time="0.001">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Error Response Compliance should return proper error format for tool execution errors" name="MCP Protocol Compliance Tests Error Response Compliance should return proper error format for tool execution errors" time="0.008">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Error Response Compliance should handle non-existent tool calls appropriately" name="MCP Protocol Compliance Tests Error Response Compliance should handle non-existent tool calls appropriately" time="0.002">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Content Type Handling should handle text content correctly" name="MCP Protocol Compliance Tests Content Type Handling should handle text content correctly" time="0.001">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Content Type Handling should handle resource content correctly" name="MCP Protocol Compliance Tests Content Type Handling should handle resource content correctly" time="0.002">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Content Type Handling should handle mixed content types" name="MCP Protocol Compliance Tests Content Type Handling should handle mixed content types" time="0.002">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Metadata Preservation should preserve tool result metadata" name="MCP Protocol Compliance Tests Metadata Preservation should preserve tool result metadata" time="0.001">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Metadata Preservation should handle empty metadata gracefully" name="MCP Protocol Compliance Tests Metadata Preservation should handle empty metadata gracefully" time="0.001">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Connection Lifecycle should handle connection and disconnection properly" name="MCP Protocol Compliance Tests Connection Lifecycle should handle connection and disconnection properly" time="0.001">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Connection Lifecycle should handle multiple connection attempts gracefully" name="MCP Protocol Compliance Tests Connection Lifecycle should handle multiple connection attempts gracefully" time="0.001">
-    </testcase>
-    <testcase classname="MCP Protocol Compliance Tests Connection Lifecycle should handle disconnection when not connected" name="MCP Protocol Compliance Tests Connection Lifecycle should handle disconnection when not connected" time="0">
-    </testcase>
-  </testsuite>
-  <testsuite name="MCP Proxy Wrapper - Comprehensive Tests" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:30:24" time="0.048" tests="14">
-    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Basic Proxy Functionality should allow normal tool registration and calls" name="MCP Proxy Wrapper - Comprehensive Tests Basic Proxy Functionality should allow normal tool registration and calls" time="0.002">
-    </testcase>
-    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Basic Proxy Functionality should list registered tools correctly" name="MCP Proxy Wrapper - Comprehensive Tests Basic Proxy Functionality should list registered tools correctly" time="0.003">
+    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Basic Proxy Functionality should list registered tools correctly" name="MCP Proxy Wrapper - Comprehensive Tests Basic Proxy Functionality should list registered tools correctly" time="0.002">
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Basic Proxy Functionality should handle tool errors gracefully" name="MCP Proxy Wrapper - Comprehensive Tests Basic Proxy Functionality should handle tool errors gracefully" time="0.008">
     </testcase>
@@ -217,11 +217,11 @@
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Before Hook Functionality should allow argument modification in beforeToolCall" name="MCP Proxy Wrapper - Comprehensive Tests Before Hook Functionality should allow argument modification in beforeToolCall" time="0.002">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Before Hook Functionality should support short-circuiting with beforeToolCall" name="MCP Proxy Wrapper - Comprehensive Tests Before Hook Functionality should support short-circuiting with beforeToolCall" time="0.002">
+    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Before Hook Functionality should support short-circuiting with beforeToolCall" name="MCP Proxy Wrapper - Comprehensive Tests Before Hook Functionality should support short-circuiting with beforeToolCall" time="0.004">
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Comprehensive Tests After Hook Functionality should execute afterToolCall hook" name="MCP Proxy Wrapper - Comprehensive Tests After Hook Functionality should execute afterToolCall hook" time="0.001">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests After Hook Functionality should allow result modification in afterToolCall" name="MCP Proxy Wrapper - Comprehensive Tests After Hook Functionality should allow result modification in afterToolCall" time="0.002">
+    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests After Hook Functionality should allow result modification in afterToolCall" name="MCP Proxy Wrapper - Comprehensive Tests After Hook Functionality should allow result modification in afterToolCall" time="0.001">
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Combined Hook Functionality should execute both before and after hooks" name="MCP Proxy Wrapper - Comprehensive Tests Combined Hook Functionality should execute both before and after hooks" time="0.002">
     </testcase>
@@ -231,21 +231,21 @@
     </testcase>
     <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Metadata and Context should include metadata in hook context" name="MCP Proxy Wrapper - Comprehensive Tests Metadata and Context should include metadata in hook context" time="0.001">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Complex Tool Interactions should handle multiple concurrent tool calls" name="MCP Proxy Wrapper - Comprehensive Tests Complex Tool Interactions should handle multiple concurrent tool calls" time="0.002">
+    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Complex Tool Interactions should handle multiple concurrent tool calls" name="MCP Proxy Wrapper - Comprehensive Tests Complex Tool Interactions should handle multiple concurrent tool calls" time="0.003">
     </testcase>
-    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Complex Tool Interactions should handle tools with complex return types" name="MCP Proxy Wrapper - Comprehensive Tests Complex Tool Interactions should handle tools with complex return types" time="0.001">
+    <testcase classname="MCP Proxy Wrapper - Comprehensive Tests Complex Tool Interactions should handle tools with complex return types" name="MCP Proxy Wrapper - Comprehensive Tests Complex Tool Interactions should handle tools with complex return types" time="0.002">
     </testcase>
   </testsuite>
-  <testsuite name="Plugin Interface Validation" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:30:24" time="0.029" tests="17">
+  <testsuite name="Plugin Interface Validation" errors="0" failures="0" skipped="0" timestamp="2025-06-13T17:47:01" time="0.029" tests="17">
     <testcase classname="Plugin Interface Validation Plugin Metadata should have required properties" name="Plugin Interface Validation Plugin Metadata should have required properties" time="0.001">
     </testcase>
     <testcase classname="Plugin Interface Validation Plugin Metadata should have valid configuration" name="Plugin Interface Validation Plugin Metadata should have valid configuration" time="0">
     </testcase>
-    <testcase classname="Plugin Interface Validation Plugin Lifecycle should initialize correctly" name="Plugin Interface Validation Plugin Lifecycle should initialize correctly" time="0.001">
+    <testcase classname="Plugin Interface Validation Plugin Lifecycle should initialize correctly" name="Plugin Interface Validation Plugin Lifecycle should initialize correctly" time="0">
     </testcase>
     <testcase classname="Plugin Interface Validation Plugin Lifecycle should perform health checks" name="Plugin Interface Validation Plugin Lifecycle should perform health checks" time="0">
     </testcase>
-    <testcase classname="Plugin Interface Validation Plugin Lifecycle should provide statistics" name="Plugin Interface Validation Plugin Lifecycle should provide statistics" time="0">
+    <testcase classname="Plugin Interface Validation Plugin Lifecycle should provide statistics" name="Plugin Interface Validation Plugin Lifecycle should provide statistics" time="0.001">
     </testcase>
     <testcase classname="Plugin Interface Validation Plugin Lifecycle should cleanup on destroy" name="Plugin Interface Validation Plugin Lifecycle should cleanup on destroy" time="0">
     </testcase>
@@ -253,7 +253,7 @@
     </testcase>
     <testcase classname="Plugin Interface Validation Hook Functionality should short-circuit dangerous tools" name="Plugin Interface Validation Hook Functionality should short-circuit dangerous tools" time="0">
     </testcase>
-    <testcase classname="Plugin Interface Validation Hook Functionality should validate arguments" name="Plugin Interface Validation Hook Functionality should validate arguments" time="0.001">
+    <testcase classname="Plugin Interface Validation Hook Functionality should validate arguments" name="Plugin Interface Validation Hook Functionality should validate arguments" time="0">
     </testcase>
     <testcase classname="Plugin Interface Validation Hook Functionality should execute afterToolCall hook" name="Plugin Interface Validation Hook Functionality should execute afterToolCall hook" time="0.001">
     </testcase>
@@ -261,9 +261,9 @@
     </testcase>
     <testcase classname="Plugin Interface Validation Configuration Management should allow configuration updates" name="Plugin Interface Validation Configuration Management should allow configuration updates" time="0">
     </testcase>
-    <testcase classname="Plugin Interface Validation Configuration Management should respect tool filtering configuration" name="Plugin Interface Validation Configuration Management should respect tool filtering configuration" time="0.001">
+    <testcase classname="Plugin Interface Validation Configuration Management should respect tool filtering configuration" name="Plugin Interface Validation Configuration Management should respect tool filtering configuration" time="0">
     </testcase>
-    <testcase classname="Plugin Interface Validation Error Handling should handle errors gracefully" name="Plugin Interface Validation Error Handling should handle errors gracefully" time="0">
+    <testcase classname="Plugin Interface Validation Error Handling should handle errors gracefully" name="Plugin Interface Validation Error Handling should handle errors gracefully" time="0.001">
     </testcase>
     <testcase classname="Plugin Interface Validation Statistics and Monitoring should track call statistics" name="Plugin Interface Validation Statistics and Monitoring should track call statistics" time="0">
     </testcase>
