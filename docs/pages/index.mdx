@@ -1,10 +1,42 @@
-import { Cards, Card } from 'nextra/components'
+import { Cards, Card, Callout } from 'nextra/components'
 
 # MCP Proxy Wrapper
 
-Transform any MCP server into a powerful, extensible platform with built-in plugin support, monetization, analytics, and enterprise features.
+**Transform any MCP server into a powerful, extensible platform with enterprise-grade features.**
+
+The MCP Proxy Wrapper is a TypeScript library that wraps existing Model Context Protocol (MCP) servers to add advanced functionality through a sophisticated plugin system—all without requiring any changes to your existing MCP server code.
+
+<Callout type="info" emoji="⚡">
+  **Zero-Modification Enhancement**: Add monetization, authentication, analytics, and more to any MCP server without touching the original code.
+</Callout>
+
+## Core Concept
+
+The proxy wrapper intercepts tool calls between clients and your MCP server, allowing plugins to:
+- **Authenticate and authorize** users before tool execution
+- **Monitor and bill** for tool usage in real-time  
+- **Transform requests and responses** for enhanced functionality
+- **Log and analyze** usage patterns and performance
+- **Cache responses** for improved performance
+- **Rate limit** to prevent abuse
 
 <Cards>
+  <Card
+    icon="🔧"
+    title="How It Works"
+    href="/how-it-works"
+  >
+    Understand the proxy interception mechanism and plugin execution flow.
+  </Card>
+  
+  <Card
+    icon="🏗️"
+    title="Architecture"
+    href="/architecture"
+  >
+    Deep dive into the technical architecture and design patterns.
+  </Card>
+  
   <Card
     icon="🚀"
     title="Quick Start"
@@ -19,22 +51,6 @@ Transform any MCP server into a powerful, extensible platform with built-in plug
     href="/plugins"
   >
     Extend your MCP server with powerful plugins for monetization, security, and more.
-  </Card>
-  
-  <Card
-    icon="💰"
-    title="Stripe Monetization"
-    href="/plugins/stripe-monetization"
-  >
-    Start earning revenue from your AI tools with enterprise-grade billing.
-  </Card>
-  
-  <Card
-    icon="📊"
-    title="API Reference"
-    href="/api"
-  >
-    Complete API documentation and reference materials.
   </Card>
 </Cards>
 

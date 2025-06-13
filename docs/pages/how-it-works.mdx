@@ -1,0 +1,178 @@
+import { Callout, Steps } from 'nextra/components'
+
+# How It Works
+
+The MCP Proxy Wrapper operates as an **interception layer** between MCP clients and your server, allowing plugins to enhance functionality without modifying your original code.
+
+## Core Mechanism
+
+The proxy wrapper works by **intercepting the `server.tool()` method** during server initialization and injecting plugin hooks around the original tool handlers.
+
+### High-Level Flow Diagram
+
+```mermaid
+graph TD
+    A[MCP Client] -->|Tool Call Request| B[Proxy Wrapper]
+    B --> C[Plugin Manager]
+    C --> D[Authentication Plugin]
+    C --> E[Billing Plugin] 
+    C --> F[Analytics Plugin]
+    D --> G{Authorization Check}
+    G -->|✅ Authorized| H[Execute beforeToolCall Hooks]
+    G -->|❌ Denied| I[Return Error Response]
+    H --> J[Original MCP Server Tool]
+    J --> K[Tool Result]
+    K --> L[Execute afterToolCall Hooks]
+    L --> M[Enhanced Result]
+    M -->|Response| A
+    I -->|Error Response| A
+```
+
+## Plugin Execution Flow
+
+The proxy wrapper executes plugins in a **priority-ordered sequence** with two main phases:
+
+### Phase 1: beforeToolCall
+- **Authentication**: Verify user credentials
+- **Authorization**: Check tool access permissions  
+- **Rate Limiting**: Enforce usage limits
+- **Billing Checks**: Verify payment/credits
+- **Request Validation**: Sanitize and validate inputs
+
+### Phase 2: afterToolCall
+- **Response Processing**: Transform or enhance results
+- **Billing**: Record usage and process charges
+- **Analytics**: Log metrics and usage data
+- **Caching**: Store responses for future use
+
+<Callout type="info" emoji="🔄">
+  **Short-Circuit Capability**: Any `beforeToolCall` hook can return a result to immediately respond without executing the original tool.
+</Callout>
+
+## Tool Interception Process
+
+Here's how the proxy wrapper modifies your MCP server:
+
+<Steps>
+### Server Wrapping
+When you call `wrapWithProxy(server, options)`, the wrapper:
+- Stores a reference to the original `server.tool()` method
+- Replaces it with an enhanced version that includes plugin hooks
+- Initializes all registered plugins in priority order
+
+### Tool Registration Enhancement
+When you call `proxiedServer.tool(name, schema, handler)`:
+- The original tool schema and handler are preserved
+- A new enhanced handler is created that wraps the original
+- Plugin hooks are injected before and after the original handler
+
+### Runtime Execution
+When a tool call arrives:
+- Context is created with tool name, arguments, and metadata
+- `beforeToolCall` hooks execute in priority order (highest first)
+- If no hook short-circuits, the original tool handler executes
+- `afterToolCall` hooks execute in reverse priority order (lowest first)
+- The final result is returned to the client
+</Steps>
+
+## Code Example: Behind the Scenes
+
+Here's what happens when you wrap a server:
+
+```typescript
+// Original MCP server
+const server = new McpServer({ name: 'My Tools', version: '1.0.0' });
+
+// This is what your code looks like
+server.tool('analyze-text', { text: z.string() }, async (args) => {
+  return { content: [{ type: 'text', text: `Analysis: ${args.text}` }] };
+});
+
+// This is what the proxy wrapper actually creates internally
+const originalToolMethod = server.tool.bind(server);
+server.tool = function(name: string, schema: any, handler: Function) {
+  
+  // Create enhanced handler with plugin hooks
+  const enhancedHandler = async (args: any) => {
+    const context = {
+      toolName: name,
+      args,
+      metadata: { requestId: generateId(), timestamp: Date.now() }
+    };
+    
+    // Execute beforeToolCall hooks
+    for (const plugin of sortedPlugins) {
+      const result = await plugin.beforeToolCall?.(context);
+      if (result) return result; // Short-circuit if plugin returns result
+    }
+    
+    // Execute original handler
+    const originalResult = await handler(args);
+    
+    // Execute afterToolCall hooks
+    let finalResult = originalResult;
+    for (const plugin of sortedPlugins.reverse()) {
+      finalResult = await plugin.afterToolCall?.(context, finalResult) || finalResult;
+    }
+    
+    return finalResult;
+  };
+  
+  // Register with original method using enhanced handler
+  return originalToolMethod(name, schema, enhancedHandler);
+};
+```
+
+## Transport Compatibility
+
+The proxy wrapper works with **all MCP transport methods** because it operates at the tool handler level, not the transport level:
+
+- **STDIO**: Command-line MCP servers
+- **WebSocket**: Real-time web applications  
+- **SSE**: Server-sent events for streaming
+- **HTTP**: REST API style interactions
+- **InMemory**: Testing and development
+
+## Plugin Context Data
+
+Each plugin receives rich context information:
+
+```typescript
+interface ToolCallContext {
+  toolName: string;           // Name of the tool being called
+  args: Record<string, any>;  // Tool arguments from client
+  metadata: {
+    requestId: string;        // Unique request identifier
+    timestamp: number;        // Request timestamp
+    userId?: string;          // Authenticated user ID
+    sessionId?: string;       // Session identifier
+    transport: string;        // Transport method used
+  };
+}
+```
+
+This context flows through all plugin hooks, allowing for sophisticated cross-plugin coordination and data sharing.
+
+## Error Handling
+
+The proxy wrapper includes robust error handling:
+
+- **Plugin Errors**: Isolated and logged without breaking tool execution
+- **Tool Errors**: Proper MCP error responses with `isError: true`
+- **Transport Errors**: Graceful degradation and retry logic
+- **Timeout Handling**: Configurable timeouts for plugin execution
+
+<Callout type="warning">
+  **Plugin Isolation**: Plugin errors never break your original tool functionality. If a plugin fails, the tool call continues normally.
+</Callout>
+
+## Performance Considerations
+
+The proxy wrapper is designed for minimal overhead:
+
+- **Lazy Loading**: Plugins only load when needed
+- **Async Execution**: Non-blocking plugin execution
+- **Caching**: Plugin results can be cached to avoid repeated operations
+- **Priority Ordering**: Critical plugins (auth) run first, optional plugins (analytics) run last
+
+Next: Learn about the detailed [Architecture](/architecture) and design patterns.

@@ -1,8 +1,10 @@
 {
   "index": "Overview",
   "getting-started": "Getting Started",
-  "plugins": "🔌 Plugin System",
-  "api": "📖 API Reference",
+  "how-it-works": "🔧 How It Works",
+  "architecture": "🏗️ Architecture", 
+  "plugins": "🔌 Plugins",
   "examples": "💡 Examples",
+  "api": "📖 API Reference",
   "deployment": "🚀 Deployment"
 }
