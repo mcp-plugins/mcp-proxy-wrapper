@@ -2,7 +2,7 @@ import React from 'react'
 import { DocsThemeConfig } from 'nextra-theme-docs'
 
 const config: DocsThemeConfig = {
-  logo: <span>🔌 MCP Proxy Wrapper</span>,
+  logo: <span>MCP Proxy Wrapper</span>,
   project: {
     link: 'https://github.com/crazyrabbitltc/mcp-proxy-wrapper',
   },
@@ -29,7 +29,7 @@ const config: DocsThemeConfig = {
     key: 'stripe-plugin-launch',
     text: (
       <a href="/plugins/stripe-monetization" target="_blank">
-        🎉 New: Stripe Monetization Plugin is now available! →
+        New: Stripe Monetization Plugin is now available! →
       </a>
     )
   },
@@ -38,7 +38,7 @@ const config: DocsThemeConfig = {
       if (type === 'separator') {
         return <div style={{ background: 'currentColor', height: '1px' }} />
       }
-      return <>🔌 {title}</>
+      return <>{title}</>
     }
   },
   toc: {
