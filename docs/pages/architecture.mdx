@@ -2,9 +2,11 @@ import { Callout, Tabs, Tab } from 'nextra/components'
 
 # Architecture
 
-Deep dive into the technical architecture, design patterns, and internal mechanisms of the MCP Proxy Wrapper.
+Technical architecture, design patterns, and internal mechanisms of the MCP Proxy Wrapper.
 
 ## System Architecture Overview
+
+The system consists of four distinct layers that work together to provide enhanced MCP functionality. Each layer has specific responsibilities and can be modified independently.
 
 ```mermaid
 graph TB
@@ -63,9 +65,15 @@ graph TB
     MS --> T3
 ```
 
+The architecture is designed with clear separation of concerns:
+- Client Layer: Various MCP clients that consume tools
+- Transport Layer: Communication protocols (STDIO, WebSocket, SSE, HTTP)
+- Proxy Wrapper Layer: Interception and plugin coordination
+- MCP Server Layer: Your original, unmodified server and tools
+
 ## Plugin Execution Swimlane
 
-This swimlane diagram shows the detailed step-by-step process when a tool call is made:
+The following swimlane diagram shows the detailed step-by-step process when a tool call is made. This illustrates how plugins interact with each other and with external systems like databases during request processing.
 
 ```mermaid
 sequenceDiagram

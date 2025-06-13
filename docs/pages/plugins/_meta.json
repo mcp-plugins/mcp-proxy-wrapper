@@ -1,11 +1,11 @@
 {
   "index": "Plugin Overview",
   "creating-plugins": "Creating Custom Plugins",
-  "stripe-monetization": "💰 Stripe Monetization",
-  "analytics": "📊 Analytics & Monitoring",
-  "authentication": "🔐 Authentication & Security", 
-  "caching": "⚡ Caching & Performance",
-  "rate-limiting": "🛡️ Rate Limiting",
-  "logging": "📝 Logging & Debugging",
-  "community": "🌟 Community Plugins"
+  "stripe-monetization": "Stripe Monetization",
+  "analytics": "Analytics & Monitoring",
+  "authentication": "Authentication & Security", 
+  "caching": "Caching & Performance",
+  "rate-limiting": "Rate Limiting",
+  "logging": "Logging & Debugging",
+  "community": "Community Plugins"
 }

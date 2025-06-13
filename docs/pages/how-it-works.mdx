@@ -2,13 +2,15 @@ import { Callout, Steps } from 'nextra/components'
 
 # How It Works
 
-The MCP Proxy Wrapper operates as an **interception layer** between MCP clients and your server, allowing plugins to enhance functionality without modifying your original code.
+The MCP Proxy Wrapper operates as an interception layer between MCP clients and your server, allowing plugins to enhance functionality without modifying your original code.
 
 ## Core Mechanism
 
-The proxy wrapper works by **intercepting the `server.tool()` method** during server initialization and injecting plugin hooks around the original tool handlers.
+The proxy wrapper works by intercepting the `server.tool()` method during server initialization and injecting plugin hooks around the original tool handlers.
 
 ### High-Level Flow Diagram
+
+The following diagram illustrates how a tool call flows through the proxy wrapper system. When a client makes a request, it first goes through the proxy wrapper, which coordinates with various plugins before reaching your original MCP server.
 
 ```mermaid
 graph TD
@@ -18,8 +20,8 @@ graph TD
     C --> E[Billing Plugin] 
     C --> F[Analytics Plugin]
     D --> G{Authorization Check}
-    G -->|✅ Authorized| H[Execute beforeToolCall Hooks]
-    G -->|❌ Denied| I[Return Error Response]
+    G -->|Authorized| H[Execute beforeToolCall Hooks]
+    G -->|Denied| I[Return Error Response]
     H --> J[Original MCP Server Tool]
     J --> K[Tool Result]
     K --> L[Execute afterToolCall Hooks]
@@ -28,30 +30,37 @@ graph TD
     I -->|Error Response| A
 ```
 
+In this flow:
+1. The MCP client sends a tool call request
+2. The proxy wrapper receives the request and forwards it to the plugin manager
+3. Each plugin (authentication, billing, analytics) is consulted in priority order
+4. If authorization passes, the original tool executes
+5. The result flows back through plugins for enhancement before returning to the client
+
 ## Plugin Execution Flow
 
-The proxy wrapper executes plugins in a **priority-ordered sequence** with two main phases:
+The proxy wrapper executes plugins in a priority-ordered sequence with two main phases:
 
 ### Phase 1: beforeToolCall
-- **Authentication**: Verify user credentials
-- **Authorization**: Check tool access permissions  
-- **Rate Limiting**: Enforce usage limits
-- **Billing Checks**: Verify payment/credits
-- **Request Validation**: Sanitize and validate inputs
+- Authentication: Verify user credentials
+- Authorization: Check tool access permissions  
+- Rate Limiting: Enforce usage limits
+- Billing Checks: Verify payment/credits
+- Request Validation: Sanitize and validate inputs
 
 ### Phase 2: afterToolCall
-- **Response Processing**: Transform or enhance results
-- **Billing**: Record usage and process charges
-- **Analytics**: Log metrics and usage data
-- **Caching**: Store responses for future use
+- Response Processing: Transform or enhance results
+- Billing: Record usage and process charges
+- Analytics: Log metrics and usage data
+- Caching: Store responses for future use
 
-<Callout type="info" emoji="🔄">
-  **Short-Circuit Capability**: Any `beforeToolCall` hook can return a result to immediately respond without executing the original tool.
+<Callout type="info">
+  Short-Circuit Capability: Any beforeToolCall hook can return a result to immediately respond without executing the original tool.
 </Callout>
 
 ## Tool Interception Process
 
-Here's how the proxy wrapper modifies your MCP server:
+The proxy wrapper modifies your MCP server through a three-step process:
 
 <Steps>
 ### Server Wrapping
@@ -69,9 +78,9 @@ When you call `proxiedServer.tool(name, schema, handler)`:
 ### Runtime Execution
 When a tool call arrives:
 - Context is created with tool name, arguments, and metadata
-- `beforeToolCall` hooks execute in priority order (highest first)
+- beforeToolCall hooks execute in priority order (highest first)
 - If no hook short-circuits, the original tool handler executes
-- `afterToolCall` hooks execute in reverse priority order (lowest first)
+- afterToolCall hooks execute in reverse priority order (lowest first)
 - The final result is returned to the client
 </Steps>
 
@@ -125,13 +134,13 @@ server.tool = function(name: string, schema: any, handler: Function) {
 
 ## Transport Compatibility
 
-The proxy wrapper works with **all MCP transport methods** because it operates at the tool handler level, not the transport level:
+The proxy wrapper works with all MCP transport methods because it operates at the tool handler level, not the transport level:
 
-- **STDIO**: Command-line MCP servers
-- **WebSocket**: Real-time web applications  
-- **SSE**: Server-sent events for streaming
-- **HTTP**: REST API style interactions
-- **InMemory**: Testing and development
+- STDIO: Command-line MCP servers
+- WebSocket: Real-time web applications  
+- SSE: Server-sent events for streaming
+- HTTP: REST API style interactions
+- InMemory: Testing and development
 
 ## Plugin Context Data
 
@@ -157,22 +166,22 @@ This context flows through all plugin hooks, allowing for sophisticated cross-pl
 
 The proxy wrapper includes robust error handling:
 
-- **Plugin Errors**: Isolated and logged without breaking tool execution
-- **Tool Errors**: Proper MCP error responses with `isError: true`
-- **Transport Errors**: Graceful degradation and retry logic
-- **Timeout Handling**: Configurable timeouts for plugin execution
+- Plugin Errors: Isolated and logged without breaking tool execution
+- Tool Errors: Proper MCP error responses with `isError: true`
+- Transport Errors: Graceful degradation and retry logic
+- Timeout Handling: Configurable timeouts for plugin execution
 
 <Callout type="warning">
-  **Plugin Isolation**: Plugin errors never break your original tool functionality. If a plugin fails, the tool call continues normally.
+  Plugin Isolation: Plugin errors never break your original tool functionality. If a plugin fails, the tool call continues normally.
 </Callout>
 
 ## Performance Considerations
 
 The proxy wrapper is designed for minimal overhead:
 
-- **Lazy Loading**: Plugins only load when needed
-- **Async Execution**: Non-blocking plugin execution
-- **Caching**: Plugin results can be cached to avoid repeated operations
-- **Priority Ordering**: Critical plugins (auth) run first, optional plugins (analytics) run last
+- Lazy Loading: Plugins only load when needed
+- Async Execution: Non-blocking plugin execution
+- Caching: Plugin results can be cached to avoid repeated operations
+- Priority Ordering: Critical plugins (auth) run first, optional plugins (analytics) run last
 
 Next: Learn about the detailed [Architecture](/architecture) and design patterns.

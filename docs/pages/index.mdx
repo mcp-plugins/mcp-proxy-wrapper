@@ -2,27 +2,26 @@ import { Cards, Card, Callout } from 'nextra/components'
 
 # MCP Proxy Wrapper
 
-**Transform any MCP server into a powerful, extensible platform with enterprise-grade features.**
+Transform any MCP server into a powerful, extensible platform with enterprise-grade features.
 
-The MCP Proxy Wrapper is a TypeScript library that wraps existing Model Context Protocol (MCP) servers to add advanced functionality through a sophisticated plugin system—all without requiring any changes to your existing MCP server code.
+The MCP Proxy Wrapper is a TypeScript library that wraps existing Model Context Protocol (MCP) servers to add advanced functionality through a sophisticated plugin system, all without requiring any changes to your existing MCP server code.
 
-<Callout type="info" emoji="⚡">
-  **Zero-Modification Enhancement**: Add monetization, authentication, analytics, and more to any MCP server without touching the original code.
+<Callout type="info">
+  Zero-Modification Enhancement: Add monetization, authentication, analytics, and more to any MCP server without touching the original code.
 </Callout>
 
 ## Core Concept
 
 The proxy wrapper intercepts tool calls between clients and your MCP server, allowing plugins to:
-- **Authenticate and authorize** users before tool execution
-- **Monitor and bill** for tool usage in real-time  
-- **Transform requests and responses** for enhanced functionality
-- **Log and analyze** usage patterns and performance
-- **Cache responses** for improved performance
-- **Rate limit** to prevent abuse
+- Authenticate and authorize users before tool execution
+- Monitor and bill for tool usage in real-time  
+- Transform requests and responses for enhanced functionality
+- Log and analyze usage patterns and performance
+- Cache responses for improved performance
+- Rate limit to prevent abuse
 
 <Cards>
   <Card
-    icon="🔧"
     title="How It Works"
     href="/how-it-works"
   >
@@ -30,7 +29,6 @@ The proxy wrapper intercepts tool calls between clients and your MCP server, all
   </Card>
   
   <Card
-    icon="🏗️"
     title="Architecture"
     href="/architecture"
   >
@@ -38,7 +36,6 @@ The proxy wrapper intercepts tool calls between clients and your MCP server, all
   </Card>
   
   <Card
-    icon="🚀"
     title="Quick Start"
     href="/getting-started"
   >
@@ -46,7 +43,6 @@ The proxy wrapper intercepts tool calls between clients and your MCP server, all
   </Card>
   
   <Card
-    icon="🔌"
     title="Plugin System"
     href="/plugins"
   >
@@ -54,20 +50,16 @@ The proxy wrapper intercepts tool calls between clients and your MCP server, all
   </Card>
 </Cards>
 
-## What is MCP Proxy Wrapper?
+## Key Features
 
-The MCP Proxy Wrapper is a TypeScript library that provides a powerful plugin system for intercepting and enhancing tool calls in Model Context Protocol (MCP) servers. It enables you to add features like monetization, authentication, analytics, and more without modifying your core tool logic.
+- Plugin Architecture: Extensible hook system for beforeToolCall and afterToolCall
+- Built-in Monetization: Stripe integration with multiple billing models
+- Authentication & Security: JWT, API keys, rate limiting, and access control
+- Analytics & Monitoring: Usage tracking, performance metrics, and error reporting
+- Transport Agnostic: Works with STDIO, WebSocket, SSE, HTTP, and InMemory
+- Enterprise Ready: Robust error handling, logging, and production features
 
-### Key Features
-
-- **🔌 Plugin Architecture**: Extensible hook system for beforeToolCall and afterToolCall
-- **💰 Built-in Monetization**: Stripe integration with multiple billing models
-- **🔒 Authentication & Security**: JWT, API keys, rate limiting, and access control
-- **📊 Analytics & Monitoring**: Usage tracking, performance metrics, and error reporting
-- **🚀 Transport Agnostic**: Works with STDIO, WebSocket, SSE, HTTP, and InMemory
-- **🛡️ Enterprise Ready**: Robust error handling, logging, and production features
-
-### Quick Example
+## Quick Example
 
 ```typescript
 import { wrapWithProxy } from 'mcp-proxy-wrapper';
