@@ -159,7 +159,7 @@ describe('Plugin System', () => {
         plugins: [{ plugin: disabledPlugin, config: pluginConfig }]
       });
       
-      proxiedServer.tool('test-tool', { message: z.string() }, async (args: any) => {
+      proxiedServer.tool('test-tool', { message: z.string() }, async (_args: any) => {
         return {
           content: [{ type: 'text', text: 'test' }]
         };
@@ -211,7 +211,7 @@ describe('Plugin System', () => {
     });
     
     it('should call destroy on plugins during cleanup', async () => {
-      const proxiedServer = await wrapWithProxy(server, {
+      const _proxiedServer = await wrapWithProxy(server, {
         plugins: [testPlugin]
       });
       
@@ -242,7 +242,7 @@ describe('Plugin System', () => {
         plugins: [lowPriorityPlugin, highPriorityPlugin, mediumPriorityPlugin]
       });
       
-      proxiedServer.tool('test-tool', { message: z.string() }, async (args: any) => {
+      proxiedServer.tool('test-tool', { message: z.string() }, async (_args: any) => {
         return {
           content: [{ type: 'text', text: 'test' }]
         };
@@ -252,7 +252,7 @@ describe('Plugin System', () => {
       // TODO: Add actual tool execution test
       
       // Verify execution order: high -> medium -> low
-      const expectedOrder = ['before-high', 'before-medium', 'before-low'];
+      const _expectedOrder = ['before-high', 'before-medium', 'before-low'];
       // We'll verify this once we implement the actual execution
     });
     
@@ -261,7 +261,7 @@ describe('Plugin System', () => {
       const plugin1 = new PriorityPlugin('first', 100);
       const plugin2 = new PriorityPlugin('second', 50);
       
-      const proxiedServer = await wrapWithProxy(server, {
+      const _proxiedServer = await wrapWithProxy(server, {
         plugins: [plugin1, plugin2]
       });
       
@@ -309,7 +309,7 @@ describe('Plugin System', () => {
         plugins: [shortCircuitPlugin]
       });
       
-      const originalTool = async (args: any) => ({
+      const originalTool = async (_args: any) => ({
         content: [{ type: 'text' as const, text: 'Original result' }]
       });
       
@@ -327,7 +327,7 @@ describe('Plugin System', () => {
         plugins: [shortCircuitPlugin]
       });
       
-      const originalTool = async (args: any) => ({
+      const originalTool = async (_args: any) => ({
         content: [{ type: 'text' as const, text: 'Original result' }]
       });
       
@@ -347,7 +347,7 @@ describe('Plugin System', () => {
         plugins: [errorPlugin]
       });
       
-      proxiedServer.tool('test-tool', { triggerError: z.boolean().optional() }, async (args: any) => {
+      proxiedServer.tool('test-tool', { triggerError: z.boolean().optional() }, async (_args: any) => {
         return {
           content: [{ type: 'text', text: 'Success' }]
         };
@@ -360,7 +360,7 @@ describe('Plugin System', () => {
     it('should mark plugins as unhealthy after errors', async () => {
       const errorPlugin = new ErrorPlugin();
       
-      const proxiedServer = await wrapWithProxy(server, {
+      const _proxiedServer = await wrapWithProxy(server, {
         plugins: [errorPlugin]
       });
       
@@ -374,7 +374,7 @@ describe('Plugin System', () => {
       const workingPlugin = new TestPlugin();
       workingPlugin.name = 'working-plugin';
       
-      const proxiedServer = await wrapWithProxy(server, {
+      const _proxiedServer = await wrapWithProxy(server, {
         plugins: [errorPlugin, workingPlugin]
       });
       

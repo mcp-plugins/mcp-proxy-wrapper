@@ -4,7 +4,7 @@
  */
 
 import { BasePlugin, PluginContext, PluginConfig } from '../interfaces/plugin.js';
-import { ToolCallContext, ToolCallResult } from '../interfaces/proxy-hooks.js';
+import { ToolCallResult } from '../interfaces/proxy-hooks.js';
 
 /**
  * Example plugin that demonstrates all plugin capabilities

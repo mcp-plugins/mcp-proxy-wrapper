@@ -277,7 +277,7 @@ describe('Plugin Interface Validation', () => {
       plugin.clearHistory();
       
       for (let i = 0; i < 6; i++) {
-        const context: ToolCallContext = {
+        const _context: ToolCallContext = {
           toolName: 'failing-tool',
           args: {}
         };

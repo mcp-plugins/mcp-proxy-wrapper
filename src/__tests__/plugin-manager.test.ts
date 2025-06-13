@@ -3,7 +3,7 @@
  * @description Test suite for the DefaultPluginManager using TDD approach
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { DefaultPluginManager } from '../utils/plugin-manager.js';
 import { ProxyPlugin, PluginConfig, BasePlugin } from '../interfaces/plugin.js';
 import { ToolCallContext, ToolCallResult } from '../interfaces/proxy-hooks.js';
@@ -24,7 +24,7 @@ class MockPlugin extends BasePlugin {
     this.initializeCalled = true;
   }
   
-  async beforeToolCall(context: any): Promise<void> {
+  async beforeToolCall(_context: any): Promise<void> {
     this.beforeCallCount++;
   }
   

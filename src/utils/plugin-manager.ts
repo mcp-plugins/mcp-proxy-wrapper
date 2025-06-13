@@ -13,7 +13,6 @@ import {
   PluginConfig, 
   PluginContext, 
   PluginInitContext,
-  PluginEvents,
   PluginError,
   PluginStats,
   PluginPhase
@@ -354,7 +353,6 @@ export class DefaultPluginManager extends EventEmitter implements PluginManager 
     };
     
     let totalProcessingTime = 0;
-    let pluginCount = 0;
     
     for (const [name, entry] of this.plugins) {
       if (entry.plugin.getStats) {
@@ -364,7 +362,7 @@ export class DefaultPluginManager extends EventEmitter implements PluginManager 
           stats.errorsEncountered += pluginStats.errorsEncountered;
           totalProcessingTime += pluginStats.averageProcessingTime * pluginStats.callsProcessed;
           stats.lastActivity = Math.max(stats.lastActivity, pluginStats.lastActivity);
-          pluginCount++;
+          // Track successful stats collection
         } catch (error) {
           this.logger.error(`Failed to get stats for plugin ${name}:`, error);
         }
