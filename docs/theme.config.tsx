@@ -4,12 +4,12 @@ import { DocsThemeConfig } from 'nextra-theme-docs'
 const config: DocsThemeConfig = {
   logo: <span>MCP Proxy Wrapper</span>,
   project: {
-    link: 'https://github.com/crazyrabbitltc/mcp-proxy-wrapper',
+    link: 'https://github.com/mcp-plugins/mcp-proxy-wrapper',
   },
   chat: {
     link: 'https://discord.gg/mcp-community',
   },
-  docsRepositoryBase: 'https://github.com/crazyrabbitltc/mcp-proxy-wrapper/tree/main/docs',
+  docsRepositoryBase: 'https://github.com/mcp-plugins/mcp-proxy-wrapper/tree/main/docs',
   footer: {
     text: '© 2024 MCP Proxy Wrapper. Built with Nextra.',
   },

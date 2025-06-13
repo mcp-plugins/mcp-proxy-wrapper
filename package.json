@@ -39,8 +39,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/crazyrabbitltc/mcp-proxy-wrapper"
+    "url": "https://github.com/mcp-plugins/mcp-proxy-wrapper.git"
   },
+  "bugs": {
+    "url": "https://github.com/mcp-plugins/mcp-proxy-wrapper/issues"
+  },
+  "homepage": "https://github.com/mcp-plugins/mcp-proxy-wrapper#readme",
   "files": [
     "dist/**/*"
   ],
