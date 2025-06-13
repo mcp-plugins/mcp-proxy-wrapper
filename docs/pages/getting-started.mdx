@@ -1,0 +1,379 @@
+import { Callout, Steps, Tabs, Tab } from 'nextra/components'
+
+# Getting Started
+
+Transform any MCP server into a powerful, extensible platform with enterprise-grade features in minutes.
+
+<Callout type="info">
+  The MCP Proxy Wrapper requires Node.js 18+ and works with any existing MCP server without code changes.
+</Callout>
+
+## Installation
+
+<Steps>
+### Install the Package
+
+```bash
+npm install mcp-proxy-wrapper
+```
+
+### Basic Setup
+
+Create a simple wrapper around your existing MCP server:
+
+```typescript
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+
+// Your existing MCP server
+const server = new Server(
+  { name: 'my-server', version: '1.0.0' },
+  { capabilities: { tools: {} } }
+);
+
+// Wrap with proxy functionality
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [] // Add plugins here
+});
+
+// Register your tools as usual
+proxiedServer.tool('hello-world', {
+  name: z.string()
+}, async (args) => {
+  return {
+    content: [{
+      type: 'text',
+      text: `Hello, ${args.name}!`
+    }]
+  };
+});
+```
+
+### Start the Server
+
+```typescript
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+
+const transport = new StdioServerTransport();
+await proxiedServer.connect(transport);
+```
+</Steps>
+
+## Your First Plugin
+
+Let's add the Stripe monetization plugin to start generating revenue:
+
+<Steps>
+### Install the Plugin
+
+```bash
+npm install mcp-stripe-monetization
+```
+
+### Get Stripe Keys
+
+1. Sign up at [stripe.com](https://stripe.com) (free)
+2. Go to **Developers → API keys**
+3. Copy your test keys for development
+
+### Configure the Plugin
+
+```typescript
+import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+
+const stripePlugin = createStripeMonetizationPlugin({
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  defaultPrice: 100, // $1.00 per call
+  toolPrices: {
+    'expensive-analysis': 250,  // $2.50
+    'quick-lookup': 50          // $0.50
+  }
+});
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [stripePlugin]
+});
+```
+
+### Test Monetization
+
+```typescript
+// This tool now requires payment
+proxiedServer.tool('expensive-analysis', {
+  data: z.string()
+}, async (args) => {
+  // Billing happens automatically before this code runs
+  return await performExpensiveAnalysis(args.data);
+});
+```
+</Steps>
+
+## Development Workflow
+
+### Environment Setup
+
+Create a `.env` file for your configuration:
+
+```bash
+# Stripe test keys (get from stripe.com)
+STRIPE_SECRET_KEY=sk_test_your_key_here
+STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# Optional: Database for production
+DATABASE_URL=sqlite:./dev.db
+
+# Optional: Logging level
+LOG_LEVEL=debug
+```
+
+### Project Structure
+
+```
+my-mcp-server/
+├── src/
+│   ├── index.ts          # Main server file
+│   ├── tools/            # Your tool implementations
+│   └── config/           # Configuration
+├── package.json
+├── .env                  # Environment variables
+└── tsconfig.json
+```
+
+### Sample Server Implementation
+
+```typescript
+// src/index.ts
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+import { z } from 'zod';
+
+async function main() {
+  // Create base server
+  const server = new Server(
+    { name: 'my-ai-tools', version: '1.0.0' },
+    { capabilities: { tools: {} } }
+  );
+
+  // Configure plugins
+  const plugins = [];
+  
+  if (process.env.STRIPE_SECRET_KEY) {
+    plugins.push(createStripeMonetizationPlugin({
+      stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      defaultPrice: 100
+    }));
+  }
+
+  // Wrap with proxy
+  const proxiedServer = await wrapWithProxy(server, { plugins });
+
+  // Register tools
+  proxiedServer.tool('text-analysis', {
+    text: z.string(),
+    analysisType: z.enum(['sentiment', 'summary', 'keywords'])
+  }, async (args) => {
+    // Your AI analysis logic here
+    const result = await analyzeText(args.text, args.analysisType);
+    
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify(result, null, 2)
+      }]
+    };
+  });
+
+  // Start server
+  const transport = new StdioServerTransport();
+  await proxiedServer.connect(transport);
+}
+
+main().catch(console.error);
+```
+
+## Testing Your Server
+
+### Manual Testing with MCP Inspector
+
+```bash
+# Install MCP Inspector
+npm install -g @modelcontextprotocol/inspector
+
+# Test your server
+mcp-inspector node dist/index.js
+```
+
+### Automated Testing
+
+```typescript
+// tests/server.test.ts
+import { describe, test, expect } from '@jest/globals';
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { createTestServer } from './test-utils';
+
+describe('My MCP Server', () => {
+  test('tool returns expected result', async () => {
+    const server = createTestServer();
+    const proxiedServer = await wrapWithProxy(server, { plugins: [] });
+    
+    const result = await proxiedServer.callTool('text-analysis', {
+      text: 'This is great!',
+      analysisType: 'sentiment'
+    });
+    
+    expect(result.content[0].text).toContain('positive');
+  });
+});
+```
+
+## Transport Options
+
+The proxy wrapper supports all MCP transport methods:
+
+<Tabs items={['STDIO', 'WebSocket', 'HTTP/SSE', 'InMemory']}>
+  <Tab>
+    ```typescript
+    // STDIO (most common for CLI tools)
+    import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+    
+    const transport = new StdioServerTransport();
+    await proxiedServer.connect(transport);
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    // WebSocket (for web applications)
+    import { WebSocketTransport } from '@modelcontextprotocol/sdk/server/websocket.js';
+    
+    const transport = new WebSocketTransport({ port: 3000 });
+    await proxiedServer.connect(transport);
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    // HTTP with SSE (for REST APIs)
+    import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+    
+    const transport = new SSEServerTransport('/mcp', (request, response) => {
+      // Handle HTTP requests
+    });
+    await proxiedServer.connect(transport);
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    // InMemory (for testing)
+    import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+    
+    const { client, server: transport } = InMemoryTransport.create();
+    await proxiedServer.connect(transport);
+    ```
+  </Tab>
+</Tabs>
+
+## Common Patterns
+
+### Environment-Based Configuration
+
+```typescript
+const config = {
+  development: {
+    logLevel: 'debug',
+    database: 'sqlite:./dev.db',
+    plugins: []
+  },
+  production: {
+    logLevel: 'info', 
+    database: process.env.DATABASE_URL,
+    plugins: [
+      createStripeMonetizationPlugin({
+        stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+        // ... other config
+      })
+    ]
+  }
+};
+
+const currentConfig = config[process.env.NODE_ENV || 'development'];
+```
+
+### Error Handling
+
+```typescript
+proxiedServer.tool('risky-operation', schema, async (args) => {
+  try {
+    return await performRiskyOperation(args);
+  } catch (error) {
+    // Plugin errors are handled automatically
+    // Tool errors should return MCP error format
+    return {
+      content: [{
+        type: 'text',
+        text: 'Operation failed'
+      }],
+      isError: true
+    };
+  }
+});
+```
+
+### Multiple Plugins
+
+```typescript
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [
+    { plugin: authPlugin, priority: 1000 },      // Auth first
+    { plugin: analyticsPlugin, priority: 500 },  // Then analytics  
+    { plugin: billingPlugin, priority: 100 }     // Billing last
+  ]
+});
+```
+
+## Next Steps
+
+<Callout type="success">
+  **Your server is now enhanced with plugin capabilities!** Explore our other guides to add more functionality.
+</Callout>
+
+- **[How It Works](/how-it-works)**: Understand the proxy wrapper architecture
+- **[Plugins](/plugins)**: Add monetization, analytics, and more
+- **[Examples](/examples)**: See real-world implementations
+- **[API Reference](/api-reference)**: Complete API documentation
+- **[Deployment](/deployment)**: Deploy to production
+
+## Troubleshooting
+
+### Common Issues
+
+**Plugin not loading:**
+```bash
+# Check your environment variables
+echo $STRIPE_SECRET_KEY
+
+# Verify plugin installation
+npm list mcp-stripe-monetization
+```
+
+**Tool calls failing:**
+```typescript
+// Add debug logging
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [plugin],
+  debug: true
+});
+```
+
+**TypeScript errors:**
+```bash
+# Ensure you have the latest types
+npm install --save-dev @types/node
+```
+
+Need more help? Check our [troubleshooting guide](/troubleshooting) or open an issue on GitHub.

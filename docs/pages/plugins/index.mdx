@@ -29,7 +29,7 @@ export interface ProxyPlugin {
 }
 ```
 
-## Official Plugins
+## Available Plugins
 
 <Cards>
   <Card
@@ -38,74 +38,36 @@ export interface ProxyPlugin {
   >
     Transform your AI tools into revenue-generating services with enterprise-grade billing, multiple payment models, and Stripe's hosted checkout.
   </Card>
-  
-  <Card
-    title="Analytics & Monitoring"
-    href="/plugins/analytics"
-  >
-    Track usage patterns, performance metrics, error rates, and user behavior with built-in dashboards and alerts.
-  </Card>
-  
-  <Card
-    title="Authentication & Security"
-    href="/plugins/authentication"
-  >
-    Add JWT authentication, API key management, and authorization controls to protect your tools and manage users.
-  </Card>
-  
-  <Card
-    title="Caching & Performance"
-    href="/plugins/caching"
-  >
-    Improve performance and reduce costs with intelligent caching strategies for tool responses and data.
-  </Card>
-  
-  <Card
-    title="Rate Limiting"
-    href="/plugins/rate-limiting"
-  >
-    Protect against abuse with configurable rate limiting, burst allowances, and usage quotas.
-  </Card>
-  
-  <Card
-    title="Logging & Debugging"
-    href="/plugins/logging"
-  >
-    Comprehensive logging with structured output, multiple destinations, and debugging tools.
-  </Card>
 </Cards>
+
+## Planned Plugins
+
+The following plugins are planned for future releases:
+
+- **Analytics & Monitoring**: Track usage patterns, performance metrics, and user behavior
+- **Authentication & Security**: JWT authentication, API key management, and authorization controls  
+- **Caching & Performance**: Intelligent caching strategies for tool responses and data
+- **Rate Limiting**: Configurable rate limiting, burst allowances, and usage quotas
+- **Logging & Debugging**: Comprehensive logging with structured output and debugging tools
 
 ## Plugin Categories
 
+The plugin system supports several categories of functionality:
+
 ### Monetization Plugins
-- Stripe Monetization: Complete billing solution with multiple payment models
-- Usage-based Billing: Pay-per-use pricing for API tools
-- Subscription Management: Recurring billing and plan management
-- Credit Systems: Token-based prepaid systems
+Currently available: Stripe Monetization with support for per-call billing, subscriptions, credits, and freemium models.
 
 ### Security & Authentication Plugins  
-- JWT Authentication: Token-based user authentication
-- API Key Management: Secure API access control
-- OAuth Integration: Third-party authentication providers
-- Request Validation: Input sanitization and validation
+Planned: JWT authentication, API key management, OAuth integration, and request validation.
 
 ### Analytics & Monitoring Plugins
-- Usage Analytics: Tool usage tracking and behavior analysis
-- Performance Monitoring: Response times, error rates, and throughput
-- Business Intelligence: Revenue metrics, user insights, and trends
-- Error Tracking: Exception monitoring and alerting
+Planned: Usage analytics, performance monitoring, business intelligence, and error tracking.
 
 ### Performance & Optimization Plugins
-- Response Caching: Intelligent caching with TTL and invalidation
-- Load Balancing: Distribute requests across multiple backends
-- Circuit Breaker: Fault tolerance and graceful degradation
-- Request Compression: Reduce bandwidth usage
+Planned: Response caching, load balancing, circuit breakers, and request compression.
 
 ### Utility & Integration Plugins
-- Request Transform: Modify requests and responses
-- Data Validation: Schema validation and type checking
-- Retry Logic: Automatic retry with exponential backoff
-- Webhook Integration: Event-driven notifications
+Planned: Request transformation, data validation, retry logic, and webhook integration.
 
 ## Plugin Execution Flow
 
@@ -157,15 +119,18 @@ npm install mcp-proxy-wrapper
 
 ```typescript
 import { wrapWithProxy } from 'mcp-proxy-wrapper';
-import { createStripeMonetizationPlugin } from 'mcp-proxy-wrapper/plugins/stripe-monetization';
+import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
 
-const plugin = createStripeMonetizationPlugin({
+// Configure the Stripe monetization plugin
+const stripePlugin = createStripeMonetizationPlugin({
   stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
   defaultPrice: 100 // $1.00 per call
 });
 
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [plugin]
+  plugins: [stripePlugin]
 });
 ```
 
@@ -176,7 +141,7 @@ const proxiedServer = await wrapWithProxy(server, {
 proxiedServer.tool('expensive-ai-analysis', {
   text: z.string()
 }, async (args) => {
-  // Plugin handles billing, auth, analytics automatically
+  // Plugin handles billing automatically
   return await performAIAnalysis(args.text);
 });
 ```
@@ -210,16 +175,20 @@ const plugin = createStripeMonetizationPlugin({
 ### Dynamic Configuration
 
 ```typescript
-const plugin = createAnalyticsPlugin({
-  providers: ['datadog', 'newrelic'],
-  metrics: {
-    enabled: true,
-    retention: '30d'
-  },
-  alerts: {
-    errorRate: 0.05,
-    latency: 1000
-  }
+const plugin = createStripeMonetizationPlugin({
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  billingModel: 'subscription',
+  plans: [
+    {
+      id: 'starter',
+      name: 'Starter Plan',
+      price: 999,
+      interval: 'month',
+      includedCalls: 1000
+    }
+  ]
 });
 ```
 
@@ -228,15 +197,16 @@ const plugin = createAnalyticsPlugin({
 The proxy wrapper includes testing utilities for plugin development:
 
 ```typescript
-import { createTestEnvironment } from 'mcp-proxy-wrapper/testing';
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
 
-describe('My Plugin', () => {
-  test('blocks unauthorized calls', async () => {
-    const env = createTestEnvironment();
-    await env.addPlugin(myAuthPlugin);
+describe('Stripe Plugin', () => {
+  test('blocks unpaid calls', async () => {
+    const plugin = createStripeMonetizationPlugin(testConfig);
+    const proxiedServer = await wrapWithProxy(server, { plugins: [plugin] });
     
-    await expect(env.callTool('protected-tool', {}))
-      .rejects.toThrow('Authentication required');
+    await expect(proxiedServer.callTool('expensive-tool', {}))
+      .rejects.toThrow('Payment required');
   });
 });
 ```
@@ -270,36 +240,21 @@ describe('My Plugin', () => {
 
 ## Community Plugins
 
-The MCP community maintains a growing ecosystem of plugins:
+The MCP community is building additional plugins. Community contributions are welcome for:
 
-- **Discord Notifications**: Send alerts to Discord channels
-- **Slack Integration**: Post tool usage to Slack
-- **Database Logging**: Store tool calls in databases
-- **OpenTelemetry**: Distributed tracing and metrics
-- **Custom Validators**: Business logic validation
+- Analytics and monitoring solutions
+- Authentication and security plugins
+- Performance optimization tools
+- Integration plugins for popular services
+- Custom business logic validators
 
-[Browse community plugins →](https://github.com/mcp-community/plugins)
+Interested in contributing? See our plugin development guide below.
 
 ## Creating Your Own Plugin
 
 Ready to build a custom plugin? Our plugin development guide walks you through everything from basic setup to advanced patterns.
 
 <Cards>
-  <Card
-    icon="🛠️"
-    title="Creating Custom Plugins"
-    href="/plugins/creating-plugins"
-  >
-    Learn how to build your own plugins from scratch with our comprehensive guide.
-  </Card>
-  
-  <Card
-    icon="🌟"
-    title="Community Plugins"
-    href="/plugins/community"
-  >
-    Explore plugins built by the community and contribute your own.
-  </Card>
 </Cards>
 
 <Callout type="success">

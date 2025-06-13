@@ -1,0 +1,471 @@
+import { Callout, Tabs, Tab } from 'nextra/components'
+
+# API Reference
+
+Complete API documentation for the MCP Proxy Wrapper and plugin system.
+
+## Core API
+
+### `wrapWithProxy(server, options)`
+
+Wraps an existing MCP server with proxy functionality and plugin support.
+
+```typescript
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [],
+  debug?: boolean,
+  logger?: Logger
+});
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `server` | `Server` | Yes | MCP server instance to wrap |
+| `options.plugins` | `ProxyPlugin[]` | No | Array of plugins to apply |
+| `options.debug` | `boolean` | No | Enable debug logging (default: false) |
+| `options.logger` | `Logger` | No | Custom logger instance |
+
+#### Returns
+
+`Promise<ProxiedServer>` - Enhanced server instance with plugin capabilities
+
+#### Example
+
+```typescript
+const server = new Server({ name: 'my-server', version: '1.0.0' }, { capabilities: { tools: {} } });
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [myPlugin],
+  debug: true
+});
+```
+
+## Plugin Interface
+
+### `ProxyPlugin`
+
+Base interface that all plugins must implement.
+
+```typescript
+interface ProxyPlugin {
+  name: string;
+  version: string;
+  
+  // Lifecycle hooks
+  beforeToolCall?(context: ToolCallContext): Promise<void | ToolCallResult>;
+  afterToolCall?(context: ToolCallContext, result: ToolCallResult): Promise<ToolCallResult>;
+  
+  // Plugin lifecycle
+  initialize?(context: PluginContext): Promise<void>;
+  destroy?(): Promise<void>;
+}
+```
+
+#### Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string` | Yes | Unique plugin identifier |
+| `version` | `string` | Yes | Plugin version (semver) |
+
+#### Methods
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| `beforeToolCall` | `context: ToolCallContext` | `Promise<void \| ToolCallResult>` | Called before tool execution |
+| `afterToolCall` | `context: ToolCallContext, result: ToolCallResult` | `Promise<ToolCallResult>` | Called after tool execution |
+| `initialize` | `context: PluginContext` | `Promise<void>` | Plugin initialization |
+| `destroy` | None | `Promise<void>` | Plugin cleanup |
+
+### `ToolCallContext`
+
+Context object provided to plugin hooks during tool execution.
+
+```typescript
+interface ToolCallContext {
+  toolName: string;
+  args: Record<string, any>;
+  metadata: {
+    requestId: string;
+    timestamp: number;
+    userId?: string;
+    [key: string]: any;
+  };
+}
+```
+
+#### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `toolName` | `string` | Name of the tool being called |
+| `args` | `Record<string, any>` | Arguments passed to the tool |
+| `metadata.requestId` | `string` | Unique request identifier |
+| `metadata.timestamp` | `number` | Request timestamp (Unix milliseconds) |
+| `metadata.userId` | `string?` | User identifier (if available) |
+
+### `ToolCallResult`
+
+Result object returned from tool execution.
+
+```typescript
+interface ToolCallResult {
+  content: Array<{
+    type: 'text' | 'image' | 'resource';
+    text?: string;
+    data?: string;
+    url?: string;
+    mimeType?: string;
+  }>;
+  isError?: boolean;
+  metadata?: Record<string, any>;
+}
+```
+
+#### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `content` | `Array<ContentBlock>` | Tool response content |
+| `isError` | `boolean?` | Indicates if result is an error |
+| `metadata` | `Record<string, any>?` | Additional result metadata |
+
+### `PluginContext`
+
+Context provided during plugin initialization.
+
+```typescript
+interface PluginContext {
+  server: Server;
+  logger: Logger;
+  config: Record<string, any>;
+}
+```
+
+## Stripe Monetization Plugin API
+
+### `createStripeMonetizationPlugin(config)`
+
+Creates a Stripe monetization plugin instance.
+
+```typescript
+import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+
+const plugin = createStripeMonetizationPlugin(config);
+```
+
+#### Configuration
+
+<Tabs items={['Basic', 'Per-Call', 'Subscription', 'Credits']}>
+  <Tab>
+    ```typescript
+    interface StripeMonetizationConfig {
+      // Required Stripe credentials
+      stripeSecretKey: string;
+      stripePublishableKey: string;
+      webhookSecret: string;
+      
+      // Basic pricing
+      defaultPrice: number;              // Price in cents
+      currency?: string;                 // ISO currency code (default: 'usd')
+      toolPrices?: Record<string, number>; // Tool-specific pricing
+    }
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    interface PerCallConfig extends StripeMonetizationConfig {
+      billingModel: 'per_call';
+      
+      // Volume discounts
+      volumeDiscounts?: Array<{
+        threshold: number;               // Number of calls required
+        discountPercent: number;         // Discount percentage (0-100)
+      }>;
+    }
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    interface SubscriptionConfig extends StripeMonetizationConfig {
+      billingModel: 'subscription';
+      
+      plans: Array<{
+        id: string;                      // Unique plan identifier
+        name: string;                    // Display name
+        price: number;                   // Price in cents
+        interval: 'month' | 'year';      // Billing interval
+        includedCalls: number;           // Included calls per period
+        overagePrice?: number;           // Price per additional call
+      }>;
+    }
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    interface CreditConfig extends StripeMonetizationConfig {
+      billingModel: 'credit_system';
+      
+      creditPackages: Array<{
+        credits: number;                 // Number of credits
+        price: number;                   // Price in cents
+        name: string;                    // Package name
+      }>;
+      
+      toolPrices: Record<string, number>; // Credits per tool call
+    }
+    ```
+  </Tab>
+</Tabs>
+
+#### Methods
+
+The plugin instance provides methods for managing billing:
+
+```typescript
+interface StripeMonetizationPlugin extends ProxyPlugin {
+  // Stripe endpoints
+  getStripeEndpoints(): StripeEndpoints;
+  
+  // Customer management
+  createCustomer(email: string, metadata?: Record<string, string>): Promise<string>;
+  getCustomer(customerId: string): Promise<Customer>;
+  
+  // Credit management (for credit system)
+  addCredits(customerId: string, credits: number): Promise<void>;
+  getCredits(customerId: string): Promise<number>;
+  
+  // Analytics
+  getAnalytics(options: AnalyticsOptions): Promise<Analytics>;
+}
+```
+
+### `StripeEndpoints`
+
+Stripe integration endpoints for payment processing.
+
+```typescript
+interface StripeEndpoints {
+  // Checkout
+  createCheckoutSession(options: CheckoutSessionOptions): Promise<{ checkoutUrl: string }>;
+  
+  // Customer portal
+  createCustomerPortalSession(options: PortalSessionOptions): Promise<{ portalUrl: string }>;
+  
+  // Webhooks
+  handleWebhook(payload: string, signature: string): Promise<void>;
+}
+```
+
+#### Checkout Session Options
+
+```typescript
+interface CheckoutSessionOptions {
+  customerId: string;
+  items?: Array<{
+    toolName: string;
+    quantity: number;
+  }>;
+  planId?: string;                     // For subscription billing
+  successUrl: string;
+  cancelUrl: string;
+  metadata?: Record<string, string>;
+}
+```
+
+#### Portal Session Options
+
+```typescript
+interface PortalSessionOptions {
+  customerId: string;
+  returnUrl: string;
+}
+```
+
+### `Analytics`
+
+Analytics data returned by the plugin.
+
+```typescript
+interface Analytics {
+  totalRevenue: number;                // Total revenue in cents
+  totalCalls: number;                  // Total tool calls
+  averageRevenue: number;              // Average revenue per call
+  popularTools: Array<{
+    tool: string;
+    calls: number;
+    revenue: number;
+  }>;
+  customerMetrics: {
+    totalCustomers: number;
+    activeCustomers: number;
+    churnRate: number;
+  };
+  revenueByPeriod: Array<{
+    period: string;
+    revenue: number;
+    calls: number;
+  }>;
+}
+```
+
+#### Analytics Options
+
+```typescript
+interface AnalyticsOptions {
+  timeframe: 'day' | 'week' | 'month' | 'year';
+  startDate?: Date;
+  endDate?: Date;
+  groupBy?: Array<'tool' | 'customer' | 'plan'>;
+  customerId?: string;                 // Filter by specific customer
+}
+```
+
+## Logger Interface
+
+### `Logger`
+
+Standard logging interface used throughout the system.
+
+```typescript
+interface Logger {
+  debug(message: string, meta?: any): void;
+  info(message: string, meta?: any): void;
+  warn(message: string, meta?: any): void;
+  error(message: string, meta?: any): void;
+}
+```
+
+#### Default Logger
+
+The proxy wrapper includes a default logger with colored output:
+
+```typescript
+import { createLogger } from 'mcp-proxy-wrapper/utils/logger';
+
+const logger = createLogger({
+  level: 'info',                       // 'debug' | 'info' | 'warn' | 'error'
+  colors: true,                        // Enable colored output
+  timestamp: true                      // Include timestamps
+});
+```
+
+## Error Handling
+
+### Plugin Errors
+
+Plugin errors are automatically caught and logged without breaking tool execution:
+
+```typescript
+// Plugin error handling
+try {
+  await plugin.beforeToolCall(context);
+} catch (error) {
+  logger.error(`Plugin ${plugin.name} error:`, error);
+  // Tool execution continues
+}
+```
+
+### Tool Errors
+
+Tools should return error results in MCP format:
+
+```typescript
+// Tool error response
+return {
+  content: [{
+    type: 'text',
+    text: 'Error: Invalid input provided'
+  }],
+  isError: true
+};
+```
+
+### Billing Errors
+
+Billing errors are handled by the monetization plugin:
+
+```typescript
+// Payment required error
+throw new Error('Payment required: Insufficient credits');
+
+// Payment processing error  
+throw new Error('Payment failed: Card declined');
+```
+
+## Type Definitions
+
+### Complete TypeScript Definitions
+
+```typescript
+// Export all types for use in your applications
+export {
+  ProxyPlugin,
+  ToolCallContext,
+  ToolCallResult,
+  PluginContext,
+  Logger,
+  StripeMonetizationConfig,
+  StripeEndpoints,
+  Analytics,
+  AnalyticsOptions
+} from 'mcp-proxy-wrapper';
+```
+
+## Migration Guide
+
+### From Direct MCP Server
+
+```typescript
+// Before: Direct MCP server
+const server = new Server(config, capabilities);
+server.tool('my-tool', schema, handler);
+
+// After: Wrapped with proxy
+const proxiedServer = await wrapWithProxy(server, { plugins: [] });
+proxiedServer.tool('my-tool', schema, handler);
+```
+
+### Adding Monetization
+
+```typescript
+// Add Stripe plugin to existing setup
+const stripePlugin = createStripeMonetizationPlugin(config);
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [stripePlugin]
+});
+```
+
+<Callout type="info">
+  **Backward Compatibility**: The proxy wrapper maintains full compatibility with existing MCP server code. No changes are required to your tool implementations.
+</Callout>
+
+## Best Practices
+
+### Plugin Development
+
+1. **Error Isolation**: Always handle errors gracefully
+2. **Performance**: Minimize blocking operations in `beforeToolCall`
+3. **Logging**: Use structured logging with context
+4. **Testing**: Write comprehensive tests for plugin logic
+
+### Production Deployment
+
+1. **Environment Variables**: Use environment-based configuration
+2. **Database**: Use PostgreSQL for production data storage
+3. **Monitoring**: Implement health checks and alerting
+4. **Security**: Follow security best practices for API keys
+
+### Performance Optimization
+
+1. **Plugin Priorities**: Order plugins by execution cost
+2. **Caching**: Implement caching for expensive operations
+3. **Connection Pooling**: Use connection pooling for databases
+4. **Rate Limiting**: Implement appropriate rate limiting
+
+<Callout type="success">
+  **Ready to build?** This API reference covers everything you need to integrate the MCP Proxy Wrapper into your applications.
+</Callout>

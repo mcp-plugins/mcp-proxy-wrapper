@@ -5,6 +5,6 @@
   "architecture": "Architecture", 
   "plugins": "Plugins",
   "examples": "Examples",
-  "api": "API Reference",
+  "api-reference": "API Reference",
   "deployment": "Deployment"
 }
