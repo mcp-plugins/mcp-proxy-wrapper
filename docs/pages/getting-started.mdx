@@ -22,14 +22,15 @@ npm install mcp-proxy-wrapper
 Create a simple wrapper around your existing MCP server:
 
 ```typescript
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { z } from 'zod';
 
 // Your existing MCP server
-const server = new Server(
-  { name: 'my-server', version: '1.0.0' },
-  { capabilities: { tools: {} } }
-);
+const server = new McpServer({
+  name: 'my-server',
+  version: '1.0.0'
+});
 
 // Wrap with proxy functionality
 const proxiedServer = await wrapWithProxy(server, {

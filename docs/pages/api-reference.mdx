@@ -11,12 +11,13 @@ Complete API documentation for the MCP Proxy Wrapper and plugin system.
 Wraps an existing MCP server with proxy functionality and plugin support.
 
 ```typescript
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy } from 'mcp-proxy-wrapper';
 
 const proxiedServer = await wrapWithProxy(server, {
   plugins: [],
-  debug?: boolean,
-  logger?: Logger
+  hooks?: ProxyHooks,
+  debug?: boolean
 });
 ```
 
@@ -24,24 +25,58 @@ const proxiedServer = await wrapWithProxy(server, {
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `server` | `Server` | Yes | MCP server instance to wrap |
+| `server` | `McpServer` | Yes | MCP server instance to wrap |
 | `options.plugins` | `ProxyPlugin[]` | No | Array of plugins to apply |
+| `options.hooks` | `ProxyHooks` | No | Before/after tool call hooks |
 | `options.debug` | `boolean` | No | Enable debug logging (default: false) |
-| `options.logger` | `Logger` | No | Custom logger instance |
 
 #### Returns
 
-`Promise<ProxiedServer>` - Enhanced server instance with plugin capabilities
+`Promise<McpServer>` - Enhanced server instance with proxy capabilities
 
 #### Example
 
 ```typescript
-const server = new Server({ name: 'my-server', version: '1.0.0' }, { capabilities: { tools: {} } });
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+
+const server = new McpServer({ name: 'my-server', version: '1.0.0' });
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [myPlugin],
+  plugins: [new LLMSummarizationPlugin()],
   debug: true
 });
 ```
+
+### `wrapWithEnhancedProxy(server, options)` (v2 API)
+
+Enhanced version with advanced lifecycle management and performance features.
+
+```typescript
+import { wrapWithEnhancedProxy, EnhancedProxyWrapperOptions } from 'mcp-proxy-wrapper';
+
+const proxiedServer = await wrapWithEnhancedProxy(server, {
+  plugins: [],
+  hooks?: ProxyHooks,
+  lifecycle?: LifecycleConfig,
+  execution?: ExecutionConfig,
+  performance?: PerformanceConfig
+});
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `server` | `McpServer` | Yes | MCP server instance to wrap |
+| `options.plugins` | `ProxyPlugin[]` | No | Array of plugins to apply |
+| `options.hooks` | `ProxyHooks` | No | Before/after tool call hooks |
+| `options.lifecycle` | `LifecycleConfig` | No | Plugin lifecycle management |
+| `options.execution` | `ExecutionConfig` | No | Hook execution configuration |
+| `options.performance` | `PerformanceConfig` | No | Performance monitoring |
+
+#### Returns
+
+`Promise<McpServer>` - Enhanced server with v2 proxy capabilities
 
 ## Plugin Interface
 

@@ -53,8 +53,8 @@ The proxy wrapper intercepts tool calls between clients and your MCP server, all
 ## Key Features
 
 - Plugin Architecture: Extensible hook system for beforeToolCall and afterToolCall
-- Built-in Monetization: Stripe integration with multiple billing models
-- Authentication & Security: JWT, API keys, rate limiting, and access control
+- AI Enhancement Plugins: LLM Summarization and Chat Memory plugins included
+- Authentication & Security: Flexible hook system for implementing access control
 - Analytics & Monitoring: Usage tracking, performance metrics, and error reporting
 - Transport Agnostic: Works with STDIO, WebSocket, SSE, HTTP, and InMemory
 - Enterprise Ready: Robust error handling, logging, and production features
@@ -62,26 +62,28 @@ The proxy wrapper intercepts tool calls between clients and your MCP server, all
 ## Quick Example
 
 ```typescript
-import { wrapWithProxy } from 'mcp-proxy-wrapper';
-import { createStripeMonetizationPlugin } from 'mcp-proxy-wrapper/plugins/stripe-monetization';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+import { z } from 'zod';
 
 // Create your MCP server
 const server = new McpServer({ name: 'My AI Tools', version: '1.0.0' });
 
-// Add monetization plugin
-const monetizationPlugin = createStripeMonetizationPlugin({
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
-  defaultPrice: 100 // $1.00 per call
-});
+// Add AI enhancement plugin
+const summarizationPlugin = new LLMSummarizationPlugin();
 
 // Wrap with proxy functionality
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [monetizationPlugin]
+  plugins: [summarizationPlugin]
 });
 
-// Register tools as usual - billing happens automatically
-proxiedServer.tool('ai-analysis', schema, async (args) => {
-  return await performAIAnalysis(args);
+// Register tools as usual - enhancement happens automatically
+proxiedServer.tool('ai-analysis', {
+  text: z.string()
+}, async (args) => {
+  return {
+    content: [{ type: 'text', text: `Analysis result: ${args.text}` }]
+  };
 });
 ```
 

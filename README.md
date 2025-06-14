@@ -349,7 +349,9 @@ interface ToolCallResult {
 
 ## 🔧 API Reference
 
-### `wrapWithProxy(server, options)`
+### Core Functions
+
+#### `wrapWithProxy(server, options)` (v1 API)
 
 Wraps an MCP server instance with proxy functionality.
 
@@ -360,6 +362,34 @@ Wraps an MCP server instance with proxy functionality.
 **Returns:** 
 `Promise<McpServer>` - A new MCP server instance with proxy capabilities
 
+#### `wrapWithEnhancedProxy(server, options)` (v2 API)
+
+Enhanced version with advanced lifecycle management and performance features.
+
+**Parameters:**
+- `server` (McpServer): The MCP server to wrap  
+- `options` (EnhancedProxyWrapperOptions): Enhanced configuration options
+
+**Returns:**
+`Promise<McpServer>` - Enhanced server with v2 proxy capabilities
+
+### Available Exports
+
+```typescript
+// Core wrapper functions
+export { wrapWithProxy } from 'mcp-proxy-wrapper';
+export { wrapWithEnhancedProxy, EnhancedProxyWrapper, getProxyWrapperInstance } from 'mcp-proxy-wrapper';
+
+// Plugin system
+export { BasePlugin, LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
+
+// Lifecycle and execution management
+export { PluginLifecycleManager, HookExecutionManager } from 'mcp-proxy-wrapper';
+
+// Types and enums
+export { ExecutionMode, HealthStatus, ServerLifecycleEvent } from 'mcp-proxy-wrapper';
+```
+
 ### ProxyWrapperOptions
 
 ```typescript
@@ -369,6 +399,16 @@ interface ProxyWrapperOptions {
   pluginConfig?: Record<string, any>; // Global plugin configuration
   metadata?: Record<string, any>;  // Global metadata
   debug?: boolean;                 // Enable debug logging
+}
+```
+
+### EnhancedProxyWrapperOptions (v2)
+
+```typescript
+interface EnhancedProxyWrapperOptions extends ProxyWrapperOptions {
+  lifecycle?: LifecycleConfig;     // Plugin lifecycle management
+  execution?: ExecutionConfig;    // Hook execution configuration  
+  performance?: PerformanceConfig; // Performance monitoring
 }
 ```
 

@@ -2,7 +2,7 @@ import { Callout, Cards, Card } from 'nextra/components'
 
 # Plugin System
 
-The MCP Proxy Wrapper features a powerful plugin architecture that allows you to extend MCP servers with additional functionality like monetization, analytics, security, and more.
+The MCP Proxy Wrapper features a powerful plugin architecture that allows you to extend MCP servers with additional functionality like AI enhancement, analytics, security, and more.
 
 <Callout type="info">
   Plugins operate at the tool call level, intercepting requests before and after execution to add features without modifying your core tool logic.
@@ -118,19 +118,15 @@ npm install mcp-proxy-wrapper
 ### 2. Import and Configure
 
 ```typescript
-import { wrapWithProxy } from 'mcp-proxy-wrapper';
-import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { wrapWithProxy, LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
 
-// Configure the Stripe monetization plugin
-const stripePlugin = createStripeMonetizationPlugin({
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
-  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-  defaultPrice: 100 // $1.00 per call
-});
+// Configure AI enhancement plugins
+const summarizationPlugin = new LLMSummarizationPlugin();
+const memoryPlugin = new ChatMemoryPlugin();
 
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [stripePlugin]
+  plugins: [summarizationPlugin, memoryPlugin]
 });
 ```
 
@@ -138,11 +134,13 @@ const proxiedServer = await wrapWithProxy(server, {
 
 ```typescript
 // Your tools are now enhanced with plugin functionality
-proxiedServer.tool('expensive-ai-analysis', {
+proxiedServer.tool('ai-analysis', {
   text: z.string()
 }, async (args) => {
-  // Plugin handles billing automatically
-  return await performAIAnalysis(args.text);
+  // Plugins handle summarization and memory automatically
+  return {
+    content: [{ type: 'text', text: await performAIAnalysis(args.text) }]
+  };
 });
 ```
 
@@ -165,9 +163,14 @@ try {
 ### Environment-based Configuration
 
 ```typescript
-const plugin = createStripeMonetizationPlugin({
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-  environment: process.env.NODE_ENV === 'production' ? 'live' : 'test',
+const plugin = new LLMSummarizationPlugin();
+plugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o-mini'
+  },
+  enabled: process.env.NODE_ENV === 'production',
   debug: process.env.DEBUG === 'true'
 });
 ```
@@ -175,20 +178,17 @@ const plugin = createStripeMonetizationPlugin({
 ### Dynamic Configuration
 
 ```typescript
-const plugin = createStripeMonetizationPlugin({
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
-  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-  billingModel: 'subscription',
-  plans: [
-    {
-      id: 'starter',
-      name: 'Starter Plan',
-      price: 999,
-      interval: 'month',
-      includedCalls: 1000
-    }
-  ]
+const chatPlugin = new ChatMemoryPlugin();
+chatPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 1000
+  },
+  enabled: true,
+  priority: 10
 });
 ```
 
@@ -197,16 +197,16 @@ const plugin = createStripeMonetizationPlugin({
 The proxy wrapper includes testing utilities for plugin development:
 
 ```typescript
-import { wrapWithProxy } from 'mcp-proxy-wrapper';
-import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 
-describe('Stripe Plugin', () => {
-  test('blocks unpaid calls', async () => {
-    const plugin = createStripeMonetizationPlugin(testConfig);
+describe('LLM Summarization Plugin', () => {
+  test('summarizes long responses', async () => {
+    const plugin = new LLMSummarizationPlugin();
     const proxiedServer = await wrapWithProxy(server, { plugins: [plugin] });
     
-    await expect(proxiedServer.callTool('expensive-tool', {}))
-      .rejects.toThrow('Payment required');
+    const result = await proxiedServer.callTool('long-analysis', { text: 'test' });
+    expect(result._meta?.summarized).toBe(true);
   });
 });
 ```

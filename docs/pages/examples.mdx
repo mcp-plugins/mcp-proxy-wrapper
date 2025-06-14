@@ -6,38 +6,27 @@ Real-world implementations showing how to use the MCP Proxy Wrapper in different
 
 ## Basic AI Service
 
-A simple AI analysis service with monetization:
+A simple AI analysis service with AI enhancement plugins:
 
 ```typescript
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { wrapWithProxy } from 'mcp-proxy-wrapper';
-import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+import { wrapWithProxy, LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
 import { z } from 'zod';
 
 // Create base server
-const server = new Server(
-  { name: 'ai-analysis-service', version: '1.0.0' },
-  { capabilities: { tools: {} } }
-);
-
-// Configure Stripe monetization
-const stripePlugin = createStripeMonetizationPlugin({
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
-  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-  defaultPrice: 100, // $1.00 default
-  toolPrices: {
-    'sentiment-analysis': 50,     // $0.50
-    'text-summary': 100,          // $1.00
-    'keyword-extraction': 75,     // $0.75
-    'advanced-analysis': 250      // $2.50
-  }
+const server = new McpServer({
+  name: 'ai-analysis-service',
+  version: '1.0.0'
 });
+
+// Configure AI enhancement plugins
+const summarizationPlugin = new LLMSummarizationPlugin();
+const memoryPlugin = new ChatMemoryPlugin();
 
 // Wrap with proxy
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [stripePlugin]
+  plugins: [summarizationPlugin, memoryPlugin]
 });
 
 // Register AI tools
