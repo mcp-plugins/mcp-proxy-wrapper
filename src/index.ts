@@ -1,24 +1,33 @@
 /**
  * @file MCP Proxy Wrapper - Main Entry Point
- * @version 1.0.0
+ * @version 2.0.0
  * @status STABLE - DO NOT MODIFY WITHOUT TESTS
- * @lastModified 2023-03-17
+ * @lastModified 2024-12-14
  * 
  * This is the main entry point for the MCP Proxy Wrapper.
- * It exports the proxy wrapper and related interfaces.
+ * It exports both v1 and v2 proxy wrappers and related interfaces.
  * 
  * IMPORTANT:
  * - Any changes to this file must be accompanied by tests
  * - Maintain backward compatibility when adding new features
  * 
  * Functionality:
- * - Exports the proxy wrapper function
+ * - Exports both v1 and v2 proxy wrapper functions
  * - Exports hook interfaces
  * - Exports utility types
+ * - Exports new lifecycle and execution interfaces
  */
 
-// Export the proxy wrapper
+// Export the original proxy wrapper (v1) for backward compatibility
 export { wrapWithProxy } from './proxy-wrapper.js';
+
+// Export the enhanced proxy wrapper (v2)
+export { 
+  wrapWithEnhancedProxy, 
+  EnhancedProxyWrapper,
+  getProxyWrapperInstance,
+  type EnhancedProxyWrapperOptions
+} from './proxy-wrapper-v2.js';
 
 // Export hook interfaces
 export {
@@ -38,6 +47,32 @@ export {
   PluginStats,
   PluginManager
 } from './interfaces/plugin.js';
+
+// Export new v2 interfaces
+export {
+  type IDisposable,
+  type IResourceTrackingDisposable,
+  type IPluginLifecycleManager,
+  type IServerLifecycleAware,
+  type HealthCheckResult,
+  type ResourceInfo,
+  HealthStatus,
+  ServerLifecycleEvent
+} from './interfaces/lifecycle.js';
+
+export {
+  type IHookExecutionManager,
+  type ExecutionContext,
+  type ExecutionResult,
+  type ExecutionStats,
+  type HookExecutionConfig,
+  type PerformanceConfig,
+  ExecutionMode
+} from './interfaces/execution.js';
+
+// Export utility classes
+export { PluginLifecycleManager } from './utils/plugin-lifecycle-manager.js';
+export { HookExecutionManager } from './utils/hook-execution-manager.js';
 
 // Export plugins
 export { LLMSummarizationPlugin } from './examples/plugins/llm-summarization.js';
