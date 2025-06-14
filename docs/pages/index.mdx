@@ -59,6 +59,18 @@ The proxy wrapper intercepts tool calls between clients and your MCP server, all
 - Transport Agnostic: Works with STDIO, WebSocket, SSE, HTTP, and InMemory
 - Enterprise Ready: Robust error handling, logging, and production features
 
+## How the Proxy Wrapper Works with Tools
+
+The proxy wrapper enhances your MCP server without breaking existing functionality:
+
+1. **Tools registered BEFORE wrapping**: Remain fully available and functional, but don't get enhanced with hooks/plugins
+2. **Tools registered AFTER wrapping**: Get full plugin functionality (authentication, billing, analytics, etc.)
+3. **All underlying server functionality**: Completely preserved (resources, prompts, metadata, transport)
+
+The proxy wrapper intercepts the `server.tool()` method registration process, not the tools themselves. So when you call `wrapWithProxy(server)`, it overrides how new tools are registered to add the hook functionality, but existing tools continue to work exactly as before.
+
+This behavior is documented in detail in the [Getting Started](/getting-started) guide and [How It Works](/how-it-works) section with examples showing the difference between enhanced and non-enhanced tools.
+
 ## Quick Example
 
 ```typescript
