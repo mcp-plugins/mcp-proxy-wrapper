@@ -1,0 +1,377 @@
+import { Callout, Steps, Tabs, Tab } from 'nextra/components'
+
+# Deployment
+
+Deploy your MCP Proxy Wrapper applications to production environments.
+
+## Production Checklist
+
+<Callout type="warning">
+  **Before deploying to production**, ensure you've completed these essential items.
+</Callout>
+
+### Security
+- ✅ Use live Stripe keys (not test keys)
+- ✅ Secure environment variables (never commit secrets)
+- ✅ Use HTTPS for webhooks
+- ✅ Enable webhook signature verification
+
+### Configuration
+- ✅ Set NODE_ENV=production
+- ✅ Configure proper logging level
+- ✅ Set up database connection (if using persistent storage)
+- ✅ Test with real Stripe webhooks
+
+## Environment Variables
+
+### Required Environment Variables
+
+```bash
+# Application
+NODE_ENV=production
+PORT=3000
+LOG_LEVEL=info
+
+# Stripe (LIVE keys for production)
+STRIPE_SECRET_KEY=sk_live_your_live_secret_key
+STRIPE_PUBLISHABLE_KEY=pk_live_your_live_publishable_key
+STRIPE_WEBHOOK_SECRET=whsec_your_live_webhook_secret
+
+# Optional: Database (if using persistent storage)
+DATABASE_URL=postgresql://user:password@host:5432/database
+
+# Optional: Security
+JWT_SECRET=your_secure_jwt_secret
+```
+
+<Callout type="info">
+  **Important**: Never commit these values to your repository. Use your deployment platform's secret management.
+</Callout>
+
+## Basic Docker Deployment
+
+### Simple Dockerfile
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy built application
+COPY dist/ ./dist/
+
+EXPOSE 3000
+
+CMD ["node", "dist/index.js"]
+```
+
+### Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  mcp-server:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+    restart: unless-stopped
+```
+
+## Platform Deployments
+
+### Railway
+
+<Steps>
+### Connect Repository
+Connect your GitHub repository to Railway.
+
+### Set Environment Variables
+Add your production environment variables in the Railway dashboard.
+
+### Deploy
+Railway will automatically build and deploy your application.
+</Steps>
+
+```bash
+# Railway CLI deployment
+npm install -g @railway/cli
+railway login
+railway init
+railway up
+```
+
+### Heroku
+
+<Steps>
+### Install Heroku CLI
+Download and install the Heroku CLI.
+
+### Create Application
+```bash
+heroku create your-app-name
+```
+
+### Set Environment Variables
+```bash
+heroku config:set NODE_ENV=production
+heroku config:set STRIPE_SECRET_KEY=sk_live_your_key
+heroku config:set STRIPE_PUBLISHABLE_KEY=pk_live_your_key
+heroku config:set STRIPE_WEBHOOK_SECRET=whsec_your_secret
+```
+
+### Deploy
+```bash
+git push heroku main
+```
+</Steps>
+
+### Vercel
+
+Create a `vercel.json` file:
+
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "dist/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/dist/index.js"
+    }
+  ]
+}
+```
+
+Deploy:
+```bash
+npm install -g vercel
+vercel --prod
+```
+
+### DigitalOcean App Platform
+
+Create an app spec file:
+
+```yaml
+name: mcp-proxy-wrapper
+services:
+- name: api
+  source_dir: /
+  github:
+    repo: your-username/your-repo
+    branch: main
+  run_command: node dist/index.js
+  environment_slug: node-js
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  envs:
+  - key: NODE_ENV
+    value: production
+  - key: STRIPE_SECRET_KEY
+    value: sk_live_your_key
+    type: SECRET
+```
+
+## Health Checks
+
+### Basic Health Endpoint
+
+```typescript
+// Add to your server
+import express from 'express';
+const app = express();
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/ready', async (req, res) => {
+  // Check dependencies (database, Stripe, etc.)
+  try {
+    // Add your health checks here
+    res.status(200).json({ status: 'ready' });
+  } catch (error) {
+    res.status(503).json({ 
+      status: 'not ready',
+      error: error.message 
+    });
+  }
+});
+```
+
+## Stripe Webhook Configuration
+
+### Production Webhook Setup
+
+<Steps>
+### Create Webhook Endpoint
+In your Stripe dashboard, go to **Developers → Webhooks** and create a new endpoint.
+
+### Set Webhook URL
+Set your production URL: `https://your-domain.com/stripe/webhook`
+
+### Select Events
+Choose the events your application needs:
+- `checkout.session.completed`
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `invoice.payment_succeeded`
+
+### Copy Webhook Secret
+Copy the webhook signing secret and set it as `STRIPE_WEBHOOK_SECRET` environment variable.
+</Steps>
+
+## Monitoring and Logging
+
+### Basic Logging
+
+```typescript
+// Production logging configuration
+const logger = createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  colors: false, // Disable colors in production
+  timestamp: true
+});
+
+// Log important events
+logger.info('Server started', { port: process.env.PORT });
+logger.info('Plugin loaded', { plugin: 'stripe-monetization' });
+```
+
+### Error Tracking
+
+```typescript
+// Basic error handling
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+```
+
+## Database Considerations
+
+### SQLite (Development/Small Scale)
+
+```typescript
+const plugin = createStripeMonetizationPlugin({
+  // ... other config
+  database: {
+    type: 'sqlite',
+    path: './data/production.db'
+  }
+});
+```
+
+### PostgreSQL (Production)
+
+```typescript
+const plugin = createStripeMonetizationPlugin({
+  // ... other config
+  database: {
+    type: 'postgresql',
+    connectionString: process.env.DATABASE_URL
+  }
+});
+```
+
+## Backup Strategy
+
+### Database Backups
+
+```bash
+# PostgreSQL backup
+pg_dump $DATABASE_URL > backup-$(date +%Y%m%d).sql
+
+# SQLite backup
+cp ./data/production.db ./backups/backup-$(date +%Y%m%d).db
+```
+
+### Environment Variables Backup
+
+Keep a secure record of your environment variables configuration (without the actual secrets).
+
+## Troubleshooting
+
+### Common Issues
+
+**Environment variables not loading:**
+```bash
+# Check if variables are set
+echo $STRIPE_SECRET_KEY
+# Should not be empty in production
+```
+
+**Webhook not receiving events:**
+```bash
+# Test webhook endpoint
+curl -X POST https://your-domain.com/stripe/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"test": "webhook"}'
+```
+
+**Application not starting:**
+```bash
+# Check logs
+docker logs your-container-name
+# or
+heroku logs --tail --app your-app-name
+```
+
+**Database connection issues:**
+```bash
+# Test database connection
+node -e "console.log(require('pg').parse(process.env.DATABASE_URL))"
+```
+
+### Debug Mode
+
+Enable debug logging temporarily:
+
+```bash
+# Set LOG_LEVEL to debug
+LOG_LEVEL=debug node dist/index.js
+```
+
+<Callout type="success">
+  **Ready for production**: Your MCP Proxy Wrapper application is now deployed and ready to handle real payments and users.
+</Callout>
+
+## Security Best Practices
+
+1. **Never commit secrets** to your repository
+2. **Use HTTPS** for all webhook endpoints
+3. **Verify webhook signatures** in production
+4. **Rotate API keys** regularly
+5. **Monitor for unusual activity** in your Stripe dashboard
+6. **Keep dependencies updated** with `npm audit`
+
+## Next Steps
+
+- **[Getting Started](/getting-started)**: Review setup guide
+- **[Examples](/examples)**: See real-world implementations  
+- **[API Reference](/api-reference)**: Complete API documentation
+- **[Plugins](/plugins)**: Explore monetization options
+
+Need help with deployment? Check the troubleshooting section above or open an issue on GitHub.

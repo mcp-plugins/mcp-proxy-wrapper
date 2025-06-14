@@ -26,6 +26,14 @@ export type {
   ManagementApiEndpoints
 } from './interfaces.js';
 
+// Import types for use in this file
+import {
+  MonetizationError,
+  PricingConfig,
+  StripeMonetizationConfig,
+  BillingModel
+} from './interfaces.js';
+
 // Error types
 export {
   MonetizationError,
@@ -226,7 +234,6 @@ export function createTestConfig(overrides: Partial<StripeMonetizationConfig> = 
  * Re-export the main types for convenience
  */
 export type { StripeMonetizationConfig as Config } from './interfaces.js';
-export type { BillingModel } from './interfaces.js';
 
 // Version information
 export const VERSION = '1.0.0';

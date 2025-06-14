@@ -1,0 +1,10 @@
+{
+  "index": "Overview",
+  "getting-started": "Getting Started",
+  "how-it-works": "How It Works",
+  "architecture": "Architecture", 
+  "plugins": "Plugins",
+  "examples": "Examples",
+  "api-reference": "API Reference",
+  "deployment": "Deployment"
+}

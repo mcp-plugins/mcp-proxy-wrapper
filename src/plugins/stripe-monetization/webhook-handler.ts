@@ -346,8 +346,8 @@ class SubscriptionProcessor implements WebhookEventProcessor {
     if (customer) {
       await this.databaseManager.updateCustomer(customer.customerId, {
         subscriptionStatus: 'cancelled',
-        subscriptionId: null,
-        planId: null
+        subscriptionId: undefined,
+        planId: undefined
       });
     }
 
@@ -404,7 +404,7 @@ class InvoiceProcessor implements WebhookEventProcessor {
         
         // Reset current period usage
         await this.databaseManager.updateCustomerUsage(customer.customerId, {
-          currentPeriodCalls: -customer.usage?.currentPeriodCalls || 0 // Reset to 0
+          currentPeriodCalls: -(customer.usage?.currentPeriodCalls || 0) // Reset to 0
         });
       }
     }

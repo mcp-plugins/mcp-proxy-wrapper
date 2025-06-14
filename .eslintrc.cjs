@@ -13,6 +13,7 @@ module.exports = {
   rules: {
     '@typescript-eslint/no-explicit-any': 'off', // Temporarily disable for the wrapper implementation
     '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_', 'varsIgnorePattern': '^_' }],
   },
   ignorePatterns: ['dist/', 'node_modules/'],
 }; 

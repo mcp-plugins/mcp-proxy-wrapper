@@ -507,7 +507,9 @@ export function createExampleConfigs(): Record<string, StripeMonetizationConfig>
         apiKeyPrefix: 'test_'
       },
       rateLimiting: {
-        enabled: false // Disabled for testing
+        enabled: false, // Disabled for testing
+        windowMs: 60000, // 1 minute window
+        maxRequests: 1000 // 1000 requests per minute
       },
       webhooks: {
         endpointUrl: '/test/webhooks',
@@ -519,7 +521,8 @@ export function createExampleConfigs(): Record<string, StripeMonetizationConfig>
         enableCors: true
       },
       analytics: {
-        enabled: false // Disabled for testing
+        enabled: false, // Disabled for testing
+        retentionDays: 30 // Keep data for 30 days
       }
     }
   };

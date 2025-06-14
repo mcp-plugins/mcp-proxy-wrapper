@@ -7,7 +7,7 @@
  * for implementing comprehensive Stripe-based monetization in MCP servers.
  */
 
-import { PluginConfig } from '../../interfaces/plugin.js';
+import { PluginConfig, PluginStats } from '../../interfaces/plugin.js';
 import { ToolCallContext, ToolCallResult } from '../../interfaces/proxy-hooks.js';
 
 /**
@@ -479,7 +479,7 @@ export interface MonetizedToolCallResult extends ToolCallResult {
 /**
  * Plugin statistics and metrics
  */
-export interface StripeMonetizationStats {
+export interface StripeMonetizationStats extends PluginStats {
   /** Revenue metrics */
   revenue: {
     /** Total revenue in cents */

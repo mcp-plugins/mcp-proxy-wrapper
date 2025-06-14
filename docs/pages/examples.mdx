@@ -1,0 +1,483 @@
+import { Callout, Tabs, Tab, Cards, Card } from 'nextra/components'
+
+# Examples
+
+Real-world implementations showing how to use the MCP Proxy Wrapper in different scenarios.
+
+## Basic AI Service
+
+A simple AI analysis service with monetization:
+
+```typescript
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+import { z } from 'zod';
+
+// Create base server
+const server = new Server(
+  { name: 'ai-analysis-service', version: '1.0.0' },
+  { capabilities: { tools: {} } }
+);
+
+// Configure Stripe monetization
+const stripePlugin = createStripeMonetizationPlugin({
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  defaultPrice: 100, // $1.00 default
+  toolPrices: {
+    'sentiment-analysis': 50,     // $0.50
+    'text-summary': 100,          // $1.00
+    'keyword-extraction': 75,     // $0.75
+    'advanced-analysis': 250      // $2.50
+  }
+});
+
+// Wrap with proxy
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [stripePlugin]
+});
+
+// Register AI tools
+proxiedServer.tool('sentiment-analysis', {
+  text: z.string().min(1, 'Text is required'),
+  language: z.string().optional()
+}, async (args) => {
+  const sentiment = await analyzeSentiment(args.text, args.language);
+  
+  return {
+    content: [{
+      type: 'text',
+      text: JSON.stringify({
+        sentiment: sentiment.label,
+        confidence: sentiment.confidence,
+        text: args.text
+      }, null, 2)
+    }]
+  };
+});
+
+proxiedServer.tool('text-summary', {
+  text: z.string().min(10, 'Text must be at least 10 characters'),
+  maxLength: z.number().optional().default(100)
+}, async (args) => {
+  const summary = await generateSummary(args.text, args.maxLength);
+  
+  return {
+    content: [{
+      type: 'text', 
+      text: summary
+    }]
+  };
+});
+
+// Start server
+const transport = new StdioServerTransport();
+await proxiedServer.connect(transport);
+```
+
+## Multi-Tenant SaaS Platform
+
+A complete SaaS platform with multiple billing models:
+
+```typescript
+import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+
+// Different pricing for different customer tiers
+const enterprisePlugin = createStripeMonetizationPlugin({
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  billingModel: 'subscription',
+  plans: [
+    {
+      id: 'starter',
+      name: 'Starter Plan',
+      price: 2999,  // $29.99/month
+      interval: 'month',
+      includedCalls: 5000,
+      overagePrice: 5  // $0.05 per additional call
+    },
+    {
+      id: 'professional', 
+      name: 'Professional Plan',
+      price: 9999,  // $99.99/month
+      interval: 'month',
+      includedCalls: 25000,
+      overagePrice: 3  // $0.03 per additional call
+    },
+    {
+      id: 'enterprise',
+      name: 'Enterprise Plan', 
+      price: 49999, // $499.99/month
+      interval: 'month',
+      includedCalls: 150000,
+      overagePrice: 1  // $0.01 per additional call
+    }
+  ]
+});
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [enterprisePlugin]
+});
+
+// Business intelligence tools
+proxiedServer.tool('market-analysis', {
+  company: z.string(),
+  metrics: z.array(z.string()),
+  timeframe: z.enum(['1M', '3M', '6M', '1Y'])
+}, async (args) => {
+  const analysis = await performMarketAnalysis(args);
+  return { content: [{ type: 'text', text: JSON.stringify(analysis) }] };
+});
+
+proxiedServer.tool('competitor-research', {
+  industry: z.string(),
+  region: z.string().optional()
+}, async (args) => {
+  const research = await conductCompetitorResearch(args);
+  return { content: [{ type: 'text', text: JSON.stringify(research) }] };
+});
+```
+
+## Credit-Based Gaming Platform
+
+A gaming service using credit-based billing:
+
+```typescript
+const gamingPlugin = createStripeMonetizationPlugin({
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  billingModel: 'credit_system',
+  creditPackages: [
+    { credits: 100, price: 999, name: 'Starter Pack' },    // $9.99
+    { credits: 500, price: 3999, name: 'Power Pack' },     // $39.99 (20% bonus)
+    { credits: 1200, price: 7999, name: 'Ultimate Pack' }  // $79.99 (50% bonus)
+  ],
+  toolPrices: {
+    'generate-character': 10,     // 10 credits
+    'create-world': 25,          // 25 credits  
+    'ai-dungeon-master': 5,      // 5 credits per response
+    'generate-quest': 15,        // 15 credits
+    'create-npc': 8             // 8 credits
+  }
+});
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [gamingPlugin]
+});
+
+// Gaming tools
+proxiedServer.tool('generate-character', {
+  class: z.enum(['warrior', 'mage', 'rogue', 'cleric']),
+  level: z.number().min(1).max(20),
+  background: z.string().optional()
+}, async (args) => {
+  const character = await generateCharacter(args);
+  return { content: [{ type: 'text', text: JSON.stringify(character) }] };
+});
+
+proxiedServer.tool('ai-dungeon-master', {
+  scenario: z.string(),
+  playerAction: z.string(),
+  context: z.string().optional()
+}, async (args) => {
+  const response = await generateDMResponse(args);
+  return { content: [{ type: 'text', text: response }] };
+});
+```
+
+## Development Tools API
+
+A developer-focused API with per-call pricing:
+
+```typescript
+const devToolsPlugin = createStripeMonetizationPlugin({
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  billingModel: 'per_call',
+  toolPrices: {
+    'code-review': 200,          // $2.00
+    'security-scan': 300,        // $3.00
+    'performance-analysis': 250,  // $2.50
+    'generate-tests': 150,       // $1.50
+    'refactor-code': 400,        // $4.00
+    'simple-format': 25          // $0.25
+  },
+  volumeDiscounts: [
+    { threshold: 50, discountPercent: 10 },   // 10% off after 50 calls
+    { threshold: 200, discountPercent: 20 },  // 20% off after 200 calls
+    { threshold: 500, discountPercent: 30 }   // 30% off after 500 calls
+  ]
+});
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [devToolsPlugin]
+});
+
+// Development tools
+proxiedServer.tool('code-review', {
+  code: z.string(),
+  language: z.string(),
+  focusAreas: z.array(z.enum(['security', 'performance', 'maintainability', 'style'])).optional()
+}, async (args) => {
+  const review = await performCodeReview(args);
+  return { content: [{ type: 'text', text: JSON.stringify(review) }] };
+});
+
+proxiedServer.tool('security-scan', {
+  code: z.string(),
+  language: z.string(),
+  scanType: z.enum(['static', 'dependency', 'comprehensive']).default('comprehensive')
+}, async (args) => {
+  const vulnerabilities = await scanForVulnerabilities(args);
+  return { content: [{ type: 'text', text: JSON.stringify(vulnerabilities) }] };
+});
+```
+
+## Freemium Content Platform
+
+A content creation platform with freemium model:
+
+```typescript
+const contentPlugin = createStripeMonetizationPlugin({
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  billingModel: 'freemium',
+  freeTier: {
+    dailyLimit: 10,           // 10 free generations per day
+    tools: ['simple-blog-post', 'basic-social-media']  // Limited tool access
+  },
+  premiumTier: {
+    price: 1999,              // $19.99/month
+    interval: 'month',
+    includedCalls: 1000,      // 1000 generations per month
+    overagePrice: 10,         // $0.10 per additional generation
+    allToolsAccess: true      // Access to all tools
+  }
+});
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [contentPlugin]
+});
+
+// Content creation tools
+proxiedServer.tool('simple-blog-post', {
+  topic: z.string(),
+  tone: z.enum(['professional', 'casual', 'humorous']).default('professional'),
+  length: z.enum(['short', 'medium', 'long']).default('medium')
+}, async (args) => {
+  const post = await generateBlogPost(args);
+  return { content: [{ type: 'text', text: post }] };
+});
+
+proxiedServer.tool('advanced-article', {  // Premium only
+  topic: z.string(),
+  sources: z.array(z.string()),
+  seoKeywords: z.array(z.string()),
+  targetAudience: z.string()
+}, async (args) => {
+  const article = await generateAdvancedArticle(args);
+  return { content: [{ type: 'text', text: article }] };
+});
+```
+
+## Production Configuration Examples
+
+### Environment-Based Setup
+
+```typescript
+// config/index.ts
+interface Config {
+  stripe: {
+    secretKey: string;
+    publishableKey: string;
+    webhookSecret: string;
+  };
+  database: string;
+  logLevel: string;
+  pricing: Record<string, number>;
+}
+
+const configs: Record<string, Config> = {
+  development: {
+    stripe: {
+      secretKey: process.env.STRIPE_TEST_SECRET_KEY!,
+      publishableKey: process.env.STRIPE_TEST_PUBLISHABLE_KEY!,
+      webhookSecret: process.env.STRIPE_TEST_WEBHOOK_SECRET!
+    },
+    database: 'sqlite:./dev.db',
+    logLevel: 'debug',
+    pricing: {
+      'test-tool': 1  // $0.01 for testing
+    }
+  },
+  production: {
+    stripe: {
+      secretKey: process.env.STRIPE_LIVE_SECRET_KEY!,
+      publishableKey: process.env.STRIPE_LIVE_PUBLISHABLE_KEY!,
+      webhookSecret: process.env.STRIPE_LIVE_WEBHOOK_SECRET!
+    },
+    database: process.env.DATABASE_URL!,
+    logLevel: 'info',
+    pricing: {
+      'ai-analysis': 100,
+      'data-processing': 150,
+      'premium-feature': 250
+    }
+  }
+};
+
+export const config = configs[process.env.NODE_ENV || 'development'];
+```
+
+### Docker Deployment
+
+```dockerfile
+# Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY dist/ ./dist/
+
+EXPOSE 3000
+
+CMD ["node", "dist/index.js"]
+```
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  mcp-server:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - DATABASE_URL=postgresql://user:pass@db:5432/mcpserver
+    depends_on:
+      - db
+  
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: mcpserver
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+```
+
+## Testing Examples
+
+### Integration Testing
+
+```typescript
+// tests/integration.test.ts
+import { describe, test, expect, beforeEach } from '@jest/globals';
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+import { createTestServer } from './test-utils';
+
+describe('Monetized Server Integration', () => {
+  let proxiedServer: any;
+  
+  beforeEach(async () => {
+    const server = createTestServer();
+    const plugin = createStripeMonetizationPlugin({
+      stripeSecretKey: process.env.STRIPE_TEST_SECRET_KEY!,
+      stripePublishableKey: process.env.STRIPE_TEST_PUBLISHABLE_KEY!,
+      webhookSecret: process.env.STRIPE_TEST_WEBHOOK_SECRET!,
+      defaultPrice: 100
+    });
+    
+    proxiedServer = await wrapWithProxy(server, { plugins: [plugin] });
+  });
+
+  test('blocks calls without payment', async () => {
+    await expect(proxiedServer.callTool('expensive-tool', {}))
+      .rejects.toThrow('Payment required');
+  });
+
+  test('allows calls after payment', async () => {
+    // Simulate payment completion
+    await plugin.addCredits('test-user', 1);
+    
+    const result = await proxiedServer.callTool('expensive-tool', {});
+    expect(result.content[0].text).toBeDefined();
+  });
+});
+```
+
+### Load Testing
+
+```typescript
+// tests/load.test.ts
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+
+async function loadTest() {
+  const server = createTestServer();
+  const proxiedServer = await wrapWithProxy(server, { plugins: [] });
+  
+  const promises = [];
+  const startTime = Date.now();
+  
+  // Simulate 100 concurrent calls
+  for (let i = 0; i < 100; i++) {
+    promises.push(proxiedServer.callTool('test-tool', { data: `test-${i}` }));
+  }
+  
+  await Promise.all(promises);
+  const duration = Date.now() - startTime;
+  
+  console.log(`Processed 100 calls in ${duration}ms`);
+  console.log(`Average: ${duration / 100}ms per call`);
+}
+```
+
+## Common Use Cases
+
+<Cards>
+  <Card title="AI-as-a-Service" href="#basic-ai-service">
+    Monetize AI analysis, generation, and processing tools
+  </Card>
+  
+  <Card title="Developer APIs" href="#development-tools-api">
+    Code review, security scanning, and development tools
+  </Card>
+  
+  <Card title="Content Platforms" href="#freemium-content-platform">
+    Writing, design, and creative tools with freemium models
+  </Card>
+  
+  <Card title="Enterprise SaaS" href="#multi-tenant-saas-platform">
+    Multi-tenant platforms with subscription billing
+  </Card>
+</Cards>
+
+<Callout type="success">
+  **Ready to implement?** These examples show real production patterns that you can adapt for your specific use case.
+</Callout>
+
+## Next Steps
+
+- **[API Reference](/api-reference)**: Complete API documentation
+- **[Deployment](/deployment)**: Production deployment guide
+- **[Plugins](/plugins)**: Explore available plugins
+- **[Getting Started](/getting-started)**: Basic setup guide
