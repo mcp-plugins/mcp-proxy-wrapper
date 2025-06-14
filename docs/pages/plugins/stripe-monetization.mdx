@@ -39,7 +39,7 @@ npm install mcp-proxy-wrapper
 
 ```typescript
 import { wrapWithProxy } from 'mcp-proxy-wrapper';
-import { createStripeMonetizationPlugin } from 'mcp-proxy-wrapper/plugins/stripe-monetization';
+// Note: Stripe plugin is a separate package - see mcp-plugins organization
 
 const plugin = createStripeMonetizationPlugin({
   stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
