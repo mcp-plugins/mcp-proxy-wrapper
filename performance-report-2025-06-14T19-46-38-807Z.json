@@ -1,0 +1,103 @@
+{
+  "summary": {
+    "totalBenchmarks": 7,
+    "totalOriginalTime": 2378,
+    "totalOptimizedTime": 1799,
+    "totalImprovement": 579,
+    "averageImprovementPercentage": -284.7977600002532,
+    "totalMemoryImprovement": -103077528
+  },
+  "results": [
+    {
+      "name": "Hook Execution",
+      "description": "Single hook execution performance over 1000 iterations",
+      "originalTime": 0,
+      "optimizedTime": 16,
+      "originalMemory": 1114792,
+      "optimizedMemory": 1174256,
+      "iterations": 1000,
+      "improvement": -16,
+      "improvementPercentage": 0,
+      "memoryImprovement": -59464,
+      "timestamp": "2025-06-14T19:46:34.540Z"
+    },
+    {
+      "name": "Hook Lookups",
+      "description": "1000 hooks with 100 lookups each",
+      "originalTime": 17,
+      "optimizedTime": 391,
+      "originalMemory": -1536408,
+      "optimizedMemory": 103109240,
+      "iterations": 100000,
+      "improvement": -374,
+      "improvementPercentage": -2200,
+      "memoryImprovement": -104645648,
+      "timestamp": "2025-06-14T19:46:34.949Z"
+    },
+    {
+      "name": "Batch Execution",
+      "description": "20 batches of 50 hooks each",
+      "originalTime": 1130,
+      "optimizedTime": 1139,
+      "originalMemory": 3011912,
+      "optimizedMemory": -2763880,
+      "iterations": 1000,
+      "improvement": -9,
+      "improvementPercentage": -0.7964601769911505,
+      "memoryImprovement": 5775792,
+      "timestamp": "2025-06-14T19:46:37.218Z"
+    },
+    {
+      "name": "Parallel Execution",
+      "description": "10 batches of 20 parallel hooks",
+      "originalTime": 1128,
+      "optimizedTime": 173,
+      "originalMemory": 509176,
+      "optimizedMemory": 1338616,
+      "iterations": 200,
+      "improvement": 955,
+      "improvementPercentage": 84.66312056737588,
+      "memoryImprovement": -829440,
+      "timestamp": "2025-06-14T19:46:38.519Z"
+    },
+    {
+      "name": "Plugin Initialization",
+      "description": "Initialize 100 plugins",
+      "originalTime": 102,
+      "optimizedTime": 79,
+      "originalMemory": 49872,
+      "optimizedMemory": 841984,
+      "iterations": 100,
+      "improvement": 23,
+      "improvementPercentage": 22.54901960784314,
+      "memoryImprovement": -792112,
+      "timestamp": "2025-06-14T19:46:38.700Z"
+    },
+    {
+      "name": "Health Checks",
+      "description": "10 rounds of health checks on 200 plugins",
+      "originalTime": 0,
+      "optimizedTime": 1,
+      "originalMemory": 29728,
+      "optimizedMemory": 3214920,
+      "iterations": 2000,
+      "improvement": -1,
+      "improvementPercentage": 0,
+      "memoryImprovement": -3185192,
+      "timestamp": "2025-06-14T19:46:38.703Z"
+    },
+    {
+      "name": "Memory Usage",
+      "description": "Memory allocation patterns over 1000 iterations",
+      "originalTime": 1,
+      "optimizedTime": 0,
+      "originalMemory": 1165352,
+      "optimizedMemory": 506816,
+      "iterations": 1000,
+      "improvement": 1,
+      "improvementPercentage": 100,
+      "memoryImprovement": 658536,
+      "timestamp": "2025-06-14T19:46:38.807Z"
+    }
+  ]
+}

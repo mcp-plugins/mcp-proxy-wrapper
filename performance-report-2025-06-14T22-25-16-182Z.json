@@ -1,0 +1,103 @@
+{
+  "summary": {
+    "totalBenchmarks": 7,
+    "totalOriginalTime": 2344,
+    "totalOptimizedTime": 1787,
+    "totalImprovement": 557,
+    "averageImprovementPercentage": -294.650032024883,
+    "totalMemoryImprovement": -116485848
+  },
+  "results": [
+    {
+      "name": "Hook Execution",
+      "description": "Single hook execution performance over 1000 iterations",
+      "originalTime": 0,
+      "optimizedTime": 12,
+      "originalMemory": 513096,
+      "optimizedMemory": 1485752,
+      "iterations": 1000,
+      "improvement": -12,
+      "improvementPercentage": 0,
+      "memoryImprovement": -972656,
+      "timestamp": "2025-06-14T22:25:11.955Z"
+    },
+    {
+      "name": "Hook Lookups",
+      "description": "1000 hooks with 100 lookups each",
+      "originalTime": 17,
+      "optimizedTime": 385,
+      "originalMemory": -144880,
+      "optimizedMemory": 110702688,
+      "iterations": 100000,
+      "improvement": -368,
+      "improvementPercentage": -2164.7058823529414,
+      "memoryImprovement": -110847568,
+      "timestamp": "2025-06-14T22:25:12.358Z"
+    },
+    {
+      "name": "Batch Execution",
+      "description": "20 batches of 50 hooks each",
+      "originalTime": 1134,
+      "optimizedTime": 1132,
+      "originalMemory": -7036728,
+      "optimizedMemory": 6823656,
+      "iterations": 1000,
+      "improvement": 2,
+      "improvementPercentage": 0.1763668430335097,
+      "memoryImprovement": -13860384,
+      "timestamp": "2025-06-14T22:25:14.625Z"
+    },
+    {
+      "name": "Parallel Execution",
+      "description": "10 batches of 20 parallel hooks",
+      "originalTime": 1092,
+      "optimizedTime": 173,
+      "originalMemory": 501456,
+      "optimizedMemory": 1330528,
+      "iterations": 200,
+      "improvement": 919,
+      "improvementPercentage": 84.15750915750915,
+      "memoryImprovement": -829072,
+      "timestamp": "2025-06-14T22:25:15.890Z"
+    },
+    {
+      "name": "Plugin Initialization",
+      "description": "Initialize 100 plugins",
+      "originalTime": 101,
+      "optimizedTime": 83,
+      "originalMemory": 46144,
+      "optimizedMemory": 876976,
+      "iterations": 100,
+      "improvement": 18,
+      "improvementPercentage": 17.82178217821782,
+      "memoryImprovement": -830832,
+      "timestamp": "2025-06-14T22:25:16.075Z"
+    },
+    {
+      "name": "Health Checks",
+      "description": "10 rounds of health checks on 200 plugins",
+      "originalTime": 0,
+      "optimizedTime": 2,
+      "originalMemory": 16104,
+      "optimizedMemory": -10180824,
+      "iterations": 2000,
+      "improvement": -2,
+      "improvementPercentage": 0,
+      "memoryImprovement": 10196928,
+      "timestamp": "2025-06-14T22:25:16.079Z"
+    },
+    {
+      "name": "Memory Usage",
+      "description": "Memory allocation patterns over 1000 iterations",
+      "originalTime": 0,
+      "optimizedTime": 0,
+      "originalMemory": 1164688,
+      "optimizedMemory": 506952,
+      "iterations": 1000,
+      "improvement": 0,
+      "improvementPercentage": 0,
+      "memoryImprovement": 657736,
+      "timestamp": "2025-06-14T22:25:16.182Z"
+    }
+  ]
+}
