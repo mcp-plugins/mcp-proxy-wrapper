@@ -84,6 +84,46 @@ When a tool call arrives:
 - The final result is returned to the client
 </Steps>
 
+## Tool Registration Behavior
+
+<Callout type="info">
+**Important:** The proxy wrapper only enhances tools registered AFTER wrapping. Tools registered before wrapping remain available but don't get hook/plugin functionality.
+</Callout>
+
+### What Gets Enhanced
+
+```typescript
+const server = new McpServer({ name: 'My Tools', version: '1.0.0' });
+
+// ❌ This tool won't have plugin functionality
+server.tool('old-tool', { text: z.string() }, async (args) => {
+  return { content: [{ type: 'text', text: 'Old tool response' }] };
+});
+
+// Wrap the server
+const proxiedServer = await wrapWithProxy(server, { plugins: [authPlugin] });
+
+// ✅ This tool will have full plugin functionality
+proxiedServer.tool('new-tool', { text: z.string() }, async (args) => {
+  return { content: [{ type: 'text', text: 'Enhanced tool response' }] };
+});
+
+// Both tools are available to clients, but only 'new-tool' gets:
+// - Authentication checks
+// - Billing verification  
+// - Analytics tracking
+// - Custom hook execution
+```
+
+### All Server Functionality Preserved
+
+The proxy wrapper preserves all existing MCP server functionality:
+- Existing tools remain fully functional
+- Resource providers work unchanged
+- Prompt templates are unaffected  
+- Server metadata and capabilities are preserved
+- Transport layer (STDIO, WebSocket, etc.) works identically
+
 ## Code Example: Behind the Scenes
 
 Here's what happens when you wrap a server:

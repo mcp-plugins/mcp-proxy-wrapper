@@ -37,7 +37,8 @@ const proxiedServer = await wrapWithProxy(server, {
   plugins: [] // Add plugins here
 });
 
-// Register your tools as usual
+// Register tools with enhanced functionality
+// Tools registered after wrapping get hook/plugin functionality
 proxiedServer.tool('hello-world', {
   name: z.string()
 }, async (args) => {
@@ -48,6 +49,9 @@ proxiedServer.tool('hello-world', {
     }]
   };
 });
+
+// Note: Any tools registered BEFORE wrapping remain available
+// but won't have hook/plugin functionality applied
 ```
 
 ### Start the Server
