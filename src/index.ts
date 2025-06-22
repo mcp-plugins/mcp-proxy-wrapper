@@ -48,7 +48,7 @@ export {
   PluginManager
 } from './interfaces/plugin.js';
 
-// Export new v2 interfaces
+// Export new v2 interfaces (experimental - moved to separate directory)
 export {
   type IDisposable,
   type IResourceTrackingDisposable,
@@ -58,7 +58,7 @@ export {
   type ResourceInfo,
   HealthStatus,
   ServerLifecycleEvent
-} from './interfaces/lifecycle.js';
+} from './experimental/v2-design/lifecycle.js';
 
 export {
   type IHookExecutionManager,
@@ -68,7 +68,7 @@ export {
   type HookExecutionConfig,
   type PerformanceConfig,
   ExecutionMode
-} from './interfaces/execution.js';
+} from './experimental/v2-design/execution.js';
 
 // Export utility classes
 export { PluginLifecycleManager } from './utils/plugin-lifecycle-manager.js';

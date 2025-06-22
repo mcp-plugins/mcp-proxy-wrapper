@@ -17,9 +17,8 @@ import {
   ExecutionResult,
   ExecutionStats,
   HookCondition,
-  HookDependency,
   PerformanceConfig
-} from '../interfaces/execution.js';
+} from '../experimental/v2-design/execution.js';
 
 /**
  * Hook function type

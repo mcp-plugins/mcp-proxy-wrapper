@@ -19,7 +19,7 @@ import {
   ResourceInfo,
   ServerLifecycleEvent,
   ServerLifecycleEventData
-} from '../interfaces/lifecycle.js';
+} from '../experimental/v2-design/lifecycle.js';
 
 interface PluginRegistration {
   id: string;

@@ -28,13 +28,13 @@ import {
 import {
   IDisposable,
   ServerLifecycleEvent
-} from './interfaces/lifecycle.js';
+} from './experimental/v2-design/lifecycle.js';
 import {
   ExecutionMode,
   ExecutionContext,
   HookExecutionConfig,
   PerformanceConfig
-} from './interfaces/execution.js';
+} from './experimental/v2-design/execution.js';
 
 // Define types for the request handler extra
 type RequestHandlerExtra = any;

@@ -1,10 +1,25 @@
-# MCP Proxy Wrapper
+<div align="center">
 
-A lightweight, powerful wrapper for Model Context Protocol (MCP) servers that provides a comprehensive hook system for intercepting, monitoring, and modifying tool calls without changing your existing server code.
+# 🚀 MCP Proxy Wrapper
 
-[![npm version](https://img.shields.io/npm/v/mcp-proxy-wrapper.svg)](https://www.npmjs.com/package/mcp-proxy-wrapper)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+**Transform any MCP server into a powerful, extensible platform with enterprise-grade features**
+
+[![NPM Version](https://img.shields.io/npm/v/mcp-proxy-wrapper?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/mcp-proxy-wrapper)
+[![GitHub Stars](https://img.shields.io/github/stars/mcp-plugins/mcp-proxy-wrapper?style=for-the-badge&logo=github)](https://github.com/mcp-plugins/mcp-proxy-wrapper)
+[![License](https://img.shields.io/github/license/mcp-plugins/mcp-proxy-wrapper?style=for-the-badge)](https://github.com/mcp-plugins/mcp-proxy-wrapper/blob/main/LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+
+### 📖 [**View Full Documentation**](https://mcp-plugins.github.io/mcp-proxy-wrapper) | 🚀 [**Quick Start Guide**](https://mcp-plugins.github.io/mcp-proxy-wrapper/getting-started) | 🔌 [**Plugin System**](https://mcp-plugins.github.io/mcp-proxy-wrapper/plugins)
+
+```bash
+npm install mcp-proxy-wrapper
+```
+
+*A lightweight, powerful wrapper for Model Context Protocol (MCP) servers that provides a comprehensive hook system for intercepting, monitoring, and modifying tool calls without changing your existing server code.*
+
+</div>
+
+---
 
 ## 🚀 Features
 
@@ -593,12 +608,25 @@ npm test
 
 MIT License - see [LICENSE](./LICENSE) file for details.
 
+## 📖 Documentation
+
+For comprehensive guides, API reference, and examples:
+
+### 🌟 [**Complete Documentation Site**](https://mcp-plugins.github.io/mcp-proxy-wrapper)
+
+- 🚀 [**Getting Started**](https://mcp-plugins.github.io/mcp-proxy-wrapper/getting-started) - 5-minute setup guide
+- 🔧 [**How It Works**](https://mcp-plugins.github.io/mcp-proxy-wrapper/how-it-works) - Understanding the proxy mechanism
+- 🏗️ [**Architecture**](https://mcp-plugins.github.io/mcp-proxy-wrapper/architecture) - Technical deep dive
+- 🔌 [**Plugin System**](https://mcp-plugins.github.io/mcp-proxy-wrapper/plugins) - Build and use plugins
+- 📚 [**API Reference**](https://mcp-plugins.github.io/mcp-proxy-wrapper/api-reference) - Complete API docs
+- 🚀 [**Deployment Guide**](https://mcp-plugins.github.io/mcp-proxy-wrapper/deployment) - Production deployment
+
 ## 🔗 Links
 
 - [Model Context Protocol](https://modelcontextprotocol.io/)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-- [GitHub Repository](https://github.com/crazyrabbitLTC/mcp-proxy-wrapper)
-- [Issues & Support](https://github.com/crazyrabbitLTC/mcp-proxy-wrapper/issues)
+- [GitHub Repository](https://github.com/mcp-plugins/mcp-proxy-wrapper)
+- [Issues & Support](https://github.com/mcp-plugins/mcp-proxy-wrapper/issues)
 
 ---
 

@@ -1,6 +1,24 @@
 /**
  * @file Chat Memory Plugin Usage Example
  * @description Demonstrates how to use the chat memory plugin with a complete MCP server
+ * 
+ * PURPOSE: This example shows how to:
+ * - Set up conversation memory that persists across tool calls
+ * - Configure automatic summarization when memory gets full
+ * - Use the memory system to provide context-aware responses
+ * - Handle memory retrieval and management in tool implementations
+ * 
+ * TO RUN:
+ * 1. npm run build
+ * 2. node dist/examples/chat-memory-example.js
+ * 3. Use MCP Inspector or connect via STDIO transport
+ * 4. Try the 'chat' tool with conversations to see memory in action
+ * 
+ * FEATURES DEMONSTRATED:
+ * - Persistent conversation memory across tool calls
+ * - Automatic summarization when memory reaches capacity
+ * - Context-aware responses using conversation history
+ * - Memory retrieval and search capabilities
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';

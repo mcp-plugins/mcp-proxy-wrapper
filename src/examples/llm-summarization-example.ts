@@ -1,6 +1,21 @@
 /**
  * @file LLM Summarization Plugin Usage Example
  * @description Demonstrates how to use the LLM summarization plugin with real MCP tools
+ * 
+ * PURPOSE: This example shows how to:
+ * - Set up a complete MCP server with LLM summarization capabilities
+ * - Configure the plugin for different environments (development vs production)
+ * - Use mock providers for development and OpenAI for production
+ * - Handle tool responses that get automatically summarized when they're too long
+ * 
+ * TO RUN:
+ * 1. npm run build
+ * 2. node dist/examples/llm-summarization-example.js
+ * 3. Use MCP Inspector or connect via STDIO transport
+ * 
+ * ENVIRONMENT VARIABLES:
+ * - OPENAI_API_KEY: Required for production OpenAI integration
+ * - NODE_ENV: Set to 'production' to use real OpenAI API
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
