@@ -11,16 +11,16 @@ Deploy your MCP Proxy Wrapper applications to production environments.
 </Callout>
 
 ### Security
-- ✅ Use live Stripe keys (not test keys)
+- ✅ Secure API keys and authentication tokens
 - ✅ Secure environment variables (never commit secrets)
-- ✅ Use HTTPS for webhooks
-- ✅ Enable webhook signature verification
+- ✅ Use HTTPS for all endpoints
+- ✅ Enable proper input validation
 
 ### Configuration
 - ✅ Set NODE_ENV=production
 - ✅ Configure proper logging level
 - ✅ Set up database connection (if using persistent storage)
-- ✅ Test with real Stripe webhooks
+- ✅ Test authentication and rate limiting
 
 ## Environment Variables
 
@@ -32,10 +32,13 @@ NODE_ENV=production
 PORT=3000
 LOG_LEVEL=info
 
-# Stripe (LIVE keys for production)
-STRIPE_SECRET_KEY=sk_live_your_live_secret_key
-STRIPE_PUBLISHABLE_KEY=pk_live_your_live_publishable_key
-STRIPE_WEBHOOK_SECRET=whsec_your_live_webhook_secret
+# Authentication
+AUTH_ENDPOINT=https://your-auth-service.com/validate
+API_KEY_CACHE_TTL=3600
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX_REQUESTS=100
 
 # Optional: Database (if using persistent storage)
 DATABASE_URL=postgresql://user:password@host:5432/database
@@ -80,9 +83,9 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - AUTH_ENDPOINT=${AUTH_ENDPOINT}
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX_REQUESTS=100
     restart: unless-stopped
 ```
 
@@ -123,9 +126,9 @@ heroku create your-app-name
 ### Set Environment Variables
 ```bash
 heroku config:set NODE_ENV=production
-heroku config:set STRIPE_SECRET_KEY=sk_live_your_key
-heroku config:set STRIPE_PUBLISHABLE_KEY=pk_live_your_key
-heroku config:set STRIPE_WEBHOOK_SECRET=whsec_your_secret
+heroku config:set AUTH_ENDPOINT=https://your-auth-service.com/validate
+heroku config:set RATE_LIMIT_WINDOW_MS=60000
+heroku config:set RATE_LIMIT_MAX_REQUESTS=100
 ```
 
 ### Deploy
@@ -181,9 +184,11 @@ services:
   envs:
   - key: NODE_ENV
     value: production
-  - key: STRIPE_SECRET_KEY
-    value: sk_live_your_key
+  - key: AUTH_ENDPOINT
+    value: https://your-auth-service.com/validate
     type: SECRET
+  - key: RATE_LIMIT_WINDOW_MS
+    value: "60000"
 ```
 
 ## Health Checks
@@ -203,7 +208,7 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/ready', async (req, res) => {
-  // Check dependencies (database, Stripe, etc.)
+  // Check dependencies (database, external APIs, etc.)
   try {
     // Add your health checks here
     res.status(200).json({ status: 'ready' });
@@ -216,26 +221,25 @@ app.get('/ready', async (req, res) => {
 });
 ```
 
-## Stripe Webhook Configuration
+## API Endpoint Configuration
 
-### Production Webhook Setup
+### Production API Setup
 
 <Steps>
-### Create Webhook Endpoint
-In your Stripe dashboard, go to **Developers → Webhooks** and create a new endpoint.
+### Configure Authentication Endpoint
+Set up your authentication service endpoint for API key validation.
 
-### Set Webhook URL
-Set your production URL: `https://your-domain.com/stripe/webhook`
+### Set Rate Limiting
+Configure appropriate rate limits for your production environment:
+- Free tier: 10 requests/minute
+- Premium tier: 100 requests/minute
+- Enterprise tier: 1000 requests/minute
 
-### Select Events
-Choose the events your application needs:
-- `checkout.session.completed`
-- `customer.subscription.created`
-- `customer.subscription.updated`
-- `invoice.payment_succeeded`
+### Database Setup
+If using persistent storage for analytics or caching, ensure your database is properly configured.
 
-### Copy Webhook Secret
-Copy the webhook signing secret and set it as `STRIPE_WEBHOOK_SECRET` environment variable.
+### Health Checks
+Implement health check endpoints to monitor your service status.
 </Steps>
 
 ## Monitoring and Logging
@@ -244,15 +248,25 @@ Copy the webhook signing secret and set it as `STRIPE_WEBHOOK_SECRET` environmen
 
 ```typescript
 // Production logging configuration
-const logger = createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  colors: false, // Disable colors in production
-  timestamp: true
-});
+const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+
+// Simple logging helper
+const log = {
+  info: (message: string, data?: any) => {
+    if (['debug', 'info'].includes(LOG_LEVEL)) {
+      console.log(`[${new Date().toISOString()}] INFO: ${message}`, data || '');
+    }
+  },
+  error: (message: string, error?: any) => {
+    if (['debug', 'info', 'warn', 'error'].includes(LOG_LEVEL)) {
+      console.error(`[${new Date().toISOString()}] ERROR: ${message}`, error || '');
+    }
+  }
+};
 
 // Log important events
-logger.info('Server started', { port: process.env.PORT });
-logger.info('Plugin loaded', { plugin: 'stripe-monetization' });
+log.info('Server started', { port: process.env.PORT });
+log.info('Plugin loaded', { plugin: 'llm-summarization' });
 ```
 
 ### Error Tracking
@@ -260,38 +274,47 @@ logger.info('Plugin loaded', { plugin: 'stripe-monetization' });
 ```typescript
 // Basic error handling
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught exception:', error);
+  console.error(`[${new Date().toISOString()}] ERROR: Uncaught exception:`, error);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled rejection at:', promise, 'reason:', reason);
+  console.error(`[${new Date().toISOString()}] ERROR: Unhandled rejection at:`, promise, 'reason:', reason);
   process.exit(1);
 });
 ```
 
-## Database Considerations
+## Plugin Configuration Examples
 
-### SQLite (Development/Small Scale)
+### LLM Summarization Plugin
 
 ```typescript
-const plugin = createStripeMonetizationPlugin({
-  // ... other config
-  database: {
-    type: 'sqlite',
-    path: './data/production.db'
+import { LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o-mini',
+    maxTokens: 150,
+    temperature: 0.3
   }
 });
 ```
 
-### PostgreSQL (Production)
+### Chat Memory Plugin
 
 ```typescript
-const plugin = createStripeMonetizationPlugin({
-  // ... other config
-  database: {
-    type: 'postgresql',
-    connectionString: process.env.DATABASE_URL
+import { ChatMemoryPlugin } from 'mcp-proxy-wrapper';
+
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    saveResponses: true,
+    maxEntries: 1000,
+    enableChat: true,
+    persistToDisk: process.env.NODE_ENV === 'production'
   }
 });
 ```
@@ -319,16 +342,17 @@ Keep a secure record of your environment variables configuration (without the ac
 **Environment variables not loading:**
 ```bash
 # Check if variables are set
-echo $STRIPE_SECRET_KEY
+echo $AUTH_ENDPOINT
 # Should not be empty in production
 ```
 
-**Webhook not receiving events:**
+**Authentication not working:**
 ```bash
-# Test webhook endpoint
-curl -X POST https://your-domain.com/stripe/webhook \
+# Test auth endpoint
+curl -X POST https://your-domain.com/api/test \
   -H "Content-Type: application/json" \
-  -d '{"test": "webhook"}'
+  -H "Authorization: Bearer your-api-key" \
+  -d '{"test": "auth"}'
 ```
 
 **Application not starting:**
@@ -355,23 +379,25 @@ LOG_LEVEL=debug node dist/index.js
 ```
 
 <Callout type="success">
-  **Ready for production**: Your MCP Proxy Wrapper application is now deployed and ready to handle real payments and users.
+  **Ready for production**: Your MCP Proxy Wrapper application is now deployed and ready to handle real users with enhanced plugin functionality.
 </Callout>
 
 ## Security Best Practices
 
 1. **Never commit secrets** to your repository
-2. **Use HTTPS** for all webhook endpoints
-3. **Verify webhook signatures** in production
+2. **Use HTTPS** for all API endpoints
+3. **Validate all inputs** and sanitize data
 4. **Rotate API keys** regularly
-5. **Monitor for unusual activity** in your Stripe dashboard
+5. **Monitor for unusual activity** and implement alerts
 6. **Keep dependencies updated** with `npm audit`
+7. **Implement proper rate limiting** to prevent abuse
+8. **Use secure authentication** mechanisms
 
 ## Next Steps
 
 - **[Getting Started](/getting-started)**: Review setup guide
 - **[Examples](/examples)**: See real-world implementations  
 - **[API Reference](/api-reference)**: Complete API documentation
-- **[Plugins](/plugins)**: Explore monetization options
+- **[Plugins](/plugins)**: Explore available plugins
 
 Need help with deployment? Check the troubleshooting section above or open an issue on GitHub.

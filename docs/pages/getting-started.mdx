@@ -219,12 +219,25 @@ mcp-inspector node dist/index.js
 ```typescript
 // tests/server.test.ts
 import { describe, test, expect } from '@jest/globals';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy } from 'mcp-proxy-wrapper';
-import { createTestServer } from './test-utils';
+import { z } from 'zod';
 
 describe('My MCP Server', () => {
   test('tool returns expected result', async () => {
-    const server = createTestServer();
+    // Create test server
+    const server = new McpServer('test-server', '1.0.0');
+    
+    // Register test tool
+    server.tool('text-analysis', {
+      text: z.string(),
+      analysisType: z.enum(['sentiment', 'readability'])
+    }, async (args) => {
+      return {
+        content: [{ type: 'text', text: `Analysis result: ${args.analysisType} is positive` }]
+      };
+    });
+    
     const proxiedServer = await wrapWithProxy(server, { plugins: [] });
     
     const result = await proxiedServer.callTool('text-analysis', {
@@ -351,7 +364,7 @@ const proxiedServer = await wrapWithProxy(server, {
 </Callout>
 
 - **[How It Works](/how-it-works)**: Understand the proxy wrapper architecture
-- **[Plugins](/plugins)**: Add monetization, analytics, and more
+- **[Plugins](/plugins)**: Add summarization, memory, and more
 - **[Examples](/examples)**: See real-world implementations
 - **[API Reference](/api-reference)**: Complete API documentation
 - **[Deployment](/deployment)**: Deploy to production

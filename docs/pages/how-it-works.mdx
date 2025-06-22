@@ -16,12 +16,11 @@ The following diagram illustrates how a tool call flows through the proxy wrappe
 graph TD
     A[MCP Client] -->|Tool Call Request| B[Proxy Wrapper]
     B --> C[Plugin Manager]
-    C --> D[Authentication Plugin]
-    C --> E[Billing Plugin] 
-    C --> F[Analytics Plugin]
-    D --> G{Authorization Check}
-    G -->|Authorized| H[Execute beforeToolCall Hooks]
-    G -->|Denied| I[Return Error Response]
+    C --> D[Chat Memory Plugin]
+    C --> E[LLM Summarization Plugin]
+    D --> G{Should Save Response?}
+    G -->|Yes| H[Execute beforeToolCall Hooks]
+    G -->|Skip| H[Execute beforeToolCall Hooks]
     H --> J[Original MCP Server Tool]
     J --> K[Tool Result]
     K --> L[Execute afterToolCall Hooks]
@@ -33,26 +32,23 @@ graph TD
 In this flow:
 1. The MCP client sends a tool call request
 2. The proxy wrapper receives the request and forwards it to the plugin manager
-3. Each plugin (authentication, billing, analytics) is consulted in priority order
-4. If authorization passes, the original tool executes
-5. The result flows back through plugins for enhancement before returning to the client
+3. Each plugin (memory, summarization) is consulted in priority order
+4. The original tool executes
+5. The result flows back through plugins for enhancement (memory storage, AI summarization) before returning to the client
 
 ## Plugin Execution Flow
 
 The proxy wrapper executes plugins in a priority-ordered sequence with two main phases:
 
 ### Phase 1: beforeToolCall
-- Authentication: Verify user credentials
-- Authorization: Check tool access permissions  
-- Rate Limiting: Enforce usage limits
-- Billing Checks: Verify payment/credits
-- Request Validation: Sanitize and validate inputs
+- Memory Plugin: Check if response should be saved
+- LLM Summarization: Check if response should be summarized
+- Request Processing: Prepare context for tool execution
 
 ### Phase 2: afterToolCall
-- Response Processing: Transform or enhance results
-- Billing: Record usage and process charges
-- Analytics: Log metrics and usage data
-- Caching: Store responses for future use
+- Memory Plugin: Save tool responses to memory database
+- LLM Summarization: Generate AI summaries of long responses
+- Response Enhancement: Add metadata about processing
 
 <Callout type="info">
   Short-Circuit Capability: Any beforeToolCall hook can return a result to immediately respond without executing the original tool.
@@ -110,7 +106,7 @@ proxiedServer.tool('new-tool', { text: z.string() }, async (args) => {
 
 // Both tools are available to clients, but only 'new-tool' gets:
 // - Authentication checks
-// - Billing verification  
+// - Summarization functionality
 // - Analytics tracking
 // - Custom hook execution
 ```
@@ -133,7 +129,10 @@ Here's what happens when you wrap a server:
 const server = new McpServer({ name: 'My Tools', version: '1.0.0' });
 
 // This is what your code looks like
-server.tool('analyze-text', { text: z.string() }, async (args) => {
+server.tool('analyze-text', { 
+  text: z.string(),
+  userId: z.string().optional() 
+}, async (args) => {
   return { content: [{ type: 'text', text: `Analysis: ${args.text}` }] };
 });
 
@@ -149,7 +148,7 @@ server.tool = function(name: string, schema: any, handler: Function) {
       metadata: { requestId: generateId(), timestamp: Date.now() }
     };
     
-    // Execute beforeToolCall hooks
+    // Execute beforeToolCall hooks (memory and summarization checks)
     for (const plugin of sortedPlugins) {
       const result = await plugin.beforeToolCall?.(context);
       if (result) return result; // Short-circuit if plugin returns result
@@ -158,7 +157,7 @@ server.tool = function(name: string, schema: any, handler: Function) {
     // Execute original handler
     const originalResult = await handler(args);
     
-    // Execute afterToolCall hooks
+    // Execute afterToolCall hooks (save to memory, generate summaries)
     let finalResult = originalResult;
     for (const plugin of sortedPlugins.reverse()) {
       finalResult = await plugin.afterToolCall?.(context, finalResult) || finalResult;

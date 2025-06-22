@@ -1,77 +1,126 @@
 import { Cards, Card, Callout } from 'nextra/components'
 
-# MCP Proxy Wrapper
+<div align="center">
 
-Transform any MCP server into a powerful, extensible platform with enterprise-grade features.
+# 🚀 MCP Proxy Wrapper
+
+**Transform any MCP server into a powerful, extensible platform with enterprise-grade features**
+
+[![NPM Version](https://img.shields.io/npm/v/mcp-proxy-wrapper?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/mcp-proxy-wrapper)
+[![GitHub Stars](https://img.shields.io/github/stars/mcp-plugins/mcp-proxy-wrapper?style=for-the-badge&logo=github)](https://github.com/mcp-plugins/mcp-proxy-wrapper)
+[![License](https://img.shields.io/github/license/mcp-plugins/mcp-proxy-wrapper?style=for-the-badge)](https://github.com/mcp-plugins/mcp-proxy-wrapper/blob/main/LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+
+```bash
+npm install mcp-proxy-wrapper
+```
+
+</div>
+
+---
+
+## ✨ What is MCP Proxy Wrapper?
 
 The MCP Proxy Wrapper is a TypeScript library that wraps existing Model Context Protocol (MCP) servers to add advanced functionality through a sophisticated plugin system, all without requiring any changes to your existing MCP server code.
 
 <Callout type="info">
-  Zero-Modification Enhancement: Add monetization, authentication, analytics, and more to any MCP server without touching the original code.
+  Zero-Modification Enhancement: Add smart features like LLM summarization, chat memory, and custom processing to any MCP server without touching the original code.
 </Callout>
 
-## Core Concept
+## 🎯 Core Concept
 
 The proxy wrapper intercepts tool calls between clients and your MCP server, allowing plugins to:
-- Authenticate and authorize users before tool execution
-- Monitor and bill for tool usage in real-time  
-- Transform requests and responses for enhanced functionality
-- Log and analyze usage patterns and performance
-- Cache responses for improved performance
-- Rate limit to prevent abuse
+
+- 🔐 **Authenticate and authorize users** before tool execution
+- 💰 **Monitor and bill for tool usage** in real-time  
+- ⚡ **Transform requests and responses** for enhanced functionality
+- 📊 **Log and analyze usage patterns** and performance
+- 🚄 **Cache responses** for improved performance
+- 🛡️ **Rate limit** to prevent abuse
+
+## 🚀 Quick Navigation
 
 <Cards>
   <Card
-    title="How It Works"
-    href="/how-it-works"
-  >
-    Understand the proxy interception mechanism and plugin execution flow.
-  </Card>
-  
-  <Card
-    title="Architecture"
-    href="/architecture"
-  >
-    Deep dive into the technical architecture and design patterns.
-  </Card>
-  
-  <Card
-    title="Quick Start"
+    title="🚀 Quick Start"
     href="/getting-started"
   >
     Get up and running in under 5 minutes with our step-by-step guide.
   </Card>
   
   <Card
-    title="Plugin System"
+    title="🔧 How It Works"
+    href="/how-it-works"
+  >
+    Understand the proxy interception mechanism and plugin execution flow.
+  </Card>
+  
+  <Card
+    title="🏗️ Architecture"
+    href="/architecture"
+  >
+    Deep dive into the technical architecture and design patterns.
+  </Card>
+  
+  <Card
+    title="🔌 Plugin System"
     href="/plugins"
   >
-    Extend your MCP server with powerful plugins for monetization, security, and more.
+    Extend your MCP server with powerful plugins for LLM summarization, chat memory, and custom processing.
   </Card>
 </Cards>
 
-## Key Features
+## ⭐ Key Features
 
-- Plugin Architecture: Extensible hook system for beforeToolCall and afterToolCall
-- AI Enhancement Plugins: LLM Summarization and Chat Memory plugins included
-- Authentication & Security: Flexible hook system for implementing access control
-- Analytics & Monitoring: Usage tracking, performance metrics, and error reporting
-- Transport Agnostic: Works with STDIO, WebSocket, SSE, HTTP, and InMemory
-- Enterprise Ready: Robust error handling, logging, and production features
+<div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', margin: '2rem 0'}}>
 
-## How the Proxy Wrapper Works with Tools
+<div style={{padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem'}}>
+  <h3>🔌 Plugin Architecture</h3>
+  <p>Extensible hook system for <code>beforeToolCall</code> and <code>afterToolCall</code> with zero server modifications.</p>
+</div>
 
-The proxy wrapper enhances your MCP server without breaking existing functionality:
+<div style={{padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem'}}>
+  <h3>🤖 AI Enhancement Plugins</h3>
+  <p>LLM Summarization and Chat Memory plugins included for intelligent tool enhancement.</p>
+</div>
+
+<div style={{padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem'}}>
+  <h3>🔐 Authentication & Security</h3>
+  <p>Flexible hook system for implementing access control, rate limiting, and user management.</p>
+</div>
+
+<div style={{padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem'}}>
+  <h3>📈 Analytics & Monitoring</h3>
+  <p>Usage tracking, performance metrics, error reporting, and real-time monitoring capabilities.</p>
+</div>
+
+<div style={{padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem'}}>
+  <h3>🌐 Transport Agnostic</h3>
+  <p>Works with STDIO, WebSocket, SSE, HTTP, and InMemory transport protocols.</p>
+</div>
+
+<div style={{padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem'}}>
+  <h3>🏢 Enterprise Ready</h3>
+  <p>Robust error handling, comprehensive logging, and production-grade features.</p>
+</div>
+
+</div>
+
+## 🔧 How the Proxy Wrapper Works with Tools
+
+<Callout type="default">
+The proxy wrapper enhances your MCP server without breaking existing functionality - it's completely backward compatible!
+</Callout>
 
 1. **Tools registered BEFORE wrapping**: Remain fully available and functional, but don't get enhanced with hooks/plugins
-2. **Tools registered AFTER wrapping**: Get full plugin functionality (authentication, billing, analytics, etc.)
+2. **Tools registered AFTER wrapping**: Get full plugin functionality (summarization, memory, analytics, etc.)
 3. **All underlying server functionality**: Completely preserved (resources, prompts, metadata, transport)
 
 The proxy wrapper intercepts the `server.tool()` method registration process, not the tools themselves. So when you call `wrapWithProxy(server)`, it overrides how new tools are registered to add the hook functionality, but existing tools continue to work exactly as before.
 
-This behavior is documented in detail in the [Getting Started](/getting-started) guide and [How It Works](/how-it-works) section with examples showing the difference between enhanced and non-enhanced tools.
+> 📖 This behavior is documented in detail in the [Getting Started](/getting-started) guide and [How It Works](/how-it-works) section with examples showing the difference between enhanced and non-enhanced tools.
 
-## Quick Example
+## 💻 Quick Example
 
 ```typescript
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -99,4 +148,23 @@ proxiedServer.tool('ai-analysis', {
 });
 ```
 
-Ready to get started? Check out our [Getting Started Guide](/getting-started) or explore the [Plugin System](/plugins).
+<div align="center" style={{margin: '3rem 0'}}>
+
+## 🎯 Ready to Transform Your MCP Server?
+
+<Cards>
+  <Card title="📚 Getting Started Guide" href="/getting-started">
+    Step-by-step setup in 5 minutes
+  </Card>
+  <Card title="🔌 Plugin System" href="/plugins">
+    Explore powerful plugins and create your own
+  </Card>
+</Cards>
+
+---
+
+<p style={{opacity: 0.7}}>
+  <strong>MCP Proxy Wrapper</strong> - Enhance any MCP server without changing a single line of code
+</p>
+
+</div>

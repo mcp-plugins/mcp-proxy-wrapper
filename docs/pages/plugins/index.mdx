@@ -33,41 +33,85 @@ export interface ProxyPlugin {
 
 <Cards>
   <Card
-    title="Stripe Monetization"
-    href="/plugins/stripe-monetization"
+    title="LLM Summarization Plugin"
+    href="#llm-summarization-plugin"
   >
-    Transform your AI tools into revenue-generating services with enterprise-grade billing, multiple payment models, and Stripe's hosted checkout.
+    Automatically generate AI summaries of tool responses using OpenAI or mock providers.
+  </Card>
+  
+  <Card
+    title="Chat Memory Plugin"
+    href="#chat-memory-plugin"
+  >
+    Save tool responses to memory and provide chat interface for interacting with saved data.
   </Card>
 </Cards>
 
-## Planned Plugins
+## Core Plugins
 
-The following plugins are planned for future releases:
+The following plugins are included in the core library:
 
-- **Analytics & Monitoring**: Track usage patterns, performance metrics, and user behavior
-- **Authentication & Security**: JWT authentication, API key management, and authorization controls  
-- **Caching & Performance**: Intelligent caching strategies for tool responses and data
-- **Rate Limiting**: Configurable rate limiting, burst allowances, and usage quotas
-- **Logging & Debugging**: Comprehensive logging with structured output and debugging tools
+### LLM Summarization Plugin
+
+```typescript
+import { LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai', // or 'mock' for testing
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o-mini',
+    maxTokens: 150,
+    temperature: 0.3,
+    summarizeTools: ['search', 'research', 'analyze', 'fetch-data'],
+    minContentLength: 100,
+    saveOriginal: true
+  }
+});
+
+// The plugin intercepts tool results and returns AI-generated summaries
+// Original content is saved and can be retrieved later
+// Works with both OpenAI API and mock provider for testing
+```
+
+### Chat Memory Plugin
+
+```typescript
+import { ChatMemoryPlugin } from 'mcp-proxy-wrapper';
+
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    provider: 'openai', // or 'mock' for testing
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o-mini',
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 1000,
+    maxSessions: 100,
+    sessionTimeout: 24 * 60 * 60 * 1000, // 24 hours
+    excludeTools: ['chat-with-memory', 'get-memory-stats']
+  }
+});
+
+// The plugin saves all tool responses to memory
+// Provides chat interface to interact with saved data
+// Supports searching and querying conversation history
+```
 
 ## Plugin Categories
 
 The plugin system supports several categories of functionality:
 
-### Monetization Plugins
-Currently available: Stripe Monetization with support for per-call billing, subscriptions, credits, and freemium models.
+### AI Enhancement Plugins
+LLM Summarization plugin provides AI-powered response summarization with configurable providers and models.
 
-### Security & Authentication Plugins  
-Planned: JWT authentication, API key management, OAuth integration, and request validation.
+### Memory & Storage Plugins
+Chat Memory plugin enables persistent storage of tool responses with intelligent search and chat interfaces.
 
-### Analytics & Monitoring Plugins
-Planned: Usage analytics, performance monitoring, business intelligence, and error tracking.
-
-### Performance & Optimization Plugins
-Planned: Response caching, load balancing, circuit breakers, and request compression.
-
-### Utility & Integration Plugins
-Planned: Request transformation, data validation, retry logic, and webhook integration.
+### Extensible Architecture
+The plugin system is designed to be extensible - you can create custom plugins by extending the BasePlugin class and implementing the required interfaces.
 
 ## Plugin Execution Flow
 
@@ -75,21 +119,21 @@ Planned: Request transformation, data validation, retry logic, and webhook integ
 sequenceDiagram
     participant Client
     participant Server
-    participant Plugin1
-    participant Plugin2
+    participant LLMSummaryPlugin
+    participant ChatMemoryPlugin
     participant Tool
 
     Client->>Server: Call Tool
-    Server->>Plugin1: beforeToolCall()
-    Plugin1-->>Server: Continue/Block
-    Server->>Plugin2: beforeToolCall()
-    Plugin2-->>Server: Continue/Block
+    Server->>LLMSummaryPlugin: beforeToolCall()
+    LLMSummaryPlugin-->>Server: Continue
+    Server->>ChatMemoryPlugin: beforeToolCall()
+    ChatMemoryPlugin-->>Server: Continue
     Server->>Tool: Execute Tool
     Tool-->>Server: Result
-    Server->>Plugin2: afterToolCall()
-    Plugin2-->>Server: Modified Result
-    Server->>Plugin1: afterToolCall()
-    Plugin1-->>Server: Final Result
+    Server->>ChatMemoryPlugin: afterToolCall()
+    ChatMemoryPlugin-->>Server: Result + Memory Metadata
+    Server->>LLMSummaryPlugin: afterToolCall()
+    LLMSummaryPlugin-->>Server: Summarized Result
     Server-->>Client: Response
 ```
 
@@ -100,9 +144,8 @@ Plugins execute in priority order (higher numbers first):
 ```typescript
 const proxiedServer = await wrapWithProxy(server, {
   plugins: [
-    { plugin: authPlugin, priority: 1000 },      // Auth first
-    { plugin: analyticsPlugin, priority: 500 },  // Analytics 
-    { plugin: billingPlugin, priority: 100 }     // Billing last
+    { plugin: memoryPlugin, priority: 20 },      // Memory plugin (higher priority)
+    { plugin: summaryPlugin, priority: 10 }      // Summary plugin (lower priority)
   ]
 });
 ```
@@ -121,12 +164,26 @@ npm install mcp-proxy-wrapper
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy, LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
 
-// Configure AI enhancement plugins
-const summarizationPlugin = new LLMSummarizationPlugin();
+// Configure enhancement plugins
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'mock', // Use 'openai' with API key for production
+    summarizeTools: ['search', 'analyze'],
+    minContentLength: 50
+  }
+});
+
 const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    saveResponses: true,
+    maxEntries: 100
+  }
+});
 
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [summarizationPlugin, memoryPlugin]
+  plugins: [summaryPlugin, memoryPlugin]
 });
 ```
 
@@ -134,12 +191,15 @@ const proxiedServer = await wrapWithProxy(server, {
 
 ```typescript
 // Your tools are now enhanced with plugin functionality
-proxiedServer.tool('ai-analysis', {
-  text: z.string()
+proxiedServer.tool('research-analysis', {
+  topic: z.string(),
+  depth: z.enum(['basic', 'detailed']).default('basic'),
+  userId: z.string().optional()
 }, async (args) => {
   // Plugins handle summarization and memory automatically
+  const research = await performResearch(args.topic, args.depth);
   return {
-    content: [{ type: 'text', text: await performAIAnalysis(args.text) }]
+    content: [{ type: 'text', text: research }]
   };
 });
 ```
@@ -153,7 +213,7 @@ Plugins include robust error handling to ensure tool calls aren't broken by plug
 try {
   await plugin.beforeToolCall(context);
 } catch (error) {
-  logger.error('Plugin error:', error);
+  console.error('Plugin error:', error);
   // Tool call continues normally
 }
 ```
@@ -163,32 +223,32 @@ try {
 ### Environment-based Configuration
 
 ```typescript
-const plugin = new LLMSummarizationPlugin();
-plugin.updateConfig({
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
   options: {
-    provider: 'openai',
+    provider: process.env.NODE_ENV === 'production' ? 'openai' : 'mock',
     openaiApiKey: process.env.OPENAI_API_KEY,
-    model: 'gpt-4o-mini'
+    model: 'gpt-4o-mini',
+    maxTokens: 150
   },
-  enabled: process.env.NODE_ENV === 'production',
-  debug: process.env.DEBUG === 'true'
+  enabled: true,
+  priority: 10
 });
 ```
 
 ### Dynamic Configuration
 
 ```typescript
-const chatPlugin = new ChatMemoryPlugin();
-chatPlugin.updateConfig({
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
   options: {
-    provider: 'openai',
-    openaiApiKey: process.env.OPENAI_API_KEY,
-    saveResponses: true,
+    maxEntries: process.env.NODE_ENV === 'production' ? 10000 : 100,
+    sessionTimeout: 24 * 60 * 60 * 1000, // 24 hours
     enableChat: true,
-    maxEntries: 1000
+    saveResponses: true
   },
   enabled: true,
-  priority: 10
+  priority: 20
 });
 ```
 
@@ -201,12 +261,24 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 
 describe('LLM Summarization Plugin', () => {
-  test('summarizes long responses', async () => {
+  test('summarizes long content', async () => {
     const plugin = new LLMSummarizationPlugin();
+    plugin.updateConfig({
+      options: {
+        provider: 'mock', // Use mock for testing
+        minContentLength: 50,
+        summarizeTools: ['test-tool']
+      }
+    });
+    
     const proxiedServer = await wrapWithProxy(server, { plugins: [plugin] });
     
-    const result = await proxiedServer.callTool('long-analysis', { text: 'test' });
-    expect(result._meta?.summarized).toBe(true);
+    const result = await proxiedServer.callTool('test-tool', { 
+      text: 'This is a very long piece of content that should be summarized by the plugin because it exceeds the minimum length threshold.' 
+    });
+    
+    expect(result.result._meta?.summarized).toBe(true);
+    expect(result.result.content[0].text).toContain('Summary:');
   });
 });
 ```
@@ -252,9 +324,21 @@ Interested in contributing? See our plugin development guide below.
 
 ## Creating Your Own Plugin
 
-Ready to build a custom plugin? Our plugin development guide walks you through everything from basic setup to advanced patterns.
+Ready to build a custom plugin? Check out the plugin interface to get started:
 
 <Cards>
+  <Card
+    title="ProxyPlugin Interface"
+    href="/api-reference#proxyplugin"
+  >
+    Learn about the core plugin interface and required methods for building custom plugins.
+  </Card>
+  <Card
+    title="Example Plugins"
+    href="https://github.com/mcp-plugins/mcp-proxy-wrapper/tree/main/src/examples/plugins"
+  >
+    View the source code for the included plugins to understand implementation patterns.
+  </Card>
 </Cards>
 
 <Callout type="success">

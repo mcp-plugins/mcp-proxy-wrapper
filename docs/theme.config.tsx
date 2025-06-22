@@ -25,14 +25,6 @@ const config: DocsThemeConfig = {
       <meta property="og:description" content="A powerful proxy wrapper for Model Context Protocol (MCP) servers with hooks and plugin system" />
     </>
   ),
-  banner: {
-    key: 'stripe-plugin-launch',
-    text: (
-      <a href="/plugins/stripe-monetization" target="_blank">
-        New: Stripe Monetization Plugin is now available! →
-      </a>
-    )
-  },
   sidebar: {
     titleComponent({ title, type }) {
       if (type === 'separator') {

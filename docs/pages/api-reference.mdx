@@ -26,7 +26,7 @@ const proxiedServer = await wrapWithProxy(server, {
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `server` | `McpServer` | Yes | MCP server instance to wrap |
-| `options.plugins` | `ProxyPlugin[]` | No | Array of plugins to apply |
+| `options.plugins` | `(ProxyPlugin \| PluginRegistration)[]` | No | Array of plugins to apply |
 | `options.hooks` | `ProxyHooks` | No | Before/after tool call hooks |
 | `options.debug` | `boolean` | No | Enable debug logging (default: false) |
 
@@ -77,7 +77,7 @@ const proxiedServer = await wrapWithEnhancedProxy(server, {
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `server` | `McpServer` | Yes | MCP server instance to wrap |
-| `options.plugins` | `ProxyPlugin[]` | No | Array of plugins to apply |
+| `options.plugins` | `(ProxyPlugin \| PluginRegistration)[]` | No | Array of plugins to apply |
 | `options.hooks` | `ProxyHooks` | No | Before/after tool call hooks |
 | `options.lifecycle` | `LifecycleConfig` | No | Plugin lifecycle management |
 | `options.execution` | `ExecutionConfig` | No | Hook execution configuration |
@@ -123,6 +123,44 @@ interface ProxyPlugin {
 | `afterToolCall` | `context: ToolCallContext, result: ToolCallResult` | `Promise<ToolCallResult>` | Called after tool execution |
 | `initialize` | `context: PluginContext` | `Promise<void>` | Plugin initialization |
 | `destroy` | None | `Promise<void>` | Plugin cleanup |
+
+### `PluginRegistration`
+
+Configuration object for registering plugins with specific settings.
+
+```typescript
+interface PluginRegistration {
+  plugin: ProxyPlugin;
+  config?: PluginConfig;
+}
+```
+
+#### Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `plugin` | `ProxyPlugin` | Yes | The plugin instance |
+| `config` | `PluginConfig` | No | Plugin-specific configuration |
+
+#### Example
+
+```typescript
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [
+    // Direct plugin registration
+    summaryPlugin,
+    
+    // Plugin with configuration
+    {
+      plugin: memoryPlugin,
+      config: {
+        maxMessages: 50,
+        summarizeAfter: 10
+      }
+    }
+  ]
+});
+```
 
 ### `ToolCallContext`
 
@@ -347,17 +385,14 @@ interface Logger {
 }
 ```
 
-#### Default Logger
+#### Built-in Logging
 
-The proxy wrapper includes a default logger with colored output:
+The proxy wrapper includes built-in logging with colored output. Enable debug mode to see detailed execution logs:
 
 ```typescript
-import { createLogger } from 'mcp-proxy-wrapper/utils/logger';
-
-const logger = createLogger({
-  level: 'info',                       // 'debug' | 'info' | 'warn' | 'error'
-  colors: true,                        // Enable colored output
-  timestamp: true                      // Include timestamps
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [summaryPlugin],
+  debug: true  // Enables detailed logging
 });
 ```
 
@@ -372,7 +407,7 @@ Plugin errors are automatically caught and logged without breaking tool executio
 try {
   await plugin.beforeToolCall(context);
 } catch (error) {
-  logger.error(`Plugin ${plugin.name} error:`, error);
+  console.error(`Plugin ${plugin.name} error:`, error);
   // Tool execution continues
 }
 ```

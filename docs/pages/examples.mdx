@@ -6,7 +6,7 @@ Real-world implementations showing how to use the MCP Proxy Wrapper in different
 
 ## Basic AI Service
 
-A simple AI analysis service with AI enhancement plugins:
+A simple AI analysis service with logging and caching plugins:
 
 ```typescript
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -20,16 +20,30 @@ const server = new McpServer({
   version: '1.0.0'
 });
 
-// Configure AI enhancement plugins
-const summarizationPlugin = new LLMSummarizationPlugin();
+// Configure enhancement plugins
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'mock', // Use 'openai' for production
+    summarizeTools: ['sentiment-analysis', 'text-summary'],
+    minContentLength: 50
+  }
+});
+
 const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    saveResponses: true,
+    maxEntries: 100
+  }
+});
 
 // Wrap with proxy
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [summarizationPlugin, memoryPlugin]
+  plugins: [summaryPlugin, memoryPlugin]
 });
 
-// Register AI tools
+// Register analysis tools
 proxiedServer.tool('sentiment-analysis', {
   text: z.string().min(1, 'Text is required'),
   language: z.string().optional()
@@ -69,101 +83,97 @@ await proxiedServer.connect(transport);
 
 ## Multi-Tenant SaaS Platform
 
-A complete SaaS platform with multiple billing models:
+A complete SaaS platform with authentication and rate limiting:
 
 ```typescript
-import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
-
-// Different pricing for different customer tiers
-const enterprisePlugin = createStripeMonetizationPlugin({
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
-  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-  billingModel: 'subscription',
-  plans: [
-    {
-      id: 'starter',
-      name: 'Starter Plan',
-      price: 2999,  // $29.99/month
-      interval: 'month',
-      includedCalls: 5000,
-      overagePrice: 5  // $0.05 per additional call
-    },
-    {
-      id: 'professional', 
-      name: 'Professional Plan',
-      price: 9999,  // $99.99/month
-      interval: 'month',
-      includedCalls: 25000,
-      overagePrice: 3  // $0.03 per additional call
-    },
-    {
-      id: 'enterprise',
-      name: 'Enterprise Plan', 
-      price: 49999, // $499.99/month
-      interval: 'month',
-      includedCalls: 150000,
-      overagePrice: 1  // $0.01 per additional call
-    }
-  ]
+// Enhanced SaaS platform with AI summarization and memory
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o-mini',
+    summarizeTools: ['market-analysis', 'competitor-research'],
+    minContentLength: 500, // Longer threshold for business data
+    saveOriginal: true
+  }
 });
 
-const proxiedServer = await wrapWithProxy(server, {
-  plugins: [enterprisePlugin]
-});
-
-// Business intelligence tools
-proxiedServer.tool('market-analysis', {
-  company: z.string(),
-  metrics: z.array(z.string()),
-  timeframe: z.enum(['1M', '3M', '6M', '1Y'])
-}, async (args) => {
-  const analysis = await performMarketAnalysis(args);
-  return { content: [{ type: 'text', text: JSON.stringify(analysis) }] };
-});
-
-proxiedServer.tool('competitor-research', {
-  industry: z.string(),
-  region: z.string().optional()
-}, async (args) => {
-  const research = await conductCompetitorResearch(args);
-  return { content: [{ type: 'text', text: JSON.stringify(research) }] };
-});
-```
-
-## Credit-Based Gaming Platform
-
-A gaming service using credit-based billing:
-
-```typescript
-const gamingPlugin = createStripeMonetizationPlugin({
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
-  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-  billingModel: 'credit_system',
-  creditPackages: [
-    { credits: 100, price: 999, name: 'Starter Pack' },    // $9.99
-    { credits: 500, price: 3999, name: 'Power Pack' },     // $39.99 (20% bonus)
-    { credits: 1200, price: 7999, name: 'Ultimate Pack' }  // $79.99 (50% bonus)
-  ],
-  toolPrices: {
-    'generate-character': 10,     // 10 credits
-    'create-world': 25,          // 25 credits  
-    'ai-dungeon-master': 5,      // 5 credits per response
-    'generate-quest': 15,        // 15 credits
-    'create-npc': 8             // 8 credits
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 5000, // Higher limit for business use
+    sessionTimeout: 7 * 24 * 60 * 60 * 1000 // 1 week
   }
 });
 
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [gamingPlugin]
+  plugins: [memoryPlugin, summaryPlugin] // Memory first, then summarization
 });
 
-// Gaming tools
+// Business intelligence tools with AI enhancement
+proxiedServer.tool('market-analysis', {
+  company: z.string(),
+  metrics: z.array(z.string()),
+  timeframe: z.enum(['1M', '3M', '6M', '1Y']),
+  userId: z.string().optional()
+}, async (args) => {
+  const analysis = await performMarketAnalysis(args);
+  // Plugin automatically summarizes complex analysis data
+  return { content: [{ type: 'text', text: JSON.stringify(analysis, null, 2) }] };
+});
+
+proxiedServer.tool('competitor-research', {
+  industry: z.string(),
+  region: z.string().optional(),
+  userId: z.string().optional()
+}, async (args) => {
+  const research = await conductCompetitorResearch(args);
+  // Plugin saves research to memory for future reference
+  return { content: [{ type: 'text', text: JSON.stringify(research, null, 2) }] };
+});
+```
+
+## Gaming Platform with Usage Tracking
+
+A gaming service with usage analytics and caching:
+
+```typescript
+// Gaming platform with memory and AI summarization
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 2000, // Store lots of game sessions
+    maxSessions: 500, // Support many concurrent players
+    excludeTools: [] // Save all gaming tools
+  }
+});
+
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    summarizeTools: ['ai-dungeon-master'], // Summarize long narrative responses
+    minContentLength: 200,
+    saveOriginal: true
+  }
+});
+
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [memoryPlugin, summaryPlugin]
+});
+
+// Gaming tools with user tracking
 proxiedServer.tool('generate-character', {
   class: z.enum(['warrior', 'mage', 'rogue', 'cleric']),
   level: z.number().min(1).max(20),
-  background: z.string().optional()
+  background: z.string().optional(),
+  userId: z.string()
 }, async (args) => {
   const character = await generateCharacter(args);
   return { content: [{ type: 'text', text: JSON.stringify(character) }] };
@@ -172,7 +182,8 @@ proxiedServer.tool('generate-character', {
 proxiedServer.tool('ai-dungeon-master', {
   scenario: z.string(),
   playerAction: z.string(),
-  context: z.string().optional()
+  context: z.string().optional(),
+  userId: z.string()
 }, async (args) => {
   const response = await generateDMResponse(args);
   return { content: [{ type: 'text', text: response }] };
@@ -181,85 +192,97 @@ proxiedServer.tool('ai-dungeon-master', {
 
 ## Development Tools API
 
-A developer-focused API with per-call pricing:
+A developer-focused API with comprehensive logging and metadata:
 
 ```typescript
-const devToolsPlugin = createStripeMonetizationPlugin({
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
-  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-  billingModel: 'per_call',
-  toolPrices: {
-    'code-review': 200,          // $2.00
-    'security-scan': 300,        // $3.00
-    'performance-analysis': 250,  // $2.50
-    'generate-tests': 150,       // $1.50
-    'refactor-code': 400,        // $4.00
-    'simple-format': 25          // $0.25
-  },
-  volumeDiscounts: [
-    { threshold: 50, discountPercent: 10 },   // 10% off after 50 calls
-    { threshold: 200, discountPercent: 20 },  // 20% off after 200 calls
-    { threshold: 500, discountPercent: 30 }   // 30% off after 500 calls
-  ]
+// Developer tools with AI summarization and memory
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    summarizeTools: ['code-review', 'security-scan'],
+    minContentLength: 300, // Code reviews can be long
+    saveOriginal: true
+  }
+});
+
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 1000,
+    sessionTimeout: 2 * 24 * 60 * 60 * 1000 // 2 days for dev work
+  }
 });
 
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [devToolsPlugin]
+  plugins: [memoryPlugin, summaryPlugin]
 });
 
-// Development tools
+// Development tools with AI enhancement
 proxiedServer.tool('code-review', {
   code: z.string(),
   language: z.string(),
-  focusAreas: z.array(z.enum(['security', 'performance', 'maintainability', 'style'])).optional()
+  focusAreas: z.array(z.enum(['security', 'performance', 'maintainability', 'style'])).optional(),
+  userId: z.string().optional()
 }, async (args) => {
   const review = await performCodeReview(args);
-  return { content: [{ type: 'text', text: JSON.stringify(review) }] };
+  // Plugin automatically summarizes detailed code review results
+  return { content: [{ type: 'text', text: JSON.stringify(review, null, 2) }] };
 });
 
 proxiedServer.tool('security-scan', {
   code: z.string(),
   language: z.string(),
-  scanType: z.enum(['static', 'dependency', 'comprehensive']).default('comprehensive')
+  scanType: z.enum(['static', 'dependency', 'comprehensive']).default('comprehensive'),
+  userId: z.string().optional()
 }, async (args) => {
   const vulnerabilities = await scanForVulnerabilities(args);
-  return { content: [{ type: 'text', text: JSON.stringify(vulnerabilities) }] };
+  // Plugin saves scan results to memory for future reference
+  return { content: [{ type: 'text', text: JSON.stringify(vulnerabilities, null, 2) }] };
 });
 ```
 
-## Freemium Content Platform
+## Content Platform with Usage Limits
 
-A content creation platform with freemium model:
+A content creation platform with user tier management:
 
 ```typescript
-const contentPlugin = createStripeMonetizationPlugin({
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
-  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-  billingModel: 'freemium',
-  freeTier: {
-    dailyLimit: 10,           // 10 free generations per day
-    tools: ['simple-blog-post', 'basic-social-media']  // Limited tool access
-  },
-  premiumTier: {
-    price: 1999,              // $19.99/month
-    interval: 'month',
-    includedCalls: 1000,      // 1000 generations per month
-    overagePrice: 10,         // $0.10 per additional generation
-    allToolsAccess: true      // Access to all tools
+// Content platform with AI summarization and memory
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    summarizeTools: ['advanced-article'], // Only summarize premium content
+    minContentLength: 500,
+    saveOriginal: true
+  }
+});
+
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 3000, // Store lots of content
+    sessionTimeout: 30 * 24 * 60 * 60 * 1000, // 30 days for content work
+    excludeTools: [] // Save all content creation
   }
 });
 
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [contentPlugin]
+  plugins: [memoryPlugin, summaryPlugin]
 });
 
-// Content creation tools
+// Content creation tools with user tiers
 proxiedServer.tool('simple-blog-post', {
   topic: z.string(),
   tone: z.enum(['professional', 'casual', 'humorous']).default('professional'),
-  length: z.enum(['short', 'medium', 'long']).default('medium')
+  length: z.enum(['short', 'medium', 'long']).default('medium'),
+  userId: z.string()
 }, async (args) => {
   const post = await generateBlogPost(args);
   return { content: [{ type: 'text', text: post }] };
@@ -269,7 +292,8 @@ proxiedServer.tool('advanced-article', {  // Premium only
   topic: z.string(),
   sources: z.array(z.string()),
   seoKeywords: z.array(z.string()),
-  targetAudience: z.string()
+  targetAudience: z.string(),
+  userId: z.string()
 }, async (args) => {
   const article = await generateAdvancedArticle(args);
   return { content: [{ type: 'text', text: article }] };
@@ -283,41 +307,39 @@ proxiedServer.tool('advanced-article', {  // Premium only
 ```typescript
 // config/index.ts
 interface Config {
-  stripe: {
-    secretKey: string;
-    publishableKey: string;
-    webhookSecret: string;
-  };
   database: string;
   logLevel: string;
-  pricing: Record<string, number>;
+  rateLimits: Record<string, number>;
+  cacheSettings: {
+    ttl: number;
+    maxSize: number;
+  };
 }
 
 const configs: Record<string, Config> = {
   development: {
-    stripe: {
-      secretKey: process.env.STRIPE_TEST_SECRET_KEY!,
-      publishableKey: process.env.STRIPE_TEST_PUBLISHABLE_KEY!,
-      webhookSecret: process.env.STRIPE_TEST_WEBHOOK_SECRET!
-    },
     database: 'sqlite:./dev.db',
     logLevel: 'debug',
-    pricing: {
-      'test-tool': 1  // $0.01 for testing
+    rateLimits: {
+      'free': 10,
+      'premium': 1000
+    },
+    cacheSettings: {
+      ttl: 60000,  // 1 minute for testing
+      maxSize: 100
     }
   },
   production: {
-    stripe: {
-      secretKey: process.env.STRIPE_LIVE_SECRET_KEY!,
-      publishableKey: process.env.STRIPE_LIVE_PUBLISHABLE_KEY!,
-      webhookSecret: process.env.STRIPE_LIVE_WEBHOOK_SECRET!
-    },
     database: process.env.DATABASE_URL!,
     logLevel: 'info',
-    pricing: {
-      'ai-analysis': 100,
-      'data-processing': 150,
-      'premium-feature': 250
+    rateLimits: {
+      'free': 100,
+      'premium': 10000,
+      'enterprise': 100000
+    },
+    cacheSettings: {
+      ttl: 300000,  // 5 minutes
+      maxSize: 10000
     }
   }
 };
@@ -353,10 +375,9 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - DATABASE_URL=postgresql://user:pass@db:5432/mcpserver
+      - LOG_LEVEL=info
+      - CACHE_TTL=300000
     depends_on:
       - db
   
@@ -380,36 +401,65 @@ volumes:
 ```typescript
 // tests/integration.test.ts
 import { describe, test, expect, beforeEach } from '@jest/globals';
-import { wrapWithProxy } from 'mcp-proxy-wrapper';
-import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
-import { createTestServer } from './test-utils';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { wrapWithProxy, LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
+import { z } from 'zod';
 
-describe('Monetized Server Integration', () => {
+describe('Plugin Integration Tests', () => {
   let proxiedServer: any;
   
   beforeEach(async () => {
-    const server = createTestServer();
-    const plugin = createStripeMonetizationPlugin({
-      stripeSecretKey: process.env.STRIPE_TEST_SECRET_KEY!,
-      stripePublishableKey: process.env.STRIPE_TEST_PUBLISHABLE_KEY!,
-      webhookSecret: process.env.STRIPE_TEST_WEBHOOK_SECRET!,
-      defaultPrice: 100
+    // Create test server with sample tool
+    const server = new McpServer('test-server', '1.0.0');
+    
+    server.tool('test-tool', {
+      text: z.string()
+    }, async (args) => {
+      return {
+        content: [{ 
+          type: 'text', 
+          text: `This is a long response that should be summarized because it exceeds the minimum length: ${args.text}` 
+        }]
+      };
     });
     
-    proxiedServer = await wrapWithProxy(server, { plugins: [plugin] });
-  });
-
-  test('blocks calls without payment', async () => {
-    await expect(proxiedServer.callTool('expensive-tool', {}))
-      .rejects.toThrow('Payment required');
-  });
-
-  test('allows calls after payment', async () => {
-    // Simulate payment completion
-    await plugin.addCredits('test-user', 1);
+    const summaryPlugin = new LLMSummarizationPlugin();
+    summaryPlugin.updateConfig({
+      options: {
+        provider: 'mock', // Use mock for testing
+        minContentLength: 50,
+        summarizeTools: ['test-tool']
+      }
+    });
     
-    const result = await proxiedServer.callTool('expensive-tool', {});
-    expect(result.content[0].text).toBeDefined();
+    const memoryPlugin = new ChatMemoryPlugin();
+    memoryPlugin.updateConfig({
+      options: {
+        saveResponses: true,
+        maxEntries: 10
+      }
+    });
+    
+    proxiedServer = await wrapWithProxy(server, { 
+      plugins: [memoryPlugin, summaryPlugin] 
+    });
+  });
+
+  test('summarizes long responses', async () => {
+    const result = await proxiedServer.callTool('test-tool', {
+      text: 'This is a long response that should be summarized by the plugin because it exceeds the minimum length threshold for summarization.'
+    });
+    expect(result.result._meta?.summarized).toBe(true);
+    expect(result.result.content[0].text).toContain('Summary:');
+  });
+
+  test('saves responses to memory', async () => {
+    await proxiedServer.callTool('test-tool', { text: 'Test content', userId: 'user123' });
+    
+    const memoryPlugin = proxiedServer.plugins.find(p => p.name === 'chat-memory-plugin');
+    const history = memoryPlugin.getConversationHistory('user123', 10);
+    expect(history.length).toBe(1);
+    expect(history[0].response.content).toContain('Test content');
   });
 });
 ```
@@ -418,10 +468,22 @@ describe('Monetized Server Integration', () => {
 
 ```typescript
 // tests/load.test.ts
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { z } from 'zod';
 
 async function loadTest() {
-  const server = createTestServer();
+  // Create test server
+  const server = new McpServer('load-test-server', '1.0.0');
+  
+  server.tool('test-tool', {
+    data: z.string()
+  }, async (args) => {
+    return {
+      content: [{ type: 'text', text: `Processed: ${args.data}` }]
+    };
+  });
+  
   const proxiedServer = await wrapWithProxy(server, { plugins: [] });
   
   const promises = [];
@@ -456,7 +518,7 @@ async function loadTest() {
   </Card>
   
   <Card title="Enterprise SaaS" href="#multi-tenant-saas-platform">
-    Multi-tenant platforms with subscription billing
+    Multi-tenant platforms with enhanced functionality
   </Card>
 </Cards>
 
