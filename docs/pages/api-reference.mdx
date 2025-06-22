@@ -40,9 +40,18 @@ const proxiedServer = await wrapWithProxy(server, {
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'mock', // Use 'openai' with API key for production
+    minContentLength: 100,
+    summarizeTools: ['search', 'analyze']
+  }
+});
+
 const server = new McpServer({ name: 'my-server', version: '1.0.0' });
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [new LLMSummarizationPlugin()],
+  plugins: [summaryPlugin],
   debug: true
 });
 ```
@@ -174,188 +183,152 @@ Context provided during plugin initialization.
 
 ```typescript
 interface PluginContext {
-  server: Server;
+  server: McpServer;
   logger: Logger;
   config: Record<string, any>;
 }
 ```
 
-## Stripe Monetization Plugin API
+## Core Plugin APIs
 
-### `createStripeMonetizationPlugin(config)`
-
-Creates a Stripe monetization plugin instance.
+### LLM Summarization Plugin
 
 ```typescript
-import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+import { LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 
-const plugin = createStripeMonetizationPlugin(config);
-```
+const summaryPlugin = new LLMSummarizationPlugin();
 
-#### Configuration
-
-<Tabs items={['Basic', 'Per-Call', 'Subscription', 'Credits']}>
-  <Tab>
-    ```typescript
-    interface StripeMonetizationConfig {
-      // Required Stripe credentials
-      stripeSecretKey: string;
-      stripePublishableKey: string;
-      webhookSecret: string;
-      
-      // Basic pricing
-      defaultPrice: number;              // Price in cents
-      currency?: string;                 // ISO currency code (default: 'usd')
-      toolPrices?: Record<string, number>; // Tool-specific pricing
-    }
-    ```
-  </Tab>
-  <Tab>
-    ```typescript
-    interface PerCallConfig extends StripeMonetizationConfig {
-      billingModel: 'per_call';
-      
-      // Volume discounts
-      volumeDiscounts?: Array<{
-        threshold: number;               // Number of calls required
-        discountPercent: number;         // Discount percentage (0-100)
-      }>;
-    }
-    ```
-  </Tab>
-  <Tab>
-    ```typescript
-    interface SubscriptionConfig extends StripeMonetizationConfig {
-      billingModel: 'subscription';
-      
-      plans: Array<{
-        id: string;                      // Unique plan identifier
-        name: string;                    // Display name
-        price: number;                   // Price in cents
-        interval: 'month' | 'year';      // Billing interval
-        includedCalls: number;           // Included calls per period
-        overagePrice?: number;           // Price per additional call
-      }>;
-    }
-    ```
-  </Tab>
-  <Tab>
-    ```typescript
-    interface CreditConfig extends StripeMonetizationConfig {
-      billingModel: 'credit_system';
-      
-      creditPackages: Array<{
-        credits: number;                 // Number of credits
-        price: number;                   // Price in cents
-        name: string;                    // Package name
-      }>;
-      
-      toolPrices: Record<string, number>; // Credits per tool call
-    }
-    ```
-  </Tab>
-</Tabs>
-
-#### Methods
-
-The plugin instance provides methods for managing billing:
-
-```typescript
-interface StripeMonetizationPlugin extends ProxyPlugin {
-  // Stripe endpoints
-  getStripeEndpoints(): StripeEndpoints;
-  
-  // Customer management
-  createCustomer(email: string, metadata?: Record<string, string>): Promise<string>;
-  getCustomer(customerId: string): Promise<Customer>;
-  
-  // Credit management (for credit system)
-  addCredits(customerId: string, credits: number): Promise<void>;
-  getCredits(customerId: string): Promise<number>;
-  
-  // Analytics
-  getAnalytics(options: AnalyticsOptions): Promise<Analytics>;
+// Configuration options
+interface SummarizationConfig {
+  provider: 'openai' | 'mock';      // AI provider
+  openaiApiKey?: string;            // OpenAI API key
+  model?: string;                   // Model name (default: gpt-4o-mini)
+  maxTokens?: number;               // Max tokens in summary
+  temperature?: number;             // Generation temperature
+  summarizeTools?: string[];        // Tools to summarize (empty = all)
+  minContentLength?: number;        // Min content length to summarize
+  saveOriginal?: boolean;           // Save original responses
 }
+
+// Update plugin configuration
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o-mini',
+    maxTokens: 150,
+    summarizeTools: ['search', 'research', 'analyze'],
+    minContentLength: 100
+  }
+});
+
+// Get original result by storage key
+const original = await summaryPlugin.getOriginalResult(storageKey);
+
+// Get plugin statistics
+const stats = await summaryPlugin.getStats();
 ```
 
-### `StripeEndpoints`
-
-Stripe integration endpoints for payment processing.
+### Chat Memory Plugin
 
 ```typescript
-interface StripeEndpoints {
-  // Checkout
-  createCheckoutSession(options: CheckoutSessionOptions): Promise<{ checkoutUrl: string }>;
-  
-  // Customer portal
-  createCustomerPortalSession(options: PortalSessionOptions): Promise<{ portalUrl: string }>;
-  
-  // Webhooks
-  handleWebhook(payload: string, signature: string): Promise<void>;
+import { ChatMemoryPlugin } from 'mcp-proxy-wrapper';
+
+const memoryPlugin = new ChatMemoryPlugin();
+
+// Configuration options
+interface MemoryConfig {
+  provider: 'openai' | 'mock';      // Chat AI provider
+  openaiApiKey?: string;            // OpenAI API key
+  model?: string;                   // Model for chat responses
+  saveResponses?: boolean;          // Save tool responses
+  enableChat?: boolean;             // Enable chat functionality
+  maxEntries?: number;              // Max stored entries
+  maxSessions?: number;             // Max chat sessions
+  sessionTimeout?: number;          // Session timeout in ms
+  excludeTools?: string[];          // Tools to exclude from saving
 }
+
+// Update plugin configuration
+memoryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 1000,
+    sessionTimeout: 24 * 60 * 60 * 1000
+  }
+});
+
+// Start chat session
+const sessionId = await memoryPlugin.startChatSession(userId);
+
+// Chat with memory
+const response = await memoryPlugin.chatWithMemory(
+  sessionId, 
+  'What data do I have about sales?', 
+  userId
+);
+
+// Search conversations
+const results = memoryPlugin.searchConversations('sales metrics', userId);
+
+// Get conversation history
+const history = memoryPlugin.getConversationHistory(userId, 20);
 ```
 
-#### Checkout Session Options
+#### Plugin Data Types
 
 ```typescript
-interface CheckoutSessionOptions {
-  customerId: string;
-  items?: Array<{
-    toolName: string;
-    quantity: number;
-  }>;
-  planId?: string;                     // For subscription billing
-  successUrl: string;
-  cancelUrl: string;
-  metadata?: Record<string, string>;
+// LLM Summarization Plugin Types
+interface StoredResult {
+  originalResult: ToolCallResult;
+  context: Omit<PluginContext, 'pluginData'>;
+  timestamp: number;
+  toolName: string;
+  requestId: string;
+  metadata?: Record<string, any>;
 }
-```
 
-#### Portal Session Options
-
-```typescript
-interface PortalSessionOptions {
-  customerId: string;
-  returnUrl: string;
+interface LLMProvider {
+  generateSummary(content: string, prompt: string, options?: any): Promise<string>;
 }
-```
 
-### `Analytics`
-
-Analytics data returned by the plugin.
-
-```typescript
-interface Analytics {
-  totalRevenue: number;                // Total revenue in cents
-  totalCalls: number;                  // Total tool calls
-  averageRevenue: number;              // Average revenue per call
-  popularTools: Array<{
-    tool: string;
-    calls: number;
-    revenue: number;
-  }>;
-  customerMetrics: {
-    totalCustomers: number;
-    activeCustomers: number;
-    churnRate: number;
+// Chat Memory Plugin Types
+interface ConversationEntry {
+  id: string;
+  toolName: string;
+  request: {
+    args: Record<string, any>;
+    timestamp: number;
   };
-  revenueByPeriod: Array<{
-    period: string;
-    revenue: number;
-    calls: number;
-  }>;
+  response: {
+    content: string;
+    metadata?: Record<string, any>;
+    timestamp: number;
+  };
+  context: {
+    requestId: string;
+    userId?: string;
+    sessionId?: string;
+  };
 }
-```
 
-#### Analytics Options
+interface ChatSession {
+  id: string;
+  userId?: string;
+  messages: ChatMessage[];
+  createdAt: number;
+  lastActivity: number;
+}
 
-```typescript
-interface AnalyticsOptions {
-  timeframe: 'day' | 'week' | 'month' | 'year';
-  startDate?: Date;
-  endDate?: Date;
-  groupBy?: Array<'tool' | 'customer' | 'plan'>;
-  customerId?: string;                 // Filter by specific customer
+interface ChatMessage {
+  id: string;
+  type: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: number;
+  metadata?: Record<string, any>;
 }
 ```
 
@@ -419,16 +392,29 @@ return {
 };
 ```
 
-### Billing Errors
+### Plugin Errors
 
-Billing errors are handled by the monetization plugin:
+Plugin errors are handled gracefully by the proxy wrapper:
 
 ```typescript
-// Payment required error
-throw new Error('Payment required: Insufficient credits');
+// LLM Summarization error (falls back to original)
+return {
+  ...result,
+  result: {
+    ...result.result,
+    _meta: {
+      ...result.result._meta,
+      summarizationError: 'OpenAI API unavailable',
+      fallbackToOriginal: true
+    }
+  }
+};
 
-// Payment processing error  
-throw new Error('Payment failed: Card declined');
+// Chat Memory error (logs but doesn't break tool call)
+catch (error) {
+  this.logger?.error(`Failed to save conversation entry: ${error}`);
+  return result; // Return original result
+}
 ```
 
 ## Type Definitions
@@ -439,14 +425,14 @@ throw new Error('Payment failed: Card declined');
 // Export all types for use in your applications
 export {
   ProxyPlugin,
+  BasePlugin,
   ToolCallContext,
   ToolCallResult,
   PluginContext,
-  Logger,
-  StripeMonetizationConfig,
-  StripeEndpoints,
-  Analytics,
-  AnalyticsOptions
+  PluginConfig,
+  PluginMetadata,
+  PluginStats,
+  Logger
 } from 'mcp-proxy-wrapper';
 ```
 
@@ -456,7 +442,7 @@ export {
 
 ```typescript
 // Before: Direct MCP server
-const server = new Server(config, capabilities);
+const server = new McpServer(config);
 server.tool('my-tool', schema, handler);
 
 // After: Wrapped with proxy
@@ -464,13 +450,24 @@ const proxiedServer = await wrapWithProxy(server, { plugins: [] });
 proxiedServer.tool('my-tool', schema, handler);
 ```
 
-### Adding Monetization
+### Adding AI Enhancement
 
 ```typescript
-// Add Stripe plugin to existing setup
-const stripePlugin = createStripeMonetizationPlugin(config);
+// Add AI summarization to existing setup
+import { LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    summarizeTools: ['research', 'analyze'],
+    minContentLength: 200
+  }
+});
+
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [stripePlugin]
+  plugins: [summaryPlugin]
 });
 ```
 

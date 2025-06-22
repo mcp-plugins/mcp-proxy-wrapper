@@ -21,11 +21,8 @@ graph TB
         PM[Plugin Manager]
         
         subgraph "Plugin Ecosystem"
-            P1[Authentication Plugin]
-            P2[Billing Plugin]
-            P3[Analytics Plugin]
-            P4[Caching Plugin]
-            P5[Rate Limiting Plugin]
+            P1[LLM Summarization Plugin]
+            P2[Chat Memory Plugin]
         end
     end
     
@@ -55,9 +52,6 @@ graph TB
     PW --> PM
     PM --> P1
     PM --> P2
-    PM --> P3
-    PM --> P4
-    PM --> P5
     
     PW --> MS
     MS --> T1
@@ -80,9 +74,8 @@ sequenceDiagram
     participant Client
     participant ProxyWrapper
     participant PluginManager
-    participant AuthPlugin
-    participant BillingPlugin
-    participant AnalyticsPlugin
+    participant ChatMemoryPlugin
+    participant LLMSummaryPlugin
     participant OriginalTool
     participant Database
     
@@ -91,27 +84,13 @@ sequenceDiagram
     Note over ProxyWrapper: Tool Interception
     ProxyWrapper->>PluginManager: executeBeforeHooks(context)
     
-    Note over PluginManager: Plugin Priority: Auth(1000) → Billing(500) → Analytics(100)
+    Note over PluginManager: Plugin Priority: ChatMemory(20) → LLMSummary(10)
     
-    PluginManager->>AuthPlugin: beforeToolCall(context)
-    AuthPlugin->>Database: validateToken(context.userId)
-    Database-->>AuthPlugin: user: {id: 123, plan: "premium"}
-    AuthPlugin-->>PluginManager: continue (no short-circuit)
+    PluginManager->>ChatMemoryPlugin: beforeToolCall(context)
+    ChatMemoryPlugin-->>PluginManager: continue (will save after execution)
     
-    PluginManager->>BillingPlugin: beforeToolCall(context)
-    BillingPlugin->>Database: checkCredits(userId)
-    Database-->>BillingPlugin: credits: 150
-    
-    alt Insufficient Credits
-        BillingPlugin-->>PluginManager: return PaymentRequiredError
-        PluginManager-->>ProxyWrapper: PaymentRequiredError
-        ProxyWrapper-->>Client: {error: "Payment required", checkoutUrl: "..."}
-    else Sufficient Credits
-        BillingPlugin-->>PluginManager: continue
-        
-        PluginManager->>AnalyticsPlugin: beforeToolCall(context)
-        AnalyticsPlugin->>Database: incrementCallCount(toolName, userId)
-        AnalyticsPlugin-->>PluginManager: continue
+    PluginManager->>LLMSummaryPlugin: beforeToolCall(context)
+    LLMSummaryPlugin-->>PluginManager: continue (will summarize after execution)
         
         Note over PluginManager: All beforeHooks passed
         PluginManager-->>ProxyWrapper: proceed to original tool
@@ -122,23 +101,19 @@ sequenceDiagram
         Note over ProxyWrapper: Tool Execution Complete
         ProxyWrapper->>PluginManager: executeAfterHooks(context, result)
         
-        Note over PluginManager: Plugin Priority Reversed: Analytics(100) → Billing(500) → Auth(1000)
+        Note over PluginManager: Plugin Priority Reversed: LLMSummary(10) → ChatMemory(20)
         
-        PluginManager->>AnalyticsPlugin: afterToolCall(context, result)
-        AnalyticsPlugin->>Database: recordUsage(toolName, userId, cost, timestamp)
-        AnalyticsPlugin-->>PluginManager: enhanced result
+        PluginManager->>LLMSummaryPlugin: afterToolCall(context, result)
+        LLMSummaryPlugin->>Database: saveOriginalResult(context, result)
+        LLMSummaryPlugin-->>PluginManager: AI summarized result
         
-        PluginManager->>BillingPlugin: afterToolCall(context, result)
-        BillingPlugin->>Database: deductCredits(userId, toolCost)
-        BillingPlugin->>Database: createUsageRecord(userId, toolName, cost)
-        BillingPlugin-->>PluginManager: result + billing metadata
-        
-        PluginManager->>AuthPlugin: afterToolCall(context, result)
-        AuthPlugin-->>PluginManager: result (no changes)
+        PluginManager->>ChatMemoryPlugin: afterToolCall(context, result)
+        ChatMemoryPlugin->>Database: saveConversationEntry(context, result)
+        ChatMemoryPlugin-->>PluginManager: result + memory metadata
         
         PluginManager-->>ProxyWrapper: final enhanced result
-        ProxyWrapper-->>Client: {content: [...], _meta: {billing: {...}, analytics: {...}}}
-    end
+        ProxyWrapper-->>Client: {content: [...], _meta: {summarized: true, savedToMemory: true}}
+    
 ```
 
 ## Core Components
@@ -244,11 +219,11 @@ The proxy wrapper uses the **Decorator Pattern** to enhance MCP servers:
 
 ```typescript
 // Original server
-const server = new McpServer(config);
+const server = new McpServer({ name: 'my-server', version: '1.0.0' });
 
 // Decorated server with enhanced capabilities
 const decoratedServer = await wrapWithProxy(server, {
-  plugins: [authPlugin, billingPlugin, analyticsPlugin]
+  plugins: [memoryPlugin, summaryPlugin]
 });
 ```
 
@@ -272,17 +247,17 @@ class PluginChain {
 
 ### 3. Strategy Pattern
 
-Different billing models use the **Strategy Pattern**:
+Different rate limiting strategies use the **Strategy Pattern**:
 
 ```typescript
-interface BillingStrategy {
-  calculateCost(toolName: string, args: any): Promise<number>
-  processPayment(customerId: string, amount: number): Promise<PaymentResult>
+interface RateLimitStrategy {
+  checkLimit(userId: string, toolName: string): Promise<boolean>
+  updateUsage(userId: string, toolName: string): Promise<void>
 }
 
-class PerCallBilling implements BillingStrategy { /* ... */ }
-class SubscriptionBilling implements BillingStrategy { /* ... */ }
-class CreditsBilling implements BillingStrategy { /* ... */ }
+class FixedWindowLimiting implements RateLimitStrategy { /* ... */ }
+class SlidingWindowLimiting implements RateLimitStrategy { /* ... */ }
+class TokenBucketLimiting implements RateLimitStrategy { /* ... */ }
 ```
 
 ### 4. Observer Pattern
@@ -297,7 +272,7 @@ class EventEmitter {
   'tool:before': (context: ToolCallContext) => void
   'tool:after': (context: ToolCallContext, result: ToolCallResult) => void
   'plugin:error': (error: PluginError) => void
-  'payment:success': (payment: PaymentInfo) => void
+  'rateLimit:exceeded': (limitInfo: RateLimitInfo) => void
 }
 ```
 
@@ -327,11 +302,12 @@ interface PluginContext extends ToolCallContext {
   previousResults?: Map<string, any>  // Results from previous plugins
 }
 
-// Plugin A sets data
-context.pluginData.set('auth:userId', '12345');
+// Memory plugin sets conversation data
+context.pluginData.set('memory:sessionId', 'session_123');
 
-// Plugin B reads data
-const userId = context.pluginData.get('auth:userId');
+// Summarization plugin reads conversation context
+const sessionId = context.pluginData.get('memory:sessionId');
+const shouldSummarize = context.toolName === 'research' && content.length > 500;
 ```
 
 ## Performance Architecture
@@ -360,23 +336,23 @@ const userId = context.pluginData.get('auth:userId');
 
 ### Security Layers
 
-1. **Authentication Layer**: Verify user identity
-2. **Authorization Layer**: Check tool access permissions
+1. **Memory Layer**: Store and retrieve conversation history
+2. **AI Enhancement Layer**: Provide summarization and processing
 3. **Input Validation**: Sanitize and validate all inputs
-4. **Rate Limiting**: Prevent abuse and DoS attacks
-5. **Audit Logging**: Track all tool calls and admin actions
-6. **Encryption**: Encrypt sensitive data at rest and in transit
+4. **Context Management**: Maintain session and user context
+5. **Response Processing**: Transform and enhance tool outputs
+6. **Data Storage**: Secure storage of conversation data
 
 ### Threat Model
 
-The proxy wrapper protects against:
+The proxy wrapper provides:
 
-- **Unauthorized Access**: Authentication and authorization plugins
-- **Usage Abuse**: Rate limiting and billing controls
-- **Data Injection**: Input validation and sanitization
-- **DoS Attacks**: Request throttling and circuit breakers
-- **Payment Fraud**: Stripe's built-in fraud protection
-- **Data Breaches**: Encryption and access controls
+- **Data Privacy**: Secure storage and handling of conversation data
+- **Memory Management**: Controlled storage with cleanup and limits
+- **AI Safety**: Secure integration with external AI providers
+- **Content Filtering**: Validation of AI-generated content
+- **Error Isolation**: Plugin failures don't break core functionality
+- **Resource Management**: Memory and storage limits
 
 <Callout type="warning">
   **Security Best Practices**: Always use HTTPS in production, rotate API keys regularly, and implement proper access controls.

@@ -66,51 +66,42 @@ await proxiedServer.connect(transport);
 
 ## Your First Plugin
 
-Let's add the Stripe monetization plugin to start generating revenue:
+Let's add the LLM Summarization plugin to enhance your tools:
 
 <Steps>
-### Install the Plugin
-
-```bash
-npm install mcp-stripe-monetization
-```
-
-### Get Stripe Keys
-
-1. Sign up at [stripe.com](https://stripe.com) (free)
-2. Go to **Developers → API keys**
-3. Copy your test keys for development
-
 ### Configure the Plugin
 
 ```typescript
-import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+import { LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 
-const stripePlugin = createStripeMonetizationPlugin({
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
-  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-  defaultPrice: 100, // $1.00 per call
-  toolPrices: {
-    'expensive-analysis': 250,  // $2.50
-    'quick-lookup': 50          // $0.50
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai', // or 'mock' for testing
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o-mini',
+    maxTokens: 150,
+    temperature: 0.3,
+    summarizeTools: ['long-analysis'],
+    minContentLength: 100
   }
 });
 
 const proxiedServer = await wrapWithProxy(server, {
-  plugins: [stripePlugin]
+  plugins: [summaryPlugin]
 });
 ```
 
-### Test Monetization
+### Test Summarization
 
 ```typescript
-// This tool now requires payment
-proxiedServer.tool('expensive-analysis', {
+// This tool now has automatic summarization
+proxiedServer.tool('long-analysis', {
   data: z.string()
 }, async (args) => {
-  // Billing happens automatically before this code runs
-  return await performExpensiveAnalysis(args.data);
+  const result = await performLongAnalysis(args.data);
+  // Plugin automatically summarizes long responses
+  return result;
 });
 ```
 </Steps>
@@ -122,13 +113,8 @@ proxiedServer.tool('expensive-analysis', {
 Create a `.env` file for your configuration:
 
 ```bash
-# Stripe test keys (get from stripe.com)
-STRIPE_SECRET_KEY=sk_test_your_key_here
-STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-
-# Optional: Database for production
-DATABASE_URL=sqlite:./dev.db
+# OpenAI API key for LLM plugins
+OPENAI_API_KEY=sk-your-openai-key-here
 
 # Optional: Logging level
 LOG_LEVEL=debug
@@ -151,29 +137,42 @@ my-mcp-server/
 
 ```typescript
 // src/index.ts
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { wrapWithProxy } from 'mcp-proxy-wrapper';
-import { createStripeMonetizationPlugin } from 'mcp-stripe-monetization';
+import { wrapWithProxy, LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
 import { z } from 'zod';
 
 async function main() {
   // Create base server
-  const server = new Server(
-    { name: 'my-ai-tools', version: '1.0.0' },
-    { capabilities: { tools: {} } }
-  );
+  const server = new McpServer({
+    name: 'my-ai-tools',
+    version: '1.0.0'
+  });
 
   // Configure plugins
   const plugins = [];
   
-  if (process.env.STRIPE_SECRET_KEY) {
-    plugins.push(createStripeMonetizationPlugin({
-      stripeSecretKey: process.env.STRIPE_SECRET_KEY,
-      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
-      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-      defaultPrice: 100
-    }));
+  if (process.env.OPENAI_API_KEY) {
+    const summaryPlugin = new LLMSummarizationPlugin();
+    summaryPlugin.updateConfig({
+      options: {
+        provider: 'openai',
+        openaiApiKey: process.env.OPENAI_API_KEY,
+        model: 'gpt-4o-mini',
+        maxTokens: 150
+      }
+    });
+    plugins.push(summaryPlugin);
+    
+    const memoryPlugin = new ChatMemoryPlugin();
+    memoryPlugin.updateConfig({
+      options: {
+        saveResponses: true,
+        maxEntries: 100,
+        enableChat: true
+      }
+    });
+    plugins.push(memoryPlugin);
   }
 
   // Wrap with proxy
@@ -291,17 +290,22 @@ The proxy wrapper supports all MCP transport methods:
 const config = {
   development: {
     logLevel: 'debug',
-    database: 'sqlite:./dev.db',
     plugins: []
   },
   production: {
     logLevel: 'info', 
-    database: process.env.DATABASE_URL,
     plugins: [
-      createStripeMonetizationPlugin({
-        stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
-        // ... other config
-      })
+      (() => {
+        const plugin = new LLMSummarizationPlugin();
+        plugin.updateConfig({
+          options: {
+            provider: 'openai',
+            openaiApiKey: process.env.OPENAI_API_KEY!,
+            model: 'gpt-4o-mini'
+          }
+        });
+        return plugin;
+      })()
     ]
   }
 };
@@ -334,9 +338,8 @@ proxiedServer.tool('risky-operation', schema, async (args) => {
 ```typescript
 const proxiedServer = await wrapWithProxy(server, {
   plugins: [
-    { plugin: authPlugin, priority: 1000 },      // Auth first
-    { plugin: analyticsPlugin, priority: 500 },  // Then analytics  
-    { plugin: billingPlugin, priority: 100 }     // Billing last
+    { plugin: memoryPlugin, priority: 20 },      // Memory first (higher priority)
+    { plugin: summaryPlugin, priority: 10 }      // Then summarization (lower priority)
   ]
 });
 ```
@@ -360,10 +363,10 @@ const proxiedServer = await wrapWithProxy(server, {
 **Plugin not loading:**
 ```bash
 # Check your environment variables
-echo $STRIPE_SECRET_KEY
+echo $OPENAI_API_KEY
 
-# Verify plugin installation
-npm list mcp-stripe-monetization
+# Verify plugin configuration
+npm run test
 ```
 
 **Tool calls failing:**
