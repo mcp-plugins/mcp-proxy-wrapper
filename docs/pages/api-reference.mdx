@@ -154,8 +154,11 @@ const proxiedServer = await wrapWithProxy(server, {
     {
       plugin: memoryPlugin,
       config: {
-        maxMessages: 50,
-        summarizeAfter: 10
+        // Plugin-specific settings go inside the 'options' object
+        options: {
+          maxEntries: 50, // Note: using actual option from ChatMemoryPlugin
+          sessionTimeout: 60 * 60 * 1000 // 1 hour
+        }
       }
     }
   ]

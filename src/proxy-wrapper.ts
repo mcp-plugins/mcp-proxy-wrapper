@@ -24,6 +24,13 @@ import { createLogger } from './utils/logger.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ProxyWrapperOptions, ToolCallContext, ToolCallResult } from './interfaces/proxy-hooks.js';
 import { DefaultPluginManager } from './utils/plugin-manager.js';
+import { 
+  ProxyConfigurationError, 
+  HookExecutionError, 
+  ToolCallError,
+  createErrorResponse
+} from './utils/errors.js';
+import { registerShutdownHandler } from './utils/shutdown-manager.js';
 
 // Define types for the request handler extra
 type RequestHandlerExtra = any;
@@ -129,7 +136,13 @@ export async function wrapWithProxy(
             logger.info(`Plugin beforeToolCall hooks completed for ${name}`, { requestId });
           } catch (error) {
             logger.error(`Error in plugin beforeToolCall hooks for ${name}:`, error);
-            throw new Error(`Plugin error: ${error instanceof Error ? error.message : String(error)}`);
+            throw new HookExecutionError(
+              `Plugin error: ${error instanceof Error ? error.message : String(error)}`,
+              'beforeToolCall',
+              name,
+              { requestId },
+              error instanceof Error ? error : undefined
+            );
           }
         } else {
           logger.debug(`No plugin manager available for beforeToolCall ${name}`, { requestId });
@@ -149,7 +162,13 @@ export async function wrapWithProxy(
             }
           } catch (error) {
             logger.error(`Error in user beforeToolCall hook for ${name}:`, error);
-            throw new Error(`Hook error: ${error instanceof Error ? error.message : String(error)}`);
+            throw new HookExecutionError(
+              `Hook error: ${error instanceof Error ? error.message : String(error)}`,
+              'beforeToolCall',
+              name,
+              { requestId },
+              error instanceof Error ? error : undefined
+            );
           }
         }
         
@@ -174,7 +193,13 @@ export async function wrapWithProxy(
             toolResult = await hooks.afterToolCall(context, toolResult);
           } catch (error) {
             logger.error(`Error in afterToolCall hook for ${name}:`, error);
-            throw new Error(`Hook error: ${error instanceof Error ? error.message : String(error)}`);
+            throw new HookExecutionError(
+              `Hook error: ${error instanceof Error ? error.message : String(error)}`,
+              'afterToolCall',
+              name,
+              { requestId },
+              error instanceof Error ? error : undefined
+            );
           }
         }
         
@@ -213,16 +238,22 @@ export async function wrapWithProxy(
       } catch (error) {
         logger.error(`Error processing tool call ${name}:`, error);
         
-        // Return a proper error response
-        return {
-          isError: true,
-          content: [
-            {
-              type: "text",
-              text: `Error: ${error instanceof Error ? error.message : String(error)}`
-            }
-          ]
-        };
+        // Convert to ToolCallError if not already a custom error
+        let toolError: Error;
+        if (error instanceof HookExecutionError || error instanceof ToolCallError) {
+          toolError = error;
+        } else {
+          toolError = new ToolCallError(
+            error instanceof Error ? error.message : String(error),
+            name,
+            context.args,
+            { requestId },
+            error instanceof Error ? error : undefined
+          );
+        }
+        
+        // Return a proper error response using the error utility
+        return createErrorResponse(toolError, requestId);
       }
     };
     
@@ -236,6 +267,30 @@ export async function wrapWithProxy(
   
   // Mark server as wrapped to prevent double wrapping
   (server as any)._isProxyWrapped = true;
+  
+  // Register shutdown handler for cleanup
+  registerShutdownHandler(
+    'proxy-wrapper',
+    async () => {
+      logger.info('Proxy wrapper shutdown initiated');
+      
+      if (pluginManager) {
+        try {
+          await pluginManager.destroy();
+          logger.debug('Plugin manager cleanup completed');
+        } catch (error) {
+          logger.error('Error during plugin manager cleanup:', error);
+        }
+      }
+      
+      logger.info('Proxy wrapper shutdown completed');
+    },
+    {
+      description: 'MCP Proxy Wrapper cleanup',
+      priority: 100, // High priority for core component
+      timeout: 10000 // 10 second timeout
+    }
+  );
   
   logger.info('MCP Proxy Wrapper initialized successfully');
   

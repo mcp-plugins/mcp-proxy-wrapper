@@ -15,7 +15,7 @@ import {
   TransportConfig, 
   JsonRpcMessage,
   ConnectionError,
-  TransportError
+  // TransportError
 } from '../interfaces/connection.js';
 import { TransportFactory } from './transport-factory.js';
 import { createLogger } from '../utils/logger.js';
@@ -564,7 +564,7 @@ export class ConnectionPool extends EventEmitter {
     
     // Remove idle connections
     const idleConnections = Array.from(this.connections.entries())
-      .filter(([id, pooled]) => pooled.activeOperations === 0 && pooled.isHealthy)
+      .filter(([_id, pooled]) => pooled.activeOperations === 0 && pooled.isHealthy)
       .sort((a, b) => a[1].lastUsedAt.getTime() - b[1].lastUsedAt.getTime())
       .slice(0, count);
     

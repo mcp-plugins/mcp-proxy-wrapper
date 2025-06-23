@@ -18,10 +18,11 @@
  * - Configuration options
  */
 
-import type { ProxyPlugin, PluginConfig, PluginContext } from './plugin.js';
-
 // Re-export types for convenience
 export type { ProxyPlugin, PluginConfig, PluginContext } from './plugin.js';
+
+// Import for local usage
+import type { ProxyPlugin, PluginConfig } from './plugin.js';
 
 /**
  * Context for a tool call

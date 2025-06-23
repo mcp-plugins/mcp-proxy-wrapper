@@ -144,8 +144,8 @@ Plugins execute in priority order (higher numbers first):
 ```typescript
 const proxiedServer = await wrapWithProxy(server, {
   plugins: [
-    { plugin: memoryPlugin, priority: 20 },      // Memory plugin (higher priority)
-    { plugin: summaryPlugin, priority: 10 }      // Summary plugin (lower priority)
+    { plugin: memoryPlugin, config: { priority: 20 } },      // Memory plugin (higher priority)
+    { plugin: summaryPlugin, config: { priority: 10 } }      // Summary plugin (lower priority)
   ]
 });
 ```

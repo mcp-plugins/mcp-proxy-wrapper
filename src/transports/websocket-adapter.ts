@@ -21,7 +21,7 @@ import {
   JsonRpcMessage,
   ConnectionError,
   TransportError,
-  TimeoutError,
+  // TimeoutError,
   ProtocolError
 } from '../interfaces/connection.js';
 import { MessageFramer, StreamingMessageParser } from '../protocol/framing.js';

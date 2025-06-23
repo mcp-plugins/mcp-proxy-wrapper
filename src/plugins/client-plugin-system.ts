@@ -10,7 +10,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { JsonRpcMessage } from '../interfaces/connection.js';
+// import { JsonRpcMessage } from '../interfaces/connection.js';
 import { ToolCallContext, ToolCallResult, ProxyPlugin, PluginContext } from '../interfaces/proxy-hooks.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -501,7 +501,7 @@ export class ClientPluginManager extends EventEmitter {
    */
   private createClientContext(
     baseContext: ToolCallContext, 
-    phase: 'beforeToolCall' | 'afterToolCall'
+    _phase: 'beforeToolCall' | 'afterToolCall'
   ): ClientPluginContext {
     const executionId = `exec_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
@@ -594,7 +594,7 @@ export class ClientPluginManager extends EventEmitter {
     registration: ClientPluginRegistration,
     hookType: 'beforeToolCall' | 'afterToolCall',
     context: ClientPluginContext,
-    result?: ToolCallResult
+    _result?: ToolCallResult
   ): Promise<ToolCallResult | null> {
     const pluginName = registration.plugin.name;
     const queue = this.executionQueue.get(pluginName)!;
@@ -696,7 +696,7 @@ export class ClientPluginManager extends EventEmitter {
     
     const memUsage = process.memoryUsage();
     
-    for (const [pluginName, metrics] of this.metrics) {
+    for (const [_pluginName, metrics] of this.metrics) {
       metrics.memoryUsage = {
         heapUsed: memUsage.heapUsed,
         heapTotal: memUsage.heapTotal,

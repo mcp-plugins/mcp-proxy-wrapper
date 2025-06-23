@@ -445,7 +445,7 @@ export class StdioConnection extends EventEmitter implements IConnection {
   /**
    * Check if we should restart on process exit
    */
-  private shouldRestartOnExit(code: number | null, signal: string | null): boolean {
+  private shouldRestartOnExit(code: number | null, _signal: string | null): boolean {
     if (!this.config.restart?.enabled) return false;
     
     const triggers = this.config.restart.triggers;

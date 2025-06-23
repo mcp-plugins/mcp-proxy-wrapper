@@ -17,7 +17,7 @@ import {
   WebSocketTransportConfig,
   HttpTransportConfig,
   SSETransportConfig,
-  IConnectionAdapter,
+  // IConnectionAdapter,
   BaseTransportConfig
 } from '../interfaces/connection.js';
 import { TransportFactory } from './transport-factory.js';
@@ -575,7 +575,7 @@ export class TransportAutoDetection {
       case 'first-available':
         return candidates.find(c => !c.testResult || c.testResult.success);
       
-      case 'most-reliable':
+      case 'most-reliable': {
         // Prefer STDIO > HTTP > WebSocket > SSE
         const reliabilityOrder: TransportType[] = ['stdio', 'http', 'websocket', 'sse'];
         for (const transport of reliabilityOrder) {
@@ -585,6 +585,7 @@ export class TransportAutoDetection {
           if (candidate) return candidate;
         }
         break;
+      }
       
       case 'fastest':
         return candidates

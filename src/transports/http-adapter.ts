@@ -221,7 +221,7 @@ export class HttpConnection extends EventEmitter implements IConnection {
     
     try {
       // Cancel all pending requests
-      for (const [id, pending] of this.pendingRequests) {
+      for (const [_id, pending] of this.pendingRequests) {
         clearTimeout(pending.timeout);
         pending.reject(new Error('Connection closing'));
       }
