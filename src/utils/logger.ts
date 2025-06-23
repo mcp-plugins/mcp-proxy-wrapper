@@ -21,7 +21,8 @@ const colors = {
   gray: (text: string) => `\x1b[90m${text}\x1b[0m`,
   green: (text: string) => `\x1b[32m${text}\x1b[0m`,
   yellow: (text: string) => `\x1b[33m${text}\x1b[0m`,
-  red: (text: string) => `\x1b[31m${text}\x1b[0m`
+  red: (text: string) => `\x1b[31m${text}\x1b[0m`,
+  cyan: (text: string) => `\x1b[36m${text}\x1b[0m`
 };
 
 /**
@@ -96,28 +97,43 @@ export function createLogger(levelOrOptions?: LogLevel | LoggerOptions): Logger 
     return LOG_LEVELS[messageLevel] >= LOG_LEVELS[level];
   };
   
+  const formatCorrelationId = (args: any[]): string => {
+    // Look for requestId in the first argument (common pattern)
+    if (args.length > 0 && typeof args[0] === 'object' && args[0] !== null) {
+      const requestId = args[0].requestId;
+      if (requestId && typeof requestId === 'string') {
+        return useColors ? colors.cyan(`[${requestId.substring(0, 8)}] `) : `[${requestId.substring(0, 8)}] `;
+      }
+    }
+    return '';
+  };
+
   return {
     debug(message: string, ...args: any[]): void {
       if (!shouldLog('debug')) return;
-      const formattedMessage = `${getTimestamp()}${getPrefix()}${message}`;
+      const correlationId = formatCorrelationId(args);
+      const formattedMessage = `${getTimestamp()}${getPrefix()}${correlationId}${message}`;
       console.debug(useColors ? colors.gray(formattedMessage) : formattedMessage, ...args);
     },
     
     info(message: string, ...args: any[]): void {
       if (!shouldLog('info')) return;
-      const formattedMessage = `${getTimestamp()}${getPrefix()}${message}`;
+      const correlationId = formatCorrelationId(args);
+      const formattedMessage = `${getTimestamp()}${getPrefix()}${correlationId}${message}`;
       console.info(useColors ? colors.green(formattedMessage) : formattedMessage, ...args);
     },
     
     warn(message: string, ...args: any[]): void {
       if (!shouldLog('warn')) return;
-      const formattedMessage = `${getTimestamp()}${getPrefix()}${message}`;
+      const correlationId = formatCorrelationId(args);
+      const formattedMessage = `${getTimestamp()}${getPrefix()}${correlationId}${message}`;
       console.warn(useColors ? colors.yellow(formattedMessage) : formattedMessage, ...args);
     },
     
     error(message: string, ...args: any[]): void {
       if (!shouldLog('error')) return;
-      const formattedMessage = `${getTimestamp()}${getPrefix()}${message}`;
+      const correlationId = formatCorrelationId(args);
+      const formattedMessage = `${getTimestamp()}${getPrefix()}${correlationId}${message}`;
       console.error(useColors ? colors.red(formattedMessage) : formattedMessage, ...args);
     }
   };
