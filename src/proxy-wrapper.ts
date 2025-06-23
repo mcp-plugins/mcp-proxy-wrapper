@@ -72,25 +72,36 @@ export async function wrapWithProxy(
   logger.info('Initializing MCP Proxy Wrapper');
   logger.debug('Options:', options);
   
-  // Create a proxy around the server's tool method
-  const originalTool = server.tool.bind(server);
+  // Store the original `tool` method safely with proper binding
+  const originalToolMethod = server.tool.bind(server);
   
-  // Override the tool method to intercept tool registrations
-  // We need to use any here because the SDK types don't match the runtime behavior
-  const toolMethod: any = function(name: string, paramsSchemaOrCallback: any, callbackOrUndefined?: any) {
+  // Create a typed wrapper that maintains the original method signature
+  const originalTool = server.tool;
+  
+  // Override using function overloading to match the exact signature
+  server.tool = function(name: string, callbackOrSchema: any, callback?: any) {
     logger.debug(`Intercepting tool registration: ${name}`);
     
-    // Determine if this is the 2-arg or 3-arg version
-    const isThreeArgVersion = callbackOrUndefined !== undefined;
-    const paramsSchema = isThreeArgVersion ? paramsSchemaOrCallback : {};
-    const originalCallback = isThreeArgVersion ? callbackOrUndefined : paramsSchemaOrCallback;
+    let schema: any;
+    let originalHandler: (...args: any[]) => Promise<any>;
     
-    // Create a wrapped handler that executes hooks
-    const wrappedCallback = async (argsOrExtra: any, extra?: RequestHandlerExtra) => {
-      // Handle both 1-arg and 2-arg callback signatures
-      const args = isThreeArgVersion ? argsOrExtra : {};
-      const actualExtra = isThreeArgVersion ? extra : argsOrExtra;
+    // Robustly determine the overload being used
+    if (typeof callbackOrSchema === 'function') {
+      // This is the 2-argument overload: tool(name, handler)
+      schema = undefined; // No schema provided
+      originalHandler = callbackOrSchema;
+    } else {
+      // This is the 3-argument overload: tool(name, schema, handler) 
+      schema = callbackOrSchema;
+      originalHandler = callback;
+    }
+    
+    // Create the wrapped handler. The core logic moves here.
+    const wrappedHandler = async (...handlerArgs: any[]) => {
       const requestId = uuidv4();
+      
+      // The first argument to the handler is always the arguments object
+      const args = handlerArgs[0] || {};
       const context: ToolCallContext = {
         toolName: name,
         args,
@@ -142,11 +153,10 @@ export async function wrapWithProxy(
           }
         }
         
-        // Call the original handler with potentially modified args from hooks
+        // Call the original handler with its original arguments
+        // The context.args might have been modified by hooks
         logger.debug(`Calling original handler for ${name}`, { requestId });
-        const result = isThreeArgVersion 
-          ? await originalCallback(context.args, actualExtra)
-          : await originalCallback(actualExtra);
+        const result = await originalHandler(...handlerArgs);
         
         let toolResult: ToolCallResult = {
           result,
@@ -216,16 +226,13 @@ export async function wrapWithProxy(
       }
     };
     
-    // Register the tool with the wrapped handler
-    if (isThreeArgVersion) {
-      return originalTool(name, paramsSchema, wrappedCallback);
+    // Call the original tool method with the wrapped handler
+    if (schema !== undefined) {
+      return originalToolMethod(name, schema, wrappedHandler);
     } else {
-      return originalTool(name, wrappedCallback);
+      return originalToolMethod(name, wrappedHandler);
     }
   };
-  
-  // Replace the original method
-  server.tool = toolMethod;
   
   // Mark server as wrapped to prevent double wrapping
   (server as any)._isProxyWrapped = true;
