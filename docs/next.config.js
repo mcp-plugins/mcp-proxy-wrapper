@@ -6,8 +6,6 @@ const withNextra = require('nextra')({
 module.exports = withNextra({
   output: 'export',
   trailingSlash: true,
-  basePath: '/mcp-proxy-wrapper',
-  assetPrefix: '/mcp-proxy-wrapper',
   images: {
     unoptimized: true
   }
