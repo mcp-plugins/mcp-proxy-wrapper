@@ -245,6 +245,270 @@ proxiedServer.tool('security-scan', {
 });
 ```
 
+## Blockchain Analytics Server
+
+Enhancing a Web3 analytics server with AI summarization and memory capabilities:
+
+```typescript
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { wrapWithProxy, LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
+import { z } from 'zod';
+
+// Create blockchain analytics server
+const server = new McpServer({
+  name: 'web3-stats-server-enhanced',
+  version: '2.0.0'
+}, {
+  capabilities: { tools: {} }
+});
+
+// Configure AI enhancement plugins
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: process.env.NODE_ENV === 'production' ? 'openai' : 'mock',
+    openaiApiKey: process.env.OPENAI_API_KEY, // Set via environment
+    model: 'gpt-4o-mini',
+    summarizeTools: [
+      'get_evm_balances', 
+      'get_evm_transactions',
+      'get_evm_collectibles',
+      'get_token_holders'
+    ],
+    minContentLength: 200, // Blockchain data can be verbose
+    saveOriginal: true
+  },
+  enabled: true,
+  priority: 10
+});
+
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    provider: process.env.NODE_ENV === 'production' ? 'openai' : 'mock',
+    openaiApiKey: process.env.OPENAI_API_KEY, // Set via environment
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 2000, // Store lots of blockchain queries
+    sessionTimeout: 24 * 60 * 60 * 1000, // 24 hours for analysis sessions
+    excludeTools: ['ping_dune_server', 'ping_blockscout'] // Skip health checks
+  },
+  enabled: true,
+  priority: 20
+});
+
+// Wrap server with AI enhancement
+const proxiedServer = await wrapWithProxy(server, {
+  plugins: [
+    { plugin: memoryPlugin, config: { priority: 20 } },
+    { plugin: summaryPlugin, config: { priority: 10 } }
+  ],
+  debug: process.env.NODE_ENV !== 'production'
+});
+
+// Blockchain analysis tools (now AI-enhanced)
+proxiedServer.tool('get_evm_balances', 'Get wallet token balances with AI insights', {
+  walletAddress: z.string().describe('EVM wallet address (0x...)'),
+  chainId: z.string().optional().describe('Chain ID (1 for Ethereum)'),
+  limit: z.number().optional().describe('Max results to return')
+}, async ({ walletAddress, chainId = '1', limit = 50 }) => {
+  // Call external blockchain API (Dune, Alchemy, etc.)
+  const balances = await fetchWalletBalances(walletAddress, chainId, limit);
+  
+  return {
+    content: [{
+      type: 'text',
+      text: JSON.stringify(balances, null, 2)
+    }]
+  };
+  // AI plugin will automatically:
+  // 1. Generate summary: "This wallet holds $X.XX across Y tokens..."
+  // 2. Save to memory for chat: "Tell me about wallets with high ETH balances"
+});
+
+proxiedServer.tool('get_evm_transactions', 'Get transaction history with AI analysis', {
+  walletAddress: z.string().describe('EVM wallet address'),
+  limit: z.number().optional().describe('Number of transactions'),
+  includeTokenTransfers: z.boolean().optional().describe('Include token transfers')
+}, async ({ walletAddress, limit = 25, includeTokenTransfers = true }) => {
+  const transactions = await fetchTransactionHistory(
+    walletAddress, 
+    limit, 
+    includeTokenTransfers
+  );
+  
+  return {
+    content: [{
+      type: 'text',
+      text: JSON.stringify(transactions, null, 2)
+    }]
+  };
+  // AI enhancement provides:
+  // - Summary of transaction patterns
+  // - Memory storage for behavioral analysis
+  // - Chat interface: "What DeFi protocols does this wallet use?"
+});
+
+proxiedServer.tool('get_token_holders', 'Analyze token distribution with insights', {
+  contractAddress: z.string().describe('Token contract address'),
+  chainId: z.string().optional().describe('Chain ID'),
+  limit: z.number().optional().describe('Number of holders to analyze')
+}, async ({ contractAddress, chainId = '1', limit = 100 }) => {
+  const holders = await analyzeTokenHolders(contractAddress, chainId, limit);
+  
+  return {
+    content: [{
+      type: 'text',
+      text: JSON.stringify(holders, null, 2)
+    }]
+  };
+  // AI creates executive summaries of:
+  // - Holder concentration analysis
+  // - Whale identification
+  // - Distribution patterns
+});
+
+// Helper functions (implement with your preferred blockchain data provider)
+async function fetchWalletBalances(address: string, chainId: string, limit: number) {
+  // Example using environment-based API configuration
+  const apiKey = process.env.BLOCKCHAIN_API_KEY; // Not committed to git!
+  const response = await fetch(`https://api.example.com/v1/balances/${address}?chain=${chainId}&limit=${limit}`, {
+    headers: { 'Authorization': `Bearer ${apiKey}` }
+  });
+  return response.json();
+}
+
+async function fetchTransactionHistory(address: string, limit: number, includeTokens: boolean) {
+  const apiKey = process.env.BLOCKCHAIN_API_KEY;
+  const response = await fetch(`https://api.example.com/v1/transactions/${address}?limit=${limit}&tokens=${includeTokens}`, {
+    headers: { 'Authorization': `Bearer ${apiKey}` }
+  });
+  return response.json();
+}
+
+async function analyzeTokenHolders(contract: string, chainId: string, limit: number) {
+  const apiKey = process.env.BLOCKCHAIN_API_KEY;
+  const response = await fetch(`https://api.example.com/v1/tokens/${contract}/holders?chain=${chainId}&limit=${limit}`, {
+    headers: { 'Authorization': `Bearer ${apiKey}` }
+  });
+  return response.json();
+}
+
+// Start the enhanced blockchain server
+const transport = new StdioServerTransport();
+await proxiedServer.connect(transport);
+console.log('Enhanced Web3 Analytics Server started with AI capabilities');
+```
+
+### Environment Configuration for Blockchain Server
+
+```bash
+# .env file (never commit this!)
+NODE_ENV=production
+BLOCKCHAIN_API_KEY=your_blockchain_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Development
+NODE_ENV=development
+# Mock providers will be used automatically
+```
+
+### Docker Configuration for Web3 Server
+
+```dockerfile
+# Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY dist/ ./dist/
+
+# Never include API keys in Docker images!
+# Use environment variables or secrets management
+EXPOSE 3000
+
+CMD ["node", "dist/index.js"]
+```
+
+```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  web3-analytics:
+    build: .
+    environment:
+      - NODE_ENV=production
+      # Use Docker secrets or external config for API keys
+      - BLOCKCHAIN_API_KEY_FILE=/run/secrets/blockchain_api_key
+      - OPENAI_API_KEY_FILE=/run/secrets/openai_api_key
+    secrets:
+      - blockchain_api_key
+      - openai_api_key
+    ports:
+      - "3000:3000"
+
+secrets:
+  blockchain_api_key:
+    external: true
+  openai_api_key:
+    external: true
+```
+
+### Testing Blockchain AI Enhancement
+
+```typescript
+// tests/blockchain.test.ts
+import { describe, test, expect } from '@jest/globals';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { wrapWithProxy, LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
+
+describe('Blockchain AI Enhancement', () => {
+  test('enhances wallet balance analysis', async () => {
+    const server = new McpServer('test-web3-server', '1.0.0');
+    
+    // Mock blockchain tool
+    server.tool('get_evm_balances', {}, async () => ({
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          address: '0x1234...5678',
+          totalValue: 150000.50,
+          tokens: [
+            { symbol: 'ETH', balance: '50.5', value: 100000 },
+            { symbol: 'USDC', balance: '50000', value: 50000 }
+          ]
+        })
+      }]
+    }));
+    
+    const summaryPlugin = new LLMSummarizationPlugin();
+    summaryPlugin.updateConfig({
+      options: {
+        provider: 'mock',
+        summarizeTools: ['get_evm_balances'],
+        minContentLength: 50
+      }
+    });
+    
+    const proxiedServer = await wrapWithProxy(server, { 
+      plugins: [summaryPlugin] 
+    });
+    
+    const result = await proxiedServer.callTool('get_evm_balances', {
+      walletAddress: '0x1234567890123456789012345678901234567890'
+    });
+    
+    // Verify AI enhancement
+    expect(result._meta?.summarized).toBe(true);
+    expect(result.content[0].text).toContain('Summary:');
+    expect(result._meta?.originalStorageKey).toBeDefined();
+  });
+});
+```
+
 ## Content Platform with Usage Limits
 
 A content creation platform with user tier management:
@@ -509,11 +773,15 @@ async function loadTest() {
     Monetize AI analysis, generation, and processing tools
   </Card>
   
+  <Card title="Blockchain Analytics" href="#blockchain-analytics-server">
+    Web3 data analysis with AI summaries and memory
+  </Card>
+  
   <Card title="Developer APIs" href="#development-tools-api">
     Code review, security scanning, and development tools
   </Card>
   
-  <Card title="Content Platforms" href="#freemium-content-platform">
+  <Card title="Content Platforms" href="#content-platform-with-usage-limits">
     Writing, design, and creative tools with freemium models
   </Card>
   

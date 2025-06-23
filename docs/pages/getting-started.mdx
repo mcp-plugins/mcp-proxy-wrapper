@@ -313,7 +313,7 @@ const config = {
         plugin.updateConfig({
           options: {
             provider: 'openai',
-            openaiApiKey: process.env.OPENAI_API_KEY!,
+            openaiApiKey: process.env.OPENAI_API_KEY!, // Set via environment
             model: 'gpt-4o-mini'
           }
         });
@@ -324,6 +324,99 @@ const config = {
 };
 
 const currentConfig = config[process.env.NODE_ENV || 'development'];
+```
+
+## Security Best Practices
+
+<Callout type="warning">
+  **API Key Security**: Never commit API keys to version control. Always use environment variables or secure secrets management.
+</Callout>
+
+### Environment Variables
+
+Create a `.env` file for local development (never commit this file):
+
+```bash
+# .env (add to .gitignore!)
+NODE_ENV=development
+OPENAI_API_KEY=sk-your-openai-key-here
+BLOCKCHAIN_API_KEY=your-blockchain-api-key-here
+DATABASE_URL=postgresql://user:pass@localhost:5432/myapp
+```
+
+### Git Security
+
+Ensure your `.gitignore` includes:
+
+```gitignore
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+
+# API keys and secrets
+**/config/secrets.json
+**/config/*.key
+*.pem
+
+# Build artifacts with embedded secrets
+dist/
+build/
+```
+
+### Production Deployment
+
+Use secure environment variable injection:
+
+```dockerfile
+# Dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY dist/ ./dist/
+
+# Never COPY .env files into Docker images!
+# Use runtime environment variables instead
+
+CMD ["node", "dist/index.js"]
+```
+
+```yaml
+# docker-compose.yml or Kubernetes manifests
+version: '3.8'
+services:
+  mcp-server:
+    build: .
+    environment:
+      - NODE_ENV=production
+      # Reference external secrets, never inline API keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - BLOCKCHAIN_API_KEY=${BLOCKCHAIN_API_KEY}
+    # Use Docker secrets or external secret management
+    secrets:
+      - openai_api_key
+      - blockchain_api_key
+```
+
+### Validation and Sanitization
+
+```typescript
+// Always validate sensitive inputs
+proxiedServer.tool('api-call', {
+  apiKey: z.string().min(20).max(200), // Validate API key format
+  endpoint: z.string().url(), // Ensure valid URLs only
+  data: z.object({}).passthrough() // Validate data structure
+}, async ({ apiKey, endpoint, data }) => {
+  // Additional validation
+  if (!endpoint.startsWith('https://')) {
+    throw new Error('Only HTTPS endpoints allowed');
+  }
+  
+  // Use the validated inputs safely
+  return await makeSecureApiCall(endpoint, data, apiKey);
+});
 ```
 
 ### Error Handling
