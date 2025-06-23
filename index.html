@@ -3,73 +3,435 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0; url=https://mcp-plugins.github.io/mcp-proxy-wrapper">
-    <title>MCP Proxy Wrapper - Redirecting to Documentation</title>
+    <title>MCP Proxy Wrapper - Transform Any MCP Server Into a Powerful Platform</title>
+    <meta name="description" content="Add plugins, AI enhancements, and enterprise features to any Model Context Protocol server without code changes.">
+    <meta name="keywords" content="MCP, Model Context Protocol, proxy, wrapper, plugins, AI, TypeScript">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mcp-proxy.dev/">
+    <meta property="og:title" content="MCP Proxy Wrapper - Transform Any MCP Server">
+    <meta property="og:description" content="Add plugins, AI enhancements, and enterprise features to any Model Context Protocol server without code changes.">
+    <meta property="og:image" content="https://mcp-proxy.dev/og-image.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://mcp-proxy.dev/">
+    <meta property="twitter:title" content="MCP Proxy Wrapper - Transform Any MCP Server">
+    <meta property="twitter:description" content="Add plugins, AI enhancements, and enterprise features to any Model Context Protocol server without code changes.">
+    <meta property="twitter:image" content="https://mcp-proxy.dev/og-image.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔧%3C/text%3E%3C/svg%3E">
+    
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        * {
             margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
+            padding: 0;
+            box-sizing: border-box;
         }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
         .container {
-            background: rgba(255, 255, 255, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            color: #667eea;
+        }
+        
+        main {
+            margin-top: 80px;
+        }
+        
+        .hero {
+            padding: 5rem 0;
+            text-align: center;
+            color: white;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0.95;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: #667eea;
+            border: 2px solid white;
+        }
+        
+        .btn-primary:hover {
+            background: transparent;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-secondary:hover {
+            background: white;
+            color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .features {
+            padding: 5rem 0;
+            background: white;
+        }
+        
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .feature-card {
             padding: 2rem;
             border-radius: 10px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
         }
-        .logo {
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
         }
-        h1 {
-            margin: 0 0 1rem 0;
-            font-size: 2rem;
-        }
-        p {
-            margin: 0 0 1.5rem 0;
-            opacity: 0.9;
-        }
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            background: white;
+        
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
             color: #333;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 500;
-            transition: transform 0.2s;
         }
-        .btn:hover {
-            transform: translateY(-2px);
+        
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
         }
-        .loading {
-            margin-top: 1rem;
-            opacity: 0.7;
+        
+        .code-example {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+        
+        .code-example pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
             font-size: 0.9rem;
+        }
+        
+        .stats {
+            padding: 3rem 0;
+            background: #f8f9fa;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        
+        .stat {
+            padding: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        footer {
+            background: #2d3748;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">🚀</div>
-        <h1>MCP Proxy Wrapper</h1>
-        <p>Transform any MCP server into a powerful, extensible platform</p>
-        <a href="https://mcp-plugins.github.io/mcp-proxy-wrapper" class="btn">View Documentation</a>
-        <div class="loading">Redirecting automatically in a few seconds...</div>
-    </div>
-    
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">
+                🔧 MCP Proxy
+            </a>
+            <ul class="nav-links">
+                <li><a href="./docs/">Documentation</a></li>
+                <li><a href="./docs/examples">Examples</a></li>
+                <li><a href="./docs/api-reference">API</a></li>
+                <li><a href="https://github.com/mcp-plugins/mcp-proxy-wrapper">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Transform Any MCP Server</h1>
+                <p>Add plugins, AI enhancements, and enterprise features to any Model Context Protocol server without changing a single line of backend code.</p>
+                <div class="cta-buttons">
+                    <a href="./docs/getting-started" class="btn btn-primary">Get Started</a>
+                    <a href="./docs/examples" class="btn btn-secondary">See Examples</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <h2>Why MCP Proxy Wrapper?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔌</div>
+                        <h3>Plugin System</h3>
+                        <p>Add AI summarization, memory, caching, and custom plugins to any MCP server with zero backend changes.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🚀</div>
+                        <h3>Zero Config</h3>
+                        <p>Wrap existing servers in minutes. No infrastructure changes, no API modifications, no downtime.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <h3>AI Enhanced</h3>
+                        <p>Built-in OpenAI integration for automatic summarization, chat memory, and intelligent responses.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Production Ready</h3>
+                        <p>Enterprise-grade logging, error handling, monitoring, and comprehensive TypeScript support.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3>High Performance</h3>
+                        <p>Minimal overhead, connection pooling, and optimized for high-throughput production environments.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h3>Secure</h3>
+                        <p>Built-in security best practices, environment variable management, and comprehensive audit logging.</p>
+                    </div>
+                </div>
+
+                <div class="code-example">
+                    <h3>Get Started in Under 5 Minutes</h3>
+                    <pre><code>npm install mcp-proxy-wrapper
+
+import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+
+// Your existing MCP server
+const server = new McpServer({ name: 'my-server', version: '1.0.0' });
+
+// Add AI enhancement
+const summaryPlugin = new LLMSummarizationPlugin();
+const proxiedServer = await wrapWithProxy(server, { 
+  plugins: [summaryPlugin] 
+});
+
+// Tools now have automatic AI summarization!
+proxiedServer.tool('analyze-data', schema, async (args) => {
+  const result = await performAnalysis(args);
+  return result; // Automatically summarized if content is long
+});</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Compatible with existing MCP servers</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">&lt;5min</div>
+                        <div class="stat-label">Setup time</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">0</div>
+                        <div class="stat-label">Backend changes required</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">TypeScript</div>
+                        <div class="stat-label">First-class support</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 MCP Proxy Wrapper. Open source under MIT License.</p>
+            <p>
+                <a href="./docs/">Documentation</a> | 
+                <a href="https://github.com/mcp-plugins/mcp-proxy-wrapper">GitHub</a> | 
+                <a href="./docs/examples">Examples</a>
+            </p>
+        </div>
+    </footer>
+
     <script>
-        // Backup redirect for browsers that don't support meta refresh
-        setTimeout(() => {
-            window.location.href = 'https://mcp-plugins.github.io/mcp-proxy-wrapper';
-        }, 3000);
+        // Simple smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(255, 255, 255, 0.98)';
+            } else {
+                header.style.background = 'rgba(255, 255, 255, 0.95)';
+            }
+        });
     </script>
 </body>
 </html>
