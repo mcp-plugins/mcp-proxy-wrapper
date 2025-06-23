@@ -37,4 +37,11 @@ lerna-debug.log*
 .vscode/
 *.swp
 *.swo
-.DS_Store 
+.DS_Store
+
+# Claude IDE local settings
+.claude/
+
+# Test and performance reports
+test-results/
+performance-report-*.json 
