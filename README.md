@@ -2,7 +2,7 @@
 
 # 🚀 MCP Proxy Wrapper
 
-**Transform any MCP server into a powerful, extensible platform with enterprise-grade features**
+**Add powerful hooks, plugins, and enterprise features to any MCP server without changing a single line of your existing code**
 
 [![NPM Version](https://img.shields.io/npm/v/mcp-proxy-wrapper?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/mcp-proxy-wrapper) [![GitHub Stars](https://img.shields.io/github/stars/mcp-plugins/mcp-proxy-wrapper?style=for-the-badge&logo=github)](https://github.com/mcp-plugins/mcp-proxy-wrapper) [![License](https://img.shields.io/github/license/mcp-plugins/mcp-proxy-wrapper?style=for-the-badge)](https://github.com/mcp-plugins/mcp-proxy-wrapper/blob/main/LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 
@@ -12,24 +12,53 @@
 npm install mcp-proxy-wrapper
 ```
 
-*A lightweight, powerful wrapper for Model Context Protocol (MCP) servers that provides a comprehensive hook system for intercepting, monitoring, and modifying tool calls without changing your existing server code.*
+*A zero-modification wrapper that instantly adds AI-powered features, security, monitoring, and extensibility to your existing MCP servers. Works with any MCP server - no code changes required.*
 
 </div>
 
 ---
 
-## 🚀 Features
+## 🚀 Why MCP Proxy Wrapper?
 
-- **🔧 Zero-Modification Wrapping**: Wrap existing MCP servers without changing their code
-- **🪝 Powerful Hook System**: Execute custom logic before and after tool calls
-- **🔌 Plugin Architecture**: Extensible plugin system for reusable functionality
-- **🔄 Argument & Result Modification**: Transform inputs and outputs on-the-fly
-- **⚡ Short-Circuit Capability**: Skip tool execution with custom responses
-- **🧠 Smart Plugins Included**: LLM summarization and chat memory plugins
-- **📊 Comprehensive Logging**: Built-in monitoring and debugging support
-- **🧪 Fully Tested**: 100% test coverage with real MCP client-server validation
-- **📘 TypeScript First**: Complete TypeScript support with full type safety
-- **🌐 Universal Compatibility**: Works with any MCP SDK v1.6.0+ server
+### **The Problem**
+You have an MCP server that works great, but you need to add authentication, rate limiting, AI summarization, caching, or monitoring. Traditional solutions require modifying your server code, adding dependencies, and maintaining additional complexity.
+
+### **The Solution**
+MCP Proxy Wrapper acts as an invisible layer between your MCP server and clients, adding powerful features without touching your existing code.
+
+```typescript
+// Your existing server - NO CHANGES NEEDED
+const server = new McpServer({ name: 'My Server', version: '1.0.0' });
+server.tool('getData', schema, getData); // Your existing tool
+
+// Add enterprise features in seconds
+const proxiedServer = await wrapWithProxy(server, {
+  hooks: {
+    beforeToolCall: async (context) => {
+      // Add authentication, rate limiting, logging...
+      console.log(`🔧 Calling: ${context.toolName}`);
+    }
+  },
+  plugins: [
+    new LLMSummarizationPlugin(), // Auto-summarize long responses
+    new ChatMemoryPlugin()        // Add conversation memory
+  ]
+});
+// That's it! Your server now has enterprise features
+```
+
+## ✨ Features
+
+- **🔧 Zero Code Changes**: Wrap any existing MCP server instantly
+- **🪝 Powerful Hooks**: beforeToolCall and afterToolCall with full context
+- **🔌 Smart Plugins**: Pre-built LLM summarization and chat memory
+- **🛡️ Enterprise Ready**: Authentication, rate limiting, caching patterns
+- **🔄 Transform Anything**: Modify arguments, results, add metadata
+- **⚡ Short-Circuit Logic**: Skip execution with custom responses  
+- **📊 Built-in Monitoring**: Comprehensive logging and debugging
+- **🧪 Production Tested**: 65+ tests with real MCP client-server validation
+- **📘 TypeScript Native**: Full type safety and IntelliSense support
+- **🌐 Universal**: Works with any MCP SDK v1.6.0+ server
 
 ## 📦 Installation
 
@@ -37,46 +66,94 @@ npm install mcp-proxy-wrapper
 npm install mcp-proxy-wrapper
 ```
 
-## 🎯 Quick Start
+## 🎯 5-Minute Quick Start
 
-### Basic Usage
+Transform your existing MCP server in under 5 minutes:
 
+### Step 1: Install (30 seconds)
+```bash
+npm install mcp-proxy-wrapper
+```
+
+### Step 2: Wrap Your Existing Server (2 minutes)
 ```typescript
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { wrapWithProxy } from 'mcp-proxy-wrapper';
-import { z } from 'zod';
+import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 
-// Create your existing MCP server
-const server = new McpServer({
-  name: 'My Server',
-  version: '1.0.0'
-});
+// Your existing server (UNCHANGED)
+const server = new McpServer({ name: 'My Server', version: '1.0.0' });
 
-// Wrap it with proxy functionality
-const proxiedServer = await wrapWithProxy(server, {
+// Add enterprise features with zero code changes
+const enhancedServer = await wrapWithProxy(server, {
+  plugins: [
+    new LLMSummarizationPlugin({
+      options: {
+        provider: 'openai',
+        openaiApiKey: process.env.OPENAI_API_KEY
+      }
+    })
+  ],
   hooks: {
-    // Monitor all tool calls
     beforeToolCall: async (context) => {
-      console.log(`🔧 Calling tool: ${context.toolName}`);
-      console.log(`📝 Arguments:`, context.args);
-    },
-    
-    // Process results
-    afterToolCall: async (context, result) => {
-      console.log(`✅ Tool completed: ${context.toolName}`);
-      return result; // Pass through unchanged
+      console.log(`🔧 [${new Date().toISOString()}] Calling: ${context.toolName}`);
     }
-  },
-  debug: true // Enable detailed logging
+  }
 });
 
-// Register tools normally
-proxiedServer.tool('greet', { name: z.string() }, async (args) => {
-  return {
-    content: [{ type: 'text', text: `Hello, ${args.name}!` }]
-  };
-});
+// Register your existing tools exactly as before
+enhancedServer.tool('myTool', mySchema, myHandler);
 ```
+
+### Step 3: See the Magic (2 minutes)
+```typescript
+// Your tool responses are now automatically:
+// ✅ Logged with timestamps
+// ✅ Summarized if over 500 characters  
+// ✅ Enhanced with metadata
+// ✅ All without changing your original tool code!
+
+// Test it
+const result = await client.callTool({
+  name: 'myTool',
+  arguments: { data: 'test' }
+});
+
+console.log(result._meta.summarized); // true (if content was long)
+console.log(result._meta.originalLength); // Original response length
+console.log(result.content); // Summarized content
+```
+
+### Before vs After
+
+**Before (your existing code):**
+```typescript
+server.tool('research', schema, async (args) => {
+  const data = await fetchResearchData(args.topic);
+  return { content: [{ type: 'text', text: data }] };
+}); // Works but no additional features
+```
+
+**After (with proxy wrapper):**
+```typescript
+const proxiedServer = await wrapWithProxy(server, { 
+  plugins: [new LLMSummarizationPlugin()] 
+});
+
+proxiedServer.tool('research', schema, async (args) => {
+  const data = await fetchResearchData(args.topic);
+  return { content: [{ type: 'text', text: data }] };
+}); // Same code + AI summarization + logging + monitoring
+```
+
+**✨ Your server instantly gains:**
+- 🤖 AI-powered response summarization
+- 📊 Automatic request/response logging
+- ⚡ Performance monitoring
+- 🔧 Request modification capabilities
+- 🛡️ Authentication hooks (add your own)
+- 💾 Response caching (add your own)
+
+**📖 [Complete Quick Start Guide →](https://mcp-plugins.github.io/mcp-proxy-wrapper/getting-started)**
 
 ## 🔌 Plugin System
 

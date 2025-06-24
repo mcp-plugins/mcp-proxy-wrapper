@@ -2,39 +2,66 @@ import { Callout, Steps } from 'nextra/components'
 
 # How It Works
 
-The MCP Proxy Wrapper operates as an interception layer between MCP clients and your server, allowing plugins to enhance functionality without modifying your original code.
+The MCP Proxy Wrapper acts as an invisible enhancement layer that sits between MCP clients and your existing server. It intercepts tool calls, adds powerful features through plugins and hooks, then forwards everything to your original server code—all without requiring any changes to your existing implementation.
 
-## Core Mechanism
+## 🔍 The Magic: Zero-Code Enhancement
 
-The proxy wrapper works by intercepting the `server.tool()` method during server initialization and injecting plugin hooks around the original tool handlers.
+**The Problem**: You have a working MCP server but need to add authentication, logging, AI summarization, or monitoring. Traditional approaches require modifying your server code, adding dependencies, and maintaining complex integrations.
 
-### High-Level Flow Diagram
+**The Solution**: The proxy wrapper intercepts your server's tool registration process and transparently enhances each tool with plugin functionality, while preserving your original code completely unchanged.
 
-The following diagram illustrates how a tool call flows through the proxy wrapper system. When a client makes a request, it first goes through the proxy wrapper, which coordinates with various plugins before reaching your original MCP server.
+```typescript
+// Your existing server stays exactly the same
+const server = new McpServer({ name: 'My Server', version: '1.0.0' });
+server.tool('getData', schema, originalHandler); // ← NO CHANGES TO THIS
+
+// The proxy wrapper creates an enhanced version
+const enhancedServer = await wrapWithProxy(server, {
+  plugins: [new LLMSummarizationPlugin()]
+});
+
+// Now your tools have AI summarization without code changes!
+```
+
+## 🔧 Core Mechanism
+
+Instead of modifying your server code, the proxy wrapper works by **intercepting the tool registration process** and creating an enhanced wrapper around each tool handler.
+
+### 📊 Request Flow: Your Tools, Enhanced
+
+Here's exactly what happens when a client calls your tool:
 
 ```mermaid
 graph TD
-    A[MCP Client] -->|Tool Call Request| B[Proxy Wrapper]
-    B --> C[Plugin Manager]
-    C --> D[Chat Memory Plugin]
-    C --> E[LLM Summarization Plugin]
-    D --> G{Should Save Response?}
-    G -->|Yes| H[Execute beforeToolCall Hooks]
-    G -->|Skip| H[Execute beforeToolCall Hooks]
-    H --> J[Original MCP Server Tool]
-    J --> K[Tool Result]
-    K --> L[Execute afterToolCall Hooks]
-    L --> M[Enhanced Result]
-    M -->|Response| A
-    I -->|Error Response| A
+    A[MCP Client] -->|"getData(query: 'AI trends')"| B[Proxy Wrapper]
+    B --> C{beforeToolCall Hooks}
+    C --> D[🔐 Authentication Plugin]
+    D --> E[📊 Logging Plugin]
+    E --> F[✅ Validation Passed]
+    F --> G[Your Original Tool Handler]
+    G -->|"Long response about AI..."| H{afterToolCall Hooks}
+    H --> I[🤖 LLM Summarization Plugin]
+    I --> J[💾 Memory Plugin]
+    J --> K[Enhanced Response]
+    K -->|"Summarized response + metadata"| A
 ```
 
-In this flow:
-1. The MCP client sends a tool call request
-2. The proxy wrapper receives the request and forwards it to the plugin manager
-3. Each plugin (memory, summarization) is consulted in priority order
-4. The original tool executes
-5. The result flows back through plugins for enhancement (memory storage, AI summarization) before returning to the client
+**🔄 Step-by-Step Breakdown:**
+
+1. **Client Request**: `getData({ query: 'AI trends' })`
+2. **Proxy Intercepts**: Captures the request before your tool sees it
+3. **Before Hooks Execute**: 
+   - 🔐 Authentication check (if configured)
+   - 📊 Request logging starts
+   - ✅ Input validation and sanitization
+4. **Your Tool Executes**: Your original `getData` handler runs unchanged
+5. **After Hooks Execute**:
+   - 🤖 AI summarizes long responses (if > 500 chars)
+   - 💾 Saves response to conversation memory
+   - 📊 Logs completion time and metadata
+6. **Enhanced Response**: Client gets summarized content + metadata
+
+**✨ Your original tool code never changes, but gains enterprise features!**
 
 ## Plugin Execution Flow
 
@@ -120,56 +147,100 @@ The proxy wrapper preserves all existing MCP server functionality:
 - Server metadata and capabilities are preserved
 - Transport layer (STDIO, WebSocket, etc.) works identically
 
-## Code Example: Behind the Scenes
+## 🛠️ Behind the Scenes: What Actually Happens
 
-Here's what happens when you wrap a server:
+When you call `wrapWithProxy()`, here's the magic that happens under the hood:
 
+### Your Original Code (Unchanged)
 ```typescript
-// Original MCP server
 const server = new McpServer({ name: 'My Tools', version: '1.0.0' });
 
-// This is what your code looks like
+// Your existing tool - NO CHANGES REQUIRED
 server.tool('analyze-text', { 
   text: z.string(),
   userId: z.string().optional() 
 }, async (args) => {
-  return { content: [{ type: 'text', text: `Analysis: ${args.text}` }] };
+  const result = await performAnalysis(args.text);
+  return { content: [{ type: 'text', text: result }] };
 });
+```
 
-// This is what the proxy wrapper actually creates internally
+### What the Proxy Wrapper Creates Internally
+```typescript
+// The proxy wrapper intercepts tool registration
 const originalToolMethod = server.tool.bind(server);
-server.tool = function(name: string, schema: any, handler: Function) {
+
+server.tool = function(name: string, schema: any, originalHandler: Function) {
   
-  // Create enhanced handler with plugin hooks
+  // Create an enhanced wrapper around your original handler
   const enhancedHandler = async (args: any) => {
     const context = {
       toolName: name,
       args,
-      metadata: { requestId: generateId(), timestamp: Date.now() }
+      metadata: { 
+        requestId: generateId(), 
+        timestamp: Date.now(),
+        userId: args.userId 
+      }
     };
     
-    // Execute beforeToolCall hooks (memory and summarization checks)
-    for (const plugin of sortedPlugins) {
+    // PHASE 1: Execute beforeToolCall hooks
+    console.log(`🔧 [${new Date().toISOString()}] Starting: ${name}`);
+    
+    for (const plugin of plugins) {
       const result = await plugin.beforeToolCall?.(context);
-      if (result) return result; // Short-circuit if plugin returns result
+      if (result) {
+        // Plugin can short-circuit (e.g., return cached result)
+        console.log(`⚡ Short-circuited by: ${plugin.name}`);
+        return result;
+      }
     }
     
-    // Execute original handler
-    const originalResult = await handler(args);
+    // PHASE 2: Execute your original tool (UNCHANGED)
+    console.log(`▶️ Executing original handler for: ${name}`);
+    const originalResult = await originalHandler(args);
     
-    // Execute afterToolCall hooks (save to memory, generate summaries)
-    let finalResult = originalResult;
-    for (const plugin of sortedPlugins.reverse()) {
-      finalResult = await plugin.afterToolCall?.(context, finalResult) || finalResult;
+    // PHASE 3: Execute afterToolCall hooks
+    let enhancedResult = originalResult;
+    
+    for (const plugin of plugins) {
+      if (plugin.afterToolCall) {
+        enhancedResult = await plugin.afterToolCall(context, enhancedResult);
+        console.log(`🔄 Enhanced by: ${plugin.name}`);
+      }
     }
     
-    return finalResult;
+    console.log(`✅ [${new Date().toISOString()}] Completed: ${name}`);
+    return enhancedResult;
   };
   
-  // Register with original method using enhanced handler
+  // Register the enhanced handler with the original MCP server
   return originalToolMethod(name, schema, enhancedHandler);
 };
 ```
+
+### The Result: Enhanced Without Changes
+
+```typescript
+// When a client calls your tool:
+const result = await client.callTool({
+  name: 'analyze-text',
+  arguments: { text: 'This is a long document...', userId: 'user123' }
+});
+
+// Your original tool logic executes unchanged, but now:
+console.log(result._meta);
+// {
+//   summarized: true,           // ← Added by LLM plugin
+//   originalLength: 1200,       // ← Added by LLM plugin  
+//   summaryLength: 150,         // ← Added by LLM plugin
+//   savedToMemory: true,        // ← Added by Memory plugin
+//   processedAt: "2024-01-15T...", // ← Added by proxy
+//   requestId: "req_123"        // ← Added by proxy
+// }
+```
+
+**🎯 Key Insight**: Your original tool handler runs exactly as written, but the proxy wrapper adds a powerful enhancement layer around it without requiring any code changes.
 
 ## Transport Compatibility
 
