@@ -1,0 +1,472 @@
+import { Callout, Steps, Tabs, Tab, Cards, Card } from 'nextra/components'
+
+# Remote Server Proxying
+
+The MCP Proxy Wrapper can connect to **remote MCP servers** and add plugin functionality without modifying the remote server code. This enables you to enhance external MCP services with AI summarization, chat memory, authentication, and more.
+
+<Callout type="info">
+  **New Feature**: Remote server proxying allows you to add enterprise features to any external MCP server over HTTP/SSE, STDIO, or WebSocket connections.
+</Callout>
+
+## Architecture
+
+```
+Your MCP Client → Proxy Wrapper → [Plugins] → Remote MCP Server (HTTP/SSE/STDIO)
+```
+
+The proxy wrapper acts as both:
+- **MCP Server** - Exposes enhanced tools to your clients
+- **MCP Client** - Connects to the remote server to forward requests
+
+## Quick Examples
+
+### HTTP/SSE Remote Server
+
+```typescript
+import { createHttpServerProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+
+// Connect to remote HTTP/SSE MCP server and add AI summarization
+const proxyServer = await createHttpServerProxy('https://api.example.com/mcp', {
+  plugins: [
+    new LLMSummarizationPlugin({
+      options: {
+        provider: 'openai',
+        openaiApiKey: process.env.OPENAI_API_KEY,
+        summarizeTools: ['search', 'analyze'],
+        minContentLength: 200
+      }
+    })
+  ],
+  remoteServer: {
+    name: 'External API Server',
+    headers: {
+      'Authorization': 'Bearer your-api-key',
+      'X-Client-Name': 'MCP-Proxy-Wrapper'
+    }
+  },
+  debug: true
+});
+
+// Your proxy server is ready!
+const transport = new StdioServerTransport();
+await proxyServer.connect(transport);
+```
+
+### STDIO Remote Server
+
+```typescript
+import { createStdioServerProxy, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
+
+// Connect to remote STDIO MCP server and add conversation memory
+const proxyServer = await createStdioServerProxy('node', ['remote-server.js'], {
+  plugins: [
+    new ChatMemoryPlugin({
+      options: {
+        saveResponses: true,
+        enableChat: true,
+        maxEntries: 1000
+      }
+    })
+  ],
+  remoteServer: {
+    name: 'Remote STDIO Server',
+    env: { 
+      API_KEY: process.env.REMOTE_API_KEY,
+      NODE_ENV: 'production'
+    },
+    cwd: '/path/to/remote/server'
+  }
+});
+```
+
+## Complete Configuration
+
+<Steps>
+
+### Step 1: Configure Remote Server Connection
+
+```typescript
+import { createRemoteServerProxy } from 'mcp-proxy-wrapper';
+
+const config = {
+  remoteServer: {
+    // Transport type
+    transport: 'sse' as const, // 'stdio' | 'sse' | 'websocket'
+    
+    // For HTTP/SSE/WebSocket
+    url: 'https://api.example.com/mcp',
+    headers: {
+      'Authorization': 'Bearer token',
+      'User-Agent': 'MCP-Proxy/1.0'
+    },
+    timeout: 30000,
+    
+    // For STDIO
+    command: 'node',
+    args: ['server.js'],
+    env: { NODE_ENV: 'production' },
+    cwd: '/app',
+    
+    // Metadata
+    name: 'Remote MCP Service',
+    version: '1.0.0'
+  }
+};
+```
+
+### Step 2: Add Plugins for Enhancement
+
+```typescript
+import { LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
+
+const plugins = [
+  // AI summarization for long responses
+  new LLMSummarizationPlugin({
+    options: {
+      provider: 'openai',
+      openaiApiKey: process.env.OPENAI_API_KEY,
+      model: 'gpt-4o-mini',
+      summarizeTools: ['research', 'analyze', 'fetch-data'],
+      minContentLength: 500,
+      saveOriginal: true // Keep original for retrieval
+    }
+  }),
+  
+  // Conversation memory and chat interface
+  new ChatMemoryPlugin({
+    options: {
+      provider: 'openai',
+      openaiApiKey: process.env.OPENAI_API_KEY,
+      saveResponses: true,
+      enableChat: true,
+      maxEntries: 2000,
+      sessionTimeout: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  })
+];
+```
+
+### Step 3: Create and Start Proxy
+
+```typescript
+const proxyServer = await createRemoteServerProxy({
+  ...config,
+  plugins,
+  proxyServerName: 'Enhanced Remote Proxy',
+  proxyServerVersion: '1.0.0',
+  debug: process.env.NODE_ENV !== 'production'
+});
+
+// Connect to your transport
+const transport = new StdioServerTransport();
+await proxyServer.connect(transport);
+
+console.log('🎉 Remote proxy server ready with enhanced functionality!');
+```
+
+</Steps>
+
+## Real-World Use Cases
+
+<Cards>
+  <Card title="Enhance Third-Party APIs" href="#api-enhancement">
+    Add AI summarization and memory to external MCP services
+  </Card>
+  
+  <Card title="Legacy System Integration" href="#legacy-integration">
+    Connect to older MCP servers and add modern features
+  </Card>
+  
+  <Card title="Multi-Tenant Proxying" href="#multi-tenant">
+    Proxy multiple remote servers with different enhancements
+  </Card>
+  
+  <Card title="Security & Monitoring" href="#security-monitoring">
+    Add authentication and monitoring to remote services
+  </Card>
+</Cards>
+
+### API Enhancement
+
+```typescript
+// Enhance a blockchain analytics API with AI summarization
+const blockchainProxy = await createHttpServerProxy('https://blockchain-api.com/mcp', {
+  plugins: [
+    new LLMSummarizationPlugin({
+      options: {
+        provider: 'openai',
+        openaiApiKey: process.env.OPENAI_API_KEY,
+        summarizeTools: ['get_wallet_analysis', 'get_transaction_summary'],
+        minContentLength: 300
+      }
+    })
+  ],
+  remoteServer: {
+    name: 'Blockchain Analytics API',
+    headers: { 'X-API-Key': process.env.BLOCKCHAIN_API_KEY }
+  }
+});
+
+// Now blockchain analysis results are automatically summarized!
+```
+
+### Legacy Integration
+
+```typescript
+// Connect to an older STDIO-based MCP server and modernize it
+const legacyProxy = await createStdioServerProxy('python', ['legacy_mcp_server.py'], {
+  plugins: [
+    new ChatMemoryPlugin(), // Add conversation memory
+    new LLMSummarizationPlugin() // Add AI summarization
+  ],
+  hooks: {
+    beforeToolCall: async (context) => {
+      // Add modern logging
+      console.log(`📊 [${new Date().toISOString()}] Tool: ${context.toolName}`);
+    },
+    afterToolCall: async (context, result) => {
+      // Add performance tracking
+      result._meta = {
+        ...result._meta,
+        processedAt: new Date().toISOString(),
+        proxyVersion: '1.0.0'
+      };
+      return result;
+    }
+  }
+});
+```
+
+### Security & Monitoring
+
+```typescript
+const secureProxy = await createRemoteServerProxy({
+  remoteServer: {
+    transport: 'sse',
+    url: 'https://external-service.com/mcp',
+    headers: { 'Authorization': `Bearer ${process.env.EXTERNAL_TOKEN}` }
+  },
+  hooks: {
+    beforeToolCall: async (context) => {
+      // Authentication check
+      if (!context.args.userId || !await validateUser(context.args.userId)) {
+        return {
+          content: [{ type: 'text', text: 'Authentication required' }],
+          isError: true
+        };
+      }
+      
+      // Rate limiting
+      if (await isRateLimited(context.args.userId)) {
+        return {
+          content: [{ type: 'text', text: 'Rate limit exceeded' }],
+          isError: true
+        };
+      }
+      
+      // Audit logging
+      await auditLog({
+        userId: context.args.userId,
+        tool: context.toolName,
+        timestamp: Date.now()
+      });
+    }
+  }
+});
+```
+
+## Transport-Specific Configuration
+
+<Tabs items={['HTTP/SSE', 'STDIO', 'WebSocket']}>
+  <Tab>
+    ```typescript
+    // HTTP/SSE Remote Server
+    const config = {
+      remoteServer: {
+        transport: 'sse',
+        url: 'https://api.example.com/mcp/events',
+        headers: {
+          'Authorization': 'Bearer token',
+          'Accept': 'text/event-stream',
+          'X-Client-ID': 'proxy-client'
+        },
+        timeout: 30000
+      }
+    };
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    // STDIO Remote Server
+    const config = {
+      remoteServer: {
+        transport: 'stdio',
+        command: 'node',
+        args: ['dist/server.js'],
+        env: {
+          NODE_ENV: 'production',
+          API_KEY: process.env.REMOTE_API_KEY,
+          LOG_LEVEL: 'info'
+        },
+        cwd: '/app/remote-server'
+      }
+    };
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    // WebSocket Remote Server
+    const config = {
+      remoteServer: {
+        transport: 'websocket',
+        url: 'wss://api.example.com/mcp/ws',
+        headers: {
+          'Authorization': 'Bearer token'
+        },
+        timeout: 30000
+      }
+    };
+    ```
+  </Tab>
+</Tabs>
+
+## Error Handling
+
+The proxy wrapper includes robust error handling for remote connections:
+
+```typescript
+const proxyServer = await createRemoteServerProxy({
+  remoteServer: {
+    transport: 'sse',
+    url: 'https://api.example.com/mcp'
+  },
+  hooks: {
+    beforeToolCall: async (context) => {
+      try {
+        // Pre-processing logic
+        await validateRequest(context.args);
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: `Validation error: ${error.message}` }],
+          isError: true
+        };
+      }
+    },
+    afterToolCall: async (context, result) => {
+      // Handle remote server errors gracefully
+      if (result.isError) {
+        await logError({
+          tool: context.toolName,
+          error: result.content[0].text,
+          timestamp: Date.now()
+        });
+      }
+      return result;
+    }
+  }
+}).catch(error => {
+  console.error('Failed to connect to remote server:', error);
+  // Implement fallback logic or retry
+});
+```
+
+## Performance Considerations
+
+### Connection Pooling
+
+For high-throughput scenarios, consider connection pooling:
+
+```typescript
+// For multiple remote servers
+const serverPool = [
+  'https://api1.example.com/mcp',
+  'https://api2.example.com/mcp',
+  'https://api3.example.com/mcp'
+];
+
+const proxies = await Promise.all(
+  serverPool.map(url => createHttpServerProxy(url, {
+    plugins: [new LLMSummarizationPlugin()],
+    remoteServer: { name: `Server: ${url}` }
+  }))
+);
+```
+
+### Caching
+
+Add caching to reduce remote server load:
+
+```typescript
+const cache = new Map();
+
+const proxyServer = await createRemoteServerProxy({
+  remoteServer: config,
+  hooks: {
+    beforeToolCall: async (context) => {
+      // Check cache first
+      const cacheKey = `${context.toolName}:${JSON.stringify(context.args)}`;
+      const cached = cache.get(cacheKey);
+      
+      if (cached && Date.now() - cached.timestamp < 300000) { // 5 min TTL
+        return cached.result;
+      }
+    },
+    afterToolCall: async (context, result) => {
+      // Cache successful responses
+      if (!result.isError) {
+        const cacheKey = `${context.toolName}:${JSON.stringify(context.args)}`;
+        cache.set(cacheKey, {
+          result,
+          timestamp: Date.now()
+        });
+      }
+      return result;
+    }
+  }
+});
+```
+
+## Best Practices
+
+### 1. Security
+
+- Always use HTTPS/WSS for remote connections
+- Validate and sanitize all inputs and outputs
+- Use environment variables for API keys and credentials
+- Implement authentication and authorization
+- Add rate limiting to prevent abuse
+
+### 2. Reliability
+
+- Configure appropriate timeouts
+- Implement retry logic for transient failures
+- Add health checks for remote server connectivity
+- Use circuit breakers for failing remote services
+- Log all errors for debugging
+
+### 3. Performance
+
+- Cache frequently requested data
+- Use connection pooling for multiple requests
+- Monitor response times and set alerts
+- Implement backpressure handling
+- Consider async processing for heavy workloads
+
+### 4. Monitoring
+
+- Track success/failure rates
+- Monitor response times and latencies
+- Set up alerts for connection failures
+- Log all proxy operations for audit trails
+- Use distributed tracing for end-to-end visibility
+
+<Callout type="success">
+  **Ready to proxy remote servers?** This feature enables you to enhance any external MCP service with powerful plugins and monitoring without touching the remote server code.
+</Callout>
+
+## Next Steps
+
+- **[Plugin System](/plugins)**: Learn about available plugins for enhancement
+- **[Examples](/examples)**: See more real-world implementations
+- **[API Reference](/api-reference)**: Complete API documentation
+- **[Deployment](/deployment)**: Deploy proxies to production

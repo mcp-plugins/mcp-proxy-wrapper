@@ -1,0 +1,15 @@
+## Remote MCP Server Proxy Implementation Review
+
+### Key Files:
+- src/remote-proxy-wrapper.ts (main implementation)
+- src/__tests__/remote-proxy-wrapper.test.ts (tests)
+- example-remote-proxy.ts (example)
+
+### Architecture Pattern:
+The implementation follows a proxy pattern where:
+1. RemoteMcpServerProxy acts as both MCP client (to remote server) and MCP server (to local clients)
+2. Plugin system integration for enhancement
+3. Tool discovery and proxying
+
+### Current Implementation:
+

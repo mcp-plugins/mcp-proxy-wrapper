@@ -78,6 +78,16 @@ export { HookExecutionManager } from './utils/hook-execution-manager.js';
 export { LLMSummarizationPlugin } from './examples/plugins/llm-summarization.js';
 export { ChatMemoryPlugin } from './examples/plugins/chat-memory.js';
 
+// Export remote server proxy functionality
+export {
+  RemoteMcpServerProxy,
+  createRemoteServerProxy,
+  createHttpServerProxy,
+  createStdioServerProxy,
+  type RemoteServerConfig,
+  type RemoteProxyWrapperOptions
+} from './remote-proxy-wrapper.js';
+
 // Example usage is available in example-proxy-wrapper-usage.ts file
 
 /*

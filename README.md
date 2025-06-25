@@ -50,6 +50,7 @@ const proxiedServer = await wrapWithProxy(server, {
 ## ✨ Features
 
 - **🔧 Zero Code Changes**: Wrap any existing MCP server instantly
+- **🌐 Remote Server Support**: Connect to external MCP servers over HTTP/SSE, STDIO, WebSocket
 - **🪝 Powerful Hooks**: beforeToolCall and afterToolCall with full context
 - **🔌 Smart Plugins**: Pre-built LLM summarization and chat memory
 - **🛡️ Enterprise Ready**: Authentication, rate limiting, caching patterns
@@ -154,6 +155,27 @@ proxiedServer.tool('research', schema, async (args) => {
 - 💾 Response caching (add your own)
 
 **📖 [Complete Quick Start Guide →](https://mcp-plugins.github.io/mcp-proxy-wrapper/getting-started)**
+
+## 🌐 Remote Server Proxying
+
+**NEW**: Connect to external MCP servers and add plugin functionality without modifying the remote server:
+
+```typescript
+import { createHttpServerProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+
+// Connect to remote HTTP/SSE MCP server and add AI summarization
+const proxyServer = await createHttpServerProxy('https://api.example.com/mcp', {
+  plugins: [new LLMSummarizationPlugin()],
+  remoteServer: {
+    name: 'External API',
+    headers: { 'Authorization': 'Bearer your-token' }
+  }
+});
+
+// Remote server now has AI summarization + all plugin features!
+```
+
+**📡 [Remote Server Guide →](https://mcp-plugins.github.io/mcp-proxy-wrapper/remote-servers)**
 
 ## 🔌 Plugin System
 
