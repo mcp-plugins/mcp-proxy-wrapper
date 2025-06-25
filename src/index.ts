@@ -84,9 +84,25 @@ export {
   createRemoteServerProxy,
   createHttpServerProxy,
   createStdioServerProxy,
+  createAutoDetectedServerProxy,
   type RemoteServerConfig,
   type RemoteProxyWrapperOptions
 } from './remote-proxy-wrapper.js';
+
+// Export transport utilities
+export {
+  TransportFactory,
+  TransportConfigValidator,
+  TransportHealthChecker
+} from './utils/transport-factory.js';
+
+// Export configuration validation utilities
+export {
+  ConfigValidator,
+  type ValidatedRemoteServerConfig,
+  type ValidatedProxyWrapperOptions,
+  type ValidatedRemoteProxyWrapperOptions
+} from './utils/config-validator.js';
 
 // Example usage is available in example-proxy-wrapper-usage.ts file
 

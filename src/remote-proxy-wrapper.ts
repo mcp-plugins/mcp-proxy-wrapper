@@ -12,12 +12,12 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import { WebSocketClientTransport } from '@modelcontextprotocol/sdk/client/websocket.js';
 import { createLogger } from './utils/logger.js';
-import { ProxyWrapperOptions, ToolCallContext, ToolCallResult } from './interfaces/proxy-hooks.js';
+import { ProxyWrapperOptions, ToolCallContext, ToolCallResult, PluginRegistration } from './interfaces/proxy-hooks.js';
+import { ProxyPlugin } from './interfaces/plugin.js';
 import { DefaultPluginManager } from './utils/plugin-manager.js';
+import { TransportFactory } from './utils/transport-factory.js';
+import { ConfigValidator } from './utils/config-validator.js';
 import { 
   ProxyConfigurationError, 
   HookExecutionError, 
@@ -96,6 +96,20 @@ export class RemoteMcpServerProxy {
   private pluginConfig: (ProxyPlugin | PluginRegistration)[];
 
   constructor(private config: RemoteProxyWrapperOptions) {
+    // Initialize logger first
+    if (config.debug) {
+      this.logger = createLogger({ level: 'debug', prefix: 'REMOTE-PROXY' });
+    }
+
+    // Validate configuration using Zod schemas
+    try {
+      ConfigValidator.validateWithHelpfulErrors(config.remoteServer);
+      this.logger.debug('Configuration validation passed');
+    } catch (error) {
+      this.logger.error('Invalid remote server configuration:', error);
+      throw error;
+    }
+
     // Create the proxy server that will expose tools to clients
     this.proxyServer = new McpServer({
       name: config.proxyServerName || `Proxy for ${config.remoteServer.name || 'Remote Server'}`,
@@ -112,15 +126,13 @@ export class RemoteMcpServerProxy {
 
     // Initialize plugin manager
     this.pluginManager = new DefaultPluginManager('1.0.0', {
-      debug: config.debug || false
+      debug: config.debug || false,
+      enableHealthChecks: true,
+      defaultTimeout: 30000
     });
 
     // Store plugin configuration for later registration
     this.pluginConfig = config.plugins || [];
-
-    if (config.debug) {
-      this.logger = createLogger({ level: 'debug', prefix: 'REMOTE-PROXY' });
-    }
 
     this.logger.info('Remote MCP Server Proxy created', {
       remoteServer: config.remoteServer.name,
@@ -164,7 +176,12 @@ export class RemoteMcpServerProxy {
       this.logger.error('Failed to connect to remote server:', error);
       throw new ProxyConfigurationError(
         `Failed to connect to remote MCP server: ${errorMessage}`,
-        'REMOTE_CONNECTION_FAILED'
+        {
+          remoteServer: this.config.remoteServer.name || 'Unknown',
+          transport: this.config.remoteServer.transport,
+          error: errorMessage
+        },
+        error instanceof Error ? error : new Error(errorMessage)
       );
     }
   }
@@ -185,57 +202,20 @@ export class RemoteMcpServerProxy {
   }
 
   /**
-   * Create the appropriate transport for the remote server
+   * Create the appropriate transport for the remote server using TransportFactory
    */
   private async createRemoteTransport() {
-    const { transport, url, command, args, env, cwd, timeout } = this.config.remoteServer;
+    this.logger.debug('Creating transport using TransportFactory', {
+      transport: this.config.remoteServer.transport,
+      url: this.config.remoteServer.url,
+      command: this.config.remoteServer.command
+    });
 
-    switch (transport) {
-      case 'stdio':
-        if (!command) {
-          throw new ProxyConfigurationError('STDIO transport requires a command', 'MISSING_COMMAND');
-        }
-        
-        this.logger.debug('Creating STDIO transport', { command, args });
-        const envVars: Record<string, string> = {};
-        Object.entries({ ...process.env, ...(env || {}) }).forEach(([key, value]) => {
-          if (value !== undefined) {
-            envVars[key] = value;
-          }
-        });
-        
-        return new StdioClientTransport({
-          command,
-          args: args || [],
-          env: envVars,
-          cwd: cwd || process.cwd()
-        });
-
-      case 'sse':
-        if (!url) {
-          throw new ProxyConfigurationError('SSE transport requires a URL', 'MISSING_URL');
-        }
-        
-        this.logger.debug('Creating SSE transport', { url });
-        return new SSEClientTransport(new URL(url), {
-          eventSourceInit: {
-            headers: this.config.remoteServer.headers
-          }
-        });
-
-      case 'websocket':
-        if (!url) {
-          throw new ProxyConfigurationError('WebSocket transport requires a URL', 'MISSING_URL');
-        }
-        
-        this.logger.debug('Creating WebSocket transport', { url });
-        return new WebSocketClientTransport(new URL(url));
-
-      default:
-        throw new ProxyConfigurationError(
-          `Unsupported transport type: ${transport}`,
-          'UNSUPPORTED_TRANSPORT'
-        );
+    try {
+      return await TransportFactory.createTransport(this.config.remoteServer);
+    } catch (error) {
+      this.logger.error('Failed to create transport', error);
+      throw error;
     }
   }
 
@@ -268,7 +248,10 @@ export class RemoteMcpServerProxy {
       this.logger.error('Failed to discover remote tools:', error);
       throw new ToolCallError(
         `Failed to discover remote tools: ${error instanceof Error ? error.message : String(error)}`,
-        'TOOL_DISCOVERY_FAILED'
+        'remote_tool_discovery',
+        {},
+        { phase: 'discovery' },
+        error instanceof Error ? error : new Error(String(error))
       );
     }
   }
@@ -283,11 +266,13 @@ export class RemoteMcpServerProxy {
       // Create an enhanced tool handler that includes plugin functionality
       const enhancedHandler = this.createEnhancedToolHandler(toolName, toolDef);
       
-      // Register the tool on the proxy server
+      // Register the tool on the proxy server with proper MCP format
       this.proxyServer.tool(
-        toolName, 
-        toolDef.description || `Proxied tool: ${toolName}`,
+        toolName,
         toolDef.inputSchema || {},
+        {
+          description: toolDef.description || `Proxied tool: ${toolName}`
+        },
         enhancedHandler
       );
       
@@ -301,7 +286,7 @@ export class RemoteMcpServerProxy {
    * Create an enhanced tool handler that adds plugin functionality
    */
   private createEnhancedToolHandler(toolName: string, toolDef: any) {
-    return async (args: any, extra?: any): Promise<ToolCallResult> => {
+    return async (args: any, extra?: any): Promise<any> => {
       const requestId = `remote_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       
       // Create tool call context
@@ -367,7 +352,14 @@ export class RemoteMcpServerProxy {
           enhanced: !!finalResult.result._meta?.enhanced
         });
 
-        return finalResult.result;
+        // Return the result in proper MCP format
+        return {
+          ...finalResult.result,
+          _meta: {
+            ...finalResult.metadata,
+            ...finalResult.result._meta
+          }
+        };
 
       } catch (error) {
         this.logger.error('Remote tool call failed', {
@@ -379,7 +371,7 @@ export class RemoteMcpServerProxy {
         // Return error response in MCP format
         return createErrorResponse(
           new Error(error instanceof Error ? error.message : String(error)),
-          `Remote tool call failed: ${toolName}`
+          requestId
         );
       }
     };
@@ -438,6 +430,9 @@ export class RemoteMcpServerProxy {
 export async function createRemoteServerProxy(
   config: RemoteProxyWrapperOptions
 ): Promise<McpServer> {
+  // Validate configuration upfront
+  ConfigValidator.validateWithHelpfulErrors(config.remoteServer);
+  
   const proxy = new RemoteMcpServerProxy(config);
   return await proxy.connect();
 }
@@ -476,6 +471,25 @@ export async function createStdioServerProxy(
       name: options?.remoteServer?.name || 'STDIO Server',
       ...options?.remoteServer
     },
+    ...options
+  });
+}
+
+/**
+ * Convenience function to create a proxy using auto-detection
+ * Automatically detects transport type from connection string
+ */
+export async function createAutoDetectedServerProxy(
+  connectionString: string,
+  options?: Partial<RemoteProxyWrapperOptions>
+): Promise<McpServer> {
+  const autoConfig = TransportFactory.createAutoDetectedConfig(
+    connectionString,
+    options?.remoteServer
+  );
+
+  return createRemoteServerProxy({
+    remoteServer: autoConfig,
     ...options
   });
 }
