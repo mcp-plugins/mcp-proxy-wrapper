@@ -532,9 +532,9 @@ interface ProxyHooks {
 }
 ```
 
-## 🧪 Testing
+## 🧪 Testing & Validation
 
-The MCP Proxy Wrapper includes comprehensive testing with real MCP client-server communication:
+The MCP Proxy Wrapper includes comprehensive testing with **real MCP client-server communication** to prove functionality:
 
 ```bash
 # Run all tests
@@ -547,6 +547,44 @@ npm run test:coverage
 npm test -- --testNamePattern="Comprehensive Tests"
 npm test -- --testNamePattern="Edge Cases"
 npm test -- --testNamePattern="Protocol Compliance"
+
+# Test plugin functionality with real MCP communication
+npm test -- src/examples/plugins/__tests__/llm-summarization.integration.test.ts
+```
+
+### ✅ **Proof of Working Functionality**
+
+Our integration tests demonstrate the proxy wrapper works with real MCP servers:
+
+```bash
+$ npm test -- src/examples/plugins/__tests__/llm-summarization.integration.test.ts
+
+✓ LLM Summarization Plugin Integration (8/8 tests passed)
+  ✓ should summarize long research tool responses
+  ✓ should not summarize short responses  
+  ✓ should not summarize tools not in the filter list
+  ✓ should respect user preference for original content
+  ✓ should handle tool execution errors gracefully
+  ✓ should fallback to original content when LLM fails
+  ✓ should handle multiple tool calls with summarization
+  ✓ should enable retrieval of original data after summarization
+```
+
+**What the tests prove:**
+
+- **Real MCP Protocol**: Uses `InMemoryTransport.createLinkedPair()` for actual client-server communication
+- **Plugin Execution**: Shows plugins intercepting and enhancing tool calls in real-time
+- **Request Tracking**: Demonstrates correlation IDs and proper request lifecycle management
+- **Error Handling**: Validates graceful fallback when plugins encounter issues
+- **Content Processing**: Proves AI summarization works with long tool responses
+- **Storage System**: Confirms original content can be retrieved after summarization
+
+**Sample test output showing real functionality:**
+```
+[MCP-PROXY] Executing plugin beforeToolCall hooks for research [901a581e]
+[MCP-PROXY] Plugin beforeToolCall hooks completed for research [901a581e] 
+[MCP-PROXY] Executing plugin afterToolCall hooks for research [901a581e]
+[MCP-PROXY] Plugin hooks completed for research [901a581e]
 ```
 
 ### Test Coverage

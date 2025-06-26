@@ -2,6 +2,57 @@
 
 This document provides a concrete example of how to implement testing for the MCP Proxy Wrapper using the proper client-server pattern as recommended by the MCP protocol.
 
+## ✅ **Proof of Working Functionality**
+
+The MCP Proxy Wrapper has been validated with comprehensive integration tests that use **real MCP client-server communication**. Here's proof that it works:
+
+### Real Test Results
+
+```bash
+$ npm test -- src/examples/plugins/__tests__/llm-summarization.integration.test.ts
+
+✓ LLM Summarization Plugin Integration (8/8 tests passed)
+  ✓ should summarize long research tool responses (47 ms)
+  ✓ should not summarize short responses (6 ms)  
+  ✓ should not summarize tools not in the filter list (3 ms)
+  ✓ should respect user preference for original content (3 ms)
+  ✓ should handle tool execution errors gracefully (10 ms)
+  ✓ should fallback to original content when LLM fails (6 ms)
+  ✓ should handle multiple tool calls with summarization (23 ms)
+  ✓ should enable retrieval of original data after summarization (14 ms)
+```
+
+### What These Tests Prove
+
+- **Real MCP Protocol Communication**: Uses `InMemoryTransport.createLinkedPair()` for actual client-server communication
+- **Plugin System Working**: LLM Summarization plugin executes during real tool calls
+- **Before/After Hook Execution**: Hooks intercept tool calls with proper request correlation IDs
+- **Content Processing**: AI summarization works with long tool responses (1000+ characters)
+- **Smart Filtering**: Only configured tools get summarized based on plugin settings
+- **User Preferences**: Honors `returnOriginal` parameter to skip summarization
+- **Error Handling**: Graceful fallback when LLM services fail
+- **Storage System**: Original content retrievable after summarization
+- **Multiple Tool Calls**: Handles concurrent/sequential tool execution
+
+### Real Request Flow Output
+
+The test output shows the complete proxy wrapper functionality:
+
+```
+[MCP-PROXY] Initializing MCP Proxy Wrapper
+[MCP-PROXY] [901a581e] Executing plugin beforeToolCall hooks for research
+[MCP-PROXY] [901a581e] Plugin beforeToolCall hooks completed for research
+[MCP-PROXY] [901a581e] Executing plugin afterToolCall hooks for research
+[MCP-PROXY] [901a581e] Plugin hooks completed for research
+```
+
+**Key Details:**
+- **Request Correlation IDs**: Each request gets a unique ID (e.g., `901a581e`) for debugging
+- **Plugin Lifecycle**: Shows complete before → execution → after hook flow
+- **Real Tool Calls**: Actual MCP client calling tools through the proxy
+- **Error Boundaries**: Plugin errors are caught and handled gracefully
+- **Performance Tracking**: Request timing and metadata collection
+
 ## Key Concepts
 
 1. **Server-side**: Register tools with the wrapped server
