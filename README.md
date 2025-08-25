@@ -2,7 +2,7 @@
 
 # 🚀 MCP Proxy Wrapper
 
-**Add hooks, plugins, and enterprise features to any MCP server without changing your code**
+**Add hooks and plugins to any MCP server without changing your code**
 
 [![NPM Version](https://img.shields.io/npm/v/mcp-proxy-wrapper?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/mcp-proxy-wrapper) [![GitHub Stars](https://img.shields.io/github/stars/mcp-plugins/mcp-proxy-wrapper?style=for-the-badge&logo=github)](https://github.com/mcp-plugins/mcp-proxy-wrapper) [![License](https://img.shields.io/github/license/mcp-plugins/mcp-proxy-wrapper?style=for-the-badge)](https://github.com/mcp-plugins/mcp-proxy-wrapper/blob/main/LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 
@@ -10,7 +10,7 @@
 
 </div>
 
-A zero-modification wrapper that adds authentication, AI summarization, monitoring, and custom logic to existing MCP servers. Works with any MCP server instantly.
+A proxy wrapper that adds hooks, plugins, and custom logic to existing MCP servers without modifying the original code.
 
 ## 🚀 Quick Start
 
@@ -25,7 +25,7 @@ import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 const server = new McpServer({ name: 'My Server', version: '1.0.0' });
 server.tool('getData', schema, getData);
 
-// Add enterprise features instantly
+// Add plugins and hooks
 const plugin = new LLMSummarizationPlugin();
 plugin.updateConfig({
   options: {

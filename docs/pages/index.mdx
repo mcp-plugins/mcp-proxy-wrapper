@@ -4,7 +4,7 @@ import { Cards, Card, Callout, Tabs, Tab } from 'nextra/components'
 
 # 🚀 MCP Proxy Wrapper
 
-**Add hooks, plugins, and enterprise features to any MCP server without changing your code**
+**Add hooks and plugins to any MCP server without changing your code**
 
 <p>
 <a href="https://www.npmjs.com/package/mcp-proxy-wrapper" target="_blank" rel="noreferrer"><img src="https://img.shields.io/npm/v/mcp-proxy-wrapper?style=for-the-badge&logo=npm" alt="NPM Version" style={{display: 'inline-block', margin: '0 4px'}} /></a>
@@ -19,13 +19,13 @@ npm install mcp-proxy-wrapper
 
 </div>
 
-A zero-modification wrapper that adds authentication, AI summarization, monitoring, and custom logic to existing MCP servers instantly.
+A proxy wrapper that adds hooks, plugins, and custom logic to existing MCP servers without modifying the original code.
 
 ---
 
-## 🎯 30-Second Overview
+## 🎯 Overview
 
-Transform your existing MCP server with enterprise features:
+Add functionality to your existing MCP server:
 
 ```typescript
 import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
@@ -34,7 +34,7 @@ import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 const server = new McpServer({ name: 'My Server', version: '1.0.0' });
 server.tool('getData', schema, getData);
 
-// Add enterprise features instantly
+// Add plugins and hooks
 const plugin = new LLMSummarizationPlugin();
 plugin.updateConfig({
   options: {
@@ -63,8 +63,8 @@ const enhanced = await wrapWithProxy(server, {
 - **🪝 Hook System** - beforeToolCall/afterToolCall with full control
 - **🔌 Plugin Architecture** - Reusable, composable functionality
 - **🌐 Remote Servers** - Proxy external MCP servers over HTTP/WebSocket
-- **🛡️ Enterprise Ready** - Auth, rate limiting, caching patterns
-- **📊 Production Tested** - 273 tests with real MCP protocol validation
+- **🛡️ Authentication & Security** - Auth, rate limiting, access control patterns
+- **📊 Comprehensive Tests** - 273 tests covering MCP protocol compatibility
 
 ## 🚀 Common Use Cases
 
@@ -139,10 +139,10 @@ const enhanced = await wrapWithProxy(server, {
   </Tab>
 </Tabs>
 
-## 🧪 Proven & Battle-Tested
+## 🧪 Technical Details
 
 - **273 passing tests** with real MCP client-server communication
-- **Production-ready** with comprehensive error handling and fallbacks  
+- **Comprehensive error handling** with fallbacks and proper error propagation
 - **TypeScript native** with full type safety and IntelliSense
 - **MCP SDK v1.6.0+** compatible with any existing server
 
@@ -153,7 +153,7 @@ const enhanced = await wrapWithProxy(server, {
     title="🚀 Quick Start"
     href="/getting-started"
   >
-    Get up and running in under 5 minutes with our step-by-step guide.
+    Get up and running with the step-by-step guide.
   </Card>
   
   <Card
@@ -208,8 +208,8 @@ const enhanced = await wrapWithProxy(server, {
 </div>
 
 <div style={{padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '0.5rem'}}>
-  <h3>🏢 Enterprise Ready</h3>
-  <p>Robust error handling, comprehensive logging, and production-grade features.</p>
+  <h3>🏢 Robust Architecture</h3>
+  <p>Comprehensive error handling, logging, and stable API design.</p>
 </div>
 
 </div>
@@ -258,21 +258,21 @@ proxiedServer.tool('ai-analysis', {
 
 <div align="center" style={{margin: '3rem 0'}}>
 
-## 🎯 Ready to Transform Your MCP Server?
+## 🎯 Get Started
 
 <Cards>
   <Card title="📚 Getting Started Guide" href="/getting-started">
-    Step-by-step setup in 5 minutes
+    Step-by-step setup guide
   </Card>
   <Card title="🔌 Plugin System" href="/plugins">
-    Explore powerful plugins and create your own
+    Explore available plugins and create your own
   </Card>
 </Cards>
 
 ---
 
 <p style={{opacity: 0.7}}>
-  <strong>MCP Proxy Wrapper</strong> - Enhance any MCP server without changing a single line of code
+  <strong>MCP Proxy Wrapper</strong> - Add hooks and plugins to any MCP server
 </p>
 
 </div>
