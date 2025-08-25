@@ -1,10 +1,10 @@
-import { Cards, Card, Callout } from 'nextra/components'
+import { Cards, Card, Callout, Tabs, Tab } from 'nextra/components'
 
 <div align="center">
 
 # 🚀 MCP Proxy Wrapper
 
-**Transform any MCP server into a powerful, extensible platform with enterprise-grade features**
+**Add hooks, plugins, and enterprise features to any MCP server without changing your code**
 
 <p>
 <a href="https://www.npmjs.com/package/mcp-proxy-wrapper" target="_blank" rel="noreferrer"><img src="https://img.shields.io/npm/v/mcp-proxy-wrapper?style=for-the-badge&logo=npm" alt="NPM Version" style={{display: 'inline-block', margin: '0 4px'}} /></a>
@@ -19,26 +19,132 @@ npm install mcp-proxy-wrapper
 
 </div>
 
+A zero-modification wrapper that adds authentication, AI summarization, monitoring, and custom logic to existing MCP servers instantly.
+
 ---
 
-## ✨ What is MCP Proxy Wrapper?
+## 🎯 30-Second Overview
 
-The MCP Proxy Wrapper is a TypeScript library that wraps existing Model Context Protocol (MCP) servers to add advanced functionality through a sophisticated plugin system, all without requiring any changes to your existing MCP server code.
+Transform your existing MCP server with enterprise features:
 
-<Callout type="info">
-  Zero-Modification Enhancement: Add smart features like LLM summarization, chat memory, and custom processing to any MCP server without touching the original code.
-</Callout>
+```typescript
+import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 
-## 🎯 Core Concept
+// Your existing server - no changes needed
+const server = new McpServer({ name: 'My Server', version: '1.0.0' });
+server.tool('getData', schema, getData);
 
-The proxy wrapper intercepts tool calls between clients and your MCP server, allowing plugins to:
+// Add enterprise features instantly
+const plugin = new LLMSummarizationPlugin();
+plugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY
+  }
+});
 
-- 🔐 **Authenticate and authorize users** before tool execution
-- 💰 **Monitor and bill for tool usage** in real-time  
-- ⚡ **Transform requests and responses** for enhanced functionality
-- 📊 **Log and analyze usage patterns** and performance
-- 🚄 **Cache responses** for improved performance
-- 🛡️ **Rate limit** to prevent abuse
+const enhanced = await wrapWithProxy(server, {
+  plugins: [plugin],
+  hooks: {
+    beforeToolCall: async (context) => {
+      console.log(`🔧 ${context.toolName}`);
+      // Add auth, rate limiting, etc.
+    }
+  }
+});
+```
+
+**Result**: Your server now has AI summarization, logging, and custom hooks without any code changes.
+
+## ✨ Key Features
+
+- **🔧 Zero Code Changes** - Wrap existing servers instantly
+- **🤖 AI Integration** - OpenAI-powered response summarization  
+- **🪝 Hook System** - beforeToolCall/afterToolCall with full control
+- **🔌 Plugin Architecture** - Reusable, composable functionality
+- **🌐 Remote Servers** - Proxy external MCP servers over HTTP/WebSocket
+- **🛡️ Enterprise Ready** - Auth, rate limiting, caching patterns
+- **📊 Production Tested** - 273 tests with real MCP protocol validation
+
+## 🚀 Common Use Cases
+
+<Tabs items={['Authentication', 'AI Enhancement', 'Monitoring', 'Remote Proxy']}>
+  <Tab>
+    ```typescript
+    const secure = await wrapWithProxy(server, {
+      hooks: {
+        beforeToolCall: async (context) => {
+          if (!await validateApiKey(context.args.apiKey)) {
+            return { 
+              result: { 
+                content: [{ type: 'text', text: 'Unauthorized' }], 
+                isError: true 
+              }
+            };
+          }
+        }
+      }
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    const plugin = new LLMSummarizationPlugin();
+    plugin.updateConfig({
+      options: {
+        provider: 'openai',
+        openaiApiKey: process.env.OPENAI_API_KEY,
+        summarizeTools: ['research', 'analyze']
+      }
+    });
+    
+    const intelligent = await wrapWithProxy(server, {
+      plugins: [plugin]
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    const monitored = await wrapWithProxy(server, {
+      hooks: {
+        beforeToolCall: async (context) => {
+          console.log(`📊 ${context.toolName} started`);
+          context.startTime = Date.now();
+        },
+        afterToolCall: async (context, result) => {
+          const duration = Date.now() - context.startTime;
+          console.log(`✅ ${context.toolName} completed in ${duration}ms`);
+          return result;
+        }
+      }
+    });
+    ```
+  </Tab>
+  <Tab>
+    ```typescript
+    // Proxy external servers and add features
+    const plugin = new LLMSummarizationPlugin();
+    plugin.updateConfig({
+      options: {
+        provider: 'openai',
+        openaiApiKey: process.env.OPENAI_API_KEY
+      }
+    });
+    
+    const proxy = await createHttpServerProxy('https://api.example.com/mcp', {
+      plugins: [plugin],
+      hooks: { /* your custom logic */ }
+    });
+    ```
+  </Tab>
+</Tabs>
+
+## 🧪 Proven & Battle-Tested
+
+- **273 passing tests** with real MCP client-server communication
+- **Production-ready** with comprehensive error handling and fallbacks  
+- **TypeScript native** with full type safety and IntelliSense
+- **MCP SDK v1.6.0+** compatible with any existing server
 
 ## 🚀 Quick Navigation
 

@@ -50,17 +50,19 @@ server.tool('getData', {
 import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 import { server } from './server.js'; // Import your existing server
 
+// Configure the summarization plugin
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    minContentLength: 200 // Auto-summarize responses over 200 chars
+  }
+});
+
 // Enhance your existing server with AI and monitoring
 const enhancedServer = await wrapWithProxy(server, {
-  plugins: [
-    new LLMSummarizationPlugin({
-      options: {
-        provider: 'openai',
-        openaiApiKey: process.env.OPENAI_API_KEY,
-        minContentLength: 200 // Auto-summarize responses over 200 chars
-      }
-    })
-  ],
+  plugins: [summaryPlugin],
   hooks: {
     beforeToolCall: async (context) => {
       console.log(`🔧 [${new Date().toISOString()}] Calling: ${context.toolName}`);

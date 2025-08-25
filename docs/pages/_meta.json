@@ -2,10 +2,11 @@
   "index": "Overview",
   "getting-started": "Getting Started",
   "how-it-works": "How It Works",
-  "remote-servers": "Remote Servers",
-  "architecture": "Architecture", 
   "plugins": "Plugins",
+  "use-cases": "Use Cases",
   "examples": "Examples",
+  "remote-servers": "Remote Servers",
+  "architecture": "Architecture",
   "api-reference": "API Reference",
   "deployment": "Deployment"
 }

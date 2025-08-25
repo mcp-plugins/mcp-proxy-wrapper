@@ -25,18 +25,20 @@ The proxy wrapper acts as both:
 ```typescript
 import { createHttpServerProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
 
+// Configure the plugin
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    summarizeTools: ['search', 'analyze'],
+    minContentLength: 200
+  }
+});
+
 // Connect to remote HTTP/SSE MCP server and add AI summarization
 const proxyServer = await createHttpServerProxy('https://api.example.com/mcp', {
-  plugins: [
-    new LLMSummarizationPlugin({
-      options: {
-        provider: 'openai',
-        openaiApiKey: process.env.OPENAI_API_KEY,
-        summarizeTools: ['search', 'analyze'],
-        minContentLength: 200
-      }
-    })
-  ],
+  plugins: [summaryPlugin],
   remoteServer: {
     name: 'External API Server',
     headers: {
@@ -57,17 +59,19 @@ await proxyServer.connect(transport);
 ```typescript
 import { createStdioServerProxy, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
 
+// Configure the plugin
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 1000
+  }
+});
+
 // Connect to remote STDIO MCP server and add conversation memory
 const proxyServer = await createStdioServerProxy('node', ['remote-server.js'], {
-  plugins: [
-    new ChatMemoryPlugin({
-      options: {
-        saveResponses: true,
-        enableChat: true,
-        maxEntries: 1000
-      }
-    })
-  ],
+  plugins: [memoryPlugin],
   remoteServer: {
     name: 'Remote STDIO Server',
     env: { 
@@ -119,31 +123,33 @@ const config = {
 ```typescript
 import { LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
 
-const plugins = [
-  // AI summarization for long responses
-  new LLMSummarizationPlugin({
-    options: {
-      provider: 'openai',
-      openaiApiKey: process.env.OPENAI_API_KEY,
-      model: 'gpt-4o-mini',
-      summarizeTools: ['research', 'analyze', 'fetch-data'],
-      minContentLength: 500,
-      saveOriginal: true // Keep original for retrieval
-    }
-  }),
-  
-  // Conversation memory and chat interface
-  new ChatMemoryPlugin({
-    options: {
-      provider: 'openai',
-      openaiApiKey: process.env.OPENAI_API_KEY,
-      saveResponses: true,
-      enableChat: true,
-      maxEntries: 2000,
-      sessionTimeout: 24 * 60 * 60 * 1000 // 24 hours
-    }
-  })
-];
+// Configure AI summarization plugin
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o-mini',
+    summarizeTools: ['research', 'analyze', 'fetch-data'],
+    minContentLength: 500,
+    saveOriginal: true // Keep original for retrieval
+  }
+});
+
+// Configure conversation memory plugin
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 2000,
+    sessionTimeout: 24 * 60 * 60 * 1000 // 24 hours
+  }
+});
+
+const plugins = [summaryPlugin, memoryPlugin];
 ```
 
 ### Step 3: Create and Start Proxy
@@ -189,18 +195,20 @@ console.log('🎉 Remote proxy server ready with enhanced functionality!');
 ### API Enhancement
 
 ```typescript
+// Configure the plugin
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    summarizeTools: ['get_wallet_analysis', 'get_transaction_summary'],
+    minContentLength: 300
+  }
+});
+
 // Enhance a blockchain analytics API with AI summarization
 const blockchainProxy = await createHttpServerProxy('https://blockchain-api.com/mcp', {
-  plugins: [
-    new LLMSummarizationPlugin({
-      options: {
-        provider: 'openai',
-        openaiApiKey: process.env.OPENAI_API_KEY,
-        summarizeTools: ['get_wallet_analysis', 'get_transaction_summary'],
-        minContentLength: 300
-      }
-    })
-  ],
+  plugins: [summaryPlugin],
   remoteServer: {
     name: 'Blockchain Analytics API',
     headers: { 'X-API-Key': process.env.BLOCKCHAIN_API_KEY }

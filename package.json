@@ -52,6 +52,7 @@
     "@modelcontextprotocol/sdk": "^1.6.0",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
+    "openai": "^5.15.0",
     "uuid": "^11.1.0",
     "ws": "^8.18.2",
     "zod": "^3.22.4"

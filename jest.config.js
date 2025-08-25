@@ -4,10 +4,13 @@ export default {
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
   transform: {
-    '^.+\\.(ts|js)x?$': [
+    '^.+\\.ts$': [
       'ts-jest',
       {
         useESM: true,
+        tsconfig: {
+          allowJs: true,
+        },
       },
     ],
   },

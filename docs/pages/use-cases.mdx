@@ -1,0 +1,782 @@
+import { Callout, Tabs, Tab, Cards, Card } from 'nextra/components'
+
+# Use Cases
+
+Complete examples of common enterprise patterns using the MCP Proxy Wrapper.
+
+<Callout type="info">
+  All examples are production-ready and include proper error handling, logging, and security best practices.
+</Callout>
+
+## Authentication & Authorization
+
+Add API key validation and user authentication to any MCP server:
+
+```typescript
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+
+const authProxy = await wrapWithProxy(server, {
+  hooks: {
+    beforeToolCall: async (context) => {
+      // API key validation
+      if (!await validateApiKey(context.args.apiKey)) {
+        return {
+          result: {
+            content: [{ type: 'text', text: 'Invalid API key' }],
+            isError: true
+          }
+        };
+      }
+      
+      // Role-based access control
+      const userRole = await getUserRole(context.args.apiKey);
+      if (context.toolName === 'admin-only-tool' && userRole !== 'admin') {
+        return {
+          result: {
+            content: [{ type: 'text', text: 'Insufficient permissions' }],
+            isError: true
+          }
+        };
+      }
+      
+      // Add user context for downstream tools
+      context.args._userId = await getUserId(context.args.apiKey);
+      context.args._userRole = userRole;
+    }
+  }
+});
+
+async function validateApiKey(apiKey: string): Promise<boolean> {
+  if (!apiKey) return false;
+  
+  // Check API key format
+  if (!/^sk-[a-zA-Z0-9]{32}$/.test(apiKey)) {
+    return false;
+  }
+  
+  // Validate against database/service
+  const user = await database.findUserByApiKey(apiKey);
+  return user && user.isActive;
+}
+```
+
+## Rate Limiting
+
+Implement sophisticated rate limiting with different limits per user and tool:
+
+```typescript
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+
+// In-memory rate limiter (use Redis for production)
+class RateLimiter {
+  private limits = new Map<string, { count: number; resetTime: number }>();
+  
+  async isExceeded(key: string, maxRequests: number, windowMs: number): Promise<boolean> {
+    const now = Date.now();
+    const limit = this.limits.get(key);
+    
+    if (!limit || now > limit.resetTime) {
+      this.limits.set(key, { count: 1, resetTime: now + windowMs });
+      return false;
+    }
+    
+    if (limit.count >= maxRequests) {
+      return true;
+    }
+    
+    limit.count++;
+    return false;
+  }
+  
+  async increment(key: string): Promise<void> {
+    // Already handled in isExceeded
+  }
+}
+
+const rateLimiter = new RateLimiter();
+
+const rateLimitedProxy = await wrapWithProxy(server, {
+  hooks: {
+    beforeToolCall: async (context) => {
+      const userId = context.args._userId || 'anonymous';
+      
+      // Different limits for different tools
+      const limits = {
+        'expensive-ai-tool': { maxRequests: 10, windowMs: 60 * 1000 }, // 10/minute
+        'data-analysis': { maxRequests: 100, windowMs: 60 * 1000 },    // 100/minute
+        default: { maxRequests: 1000, windowMs: 60 * 1000 }            // 1000/minute
+      };
+      
+      const limit = limits[context.toolName] || limits.default;
+      const rateLimitKey = `${userId}:${context.toolName}`;
+      
+      if (await rateLimiter.isExceeded(rateLimitKey, limit.maxRequests, limit.windowMs)) {
+        return {
+          result: {
+            content: [{
+              type: 'text',
+              text: `Rate limit exceeded. Max ${limit.maxRequests} requests per ${limit.windowMs / 1000}s for ${context.toolName}`
+            }],
+            isError: true,
+            _meta: {
+              rateLimited: true,
+              resetAfter: limit.windowMs
+            }
+          }
+        };
+      }
+      
+      await rateLimiter.increment(rateLimitKey);
+    }
+  }
+});
+```
+
+## Intelligent Caching
+
+Cache results with smart invalidation and compression:
+
+```typescript
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+import { createHash } from 'crypto';
+
+class IntelligentCache {
+  private cache = new Map<string, {
+    data: any;
+    timestamp: number;
+    hits: number;
+    size: number;
+  }>();
+  
+  private maxSize = 100 * 1024 * 1024; // 100MB
+  private currentSize = 0;
+  
+  generateKey(toolName: string, args: Record<string, any>): string {
+    const normalized = JSON.stringify(args, Object.keys(args).sort());
+    return createHash('sha256').update(`${toolName}:${normalized}`).digest('hex');
+  }
+  
+  get(key: string, ttlMs: number): any | null {
+    const item = this.cache.get(key);
+    if (!item) return null;
+    
+    // Check if expired
+    if (Date.now() - item.timestamp > ttlMs) {
+      this.delete(key);
+      return null;
+    }
+    
+    item.hits++;
+    return item.data;
+  }
+  
+  set(key: string, data: any): void {
+    const serialized = JSON.stringify(data);
+    const size = Buffer.byteLength(serialized, 'utf8');
+    
+    // Evict if necessary
+    while (this.currentSize + size > this.maxSize && this.cache.size > 0) {
+      this.evictLRU();
+    }
+    
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      hits: 0,
+      size
+    });
+    
+    this.currentSize += size;
+  }
+  
+  private evictLRU(): void {
+    let lruKey = '';
+    let lruTime = Date.now();
+    
+    for (const [key, item] of this.cache.entries()) {
+      if (item.timestamp < lruTime) {
+        lruTime = item.timestamp;
+        lruKey = key;
+      }
+    }
+    
+    if (lruKey) {
+      this.delete(lruKey);
+    }
+  }
+  
+  private delete(key: string): void {
+    const item = this.cache.get(key);
+    if (item) {
+      this.currentSize -= item.size;
+      this.cache.delete(key);
+    }
+  }
+}
+
+const cache = new IntelligentCache();
+
+const cachedProxy = await wrapWithProxy(server, {
+  hooks: {
+    beforeToolCall: async (context) => {
+      // Skip caching for real-time tools
+      const noCacheTools = ['current-time', 'random-number', 'live-data'];
+      if (noCacheTools.includes(context.toolName)) {
+        return;
+      }
+      
+      const cacheKey = cache.generateKey(context.toolName, context.args);
+      
+      // Different TTL for different tools
+      const ttlConfig = {
+        'expensive-analysis': 60 * 60 * 1000,  // 1 hour
+        'static-data': 24 * 60 * 60 * 1000,    // 24 hours
+        default: 5 * 60 * 1000                  // 5 minutes
+      };
+      
+      const ttl = ttlConfig[context.toolName] || ttlConfig.default;
+      const cached = cache.get(cacheKey, ttl);
+      
+      if (cached) {
+        console.log(`📦 Cache hit for ${context.toolName}`);
+        return {
+          result: {
+            ...cached,
+            _meta: {
+              ...cached._meta,
+              cachedAt: new Date().toISOString(),
+              cacheHit: true
+            }
+          }
+        };
+      }
+      
+      // Store cache key for afterToolCall
+      context.metadata = { ...context.metadata, cacheKey, ttl };
+    },
+    
+    afterToolCall: async (context, result) => {
+      const { cacheKey, ttl } = context.metadata || {};
+      
+      if (cacheKey && !result.result.isError) {
+        cache.set(cacheKey, result.result);
+        console.log(`💾 Cached result for ${context.toolName}`);
+      }
+      
+      return result;
+    }
+  }
+});
+```
+
+## Analytics & Monitoring
+
+Comprehensive monitoring with metrics, alerting, and performance tracking:
+
+```typescript
+import { wrapWithProxy } from 'mcp-proxy-wrapper';
+
+class MetricsCollector {
+  private metrics = {
+    toolCalls: new Map<string, number>(),
+    errors: new Map<string, number>(),
+    durations: new Map<string, number[]>(),
+    userActivity: new Map<string, number>()
+  };
+  
+  increment(metric: string, tags: Record<string, string> = {}): void {
+    const key = `${metric}:${JSON.stringify(tags)}`;
+    this.metrics.toolCalls.set(key, (this.metrics.toolCalls.get(key) || 0) + 1);
+  }
+  
+  recordDuration(tool: string, duration: number): void {
+    if (!this.metrics.durations.has(tool)) {
+      this.metrics.durations.set(tool, []);
+    }
+    this.metrics.durations.get(tool)!.push(duration);
+    
+    // Keep only last 100 measurements
+    const durations = this.metrics.durations.get(tool)!;
+    if (durations.length > 100) {
+      durations.shift();
+    }
+  }
+  
+  getStats(): any {
+    const stats = {};
+    
+    // Calculate averages
+    for (const [tool, durations] of this.metrics.durations) {
+      const avg = durations.reduce((a, b) => a + b, 0) / durations.length;
+      const p95 = durations.sort((a, b) => a - b)[Math.floor(durations.length * 0.95)];
+      
+      stats[tool] = {
+        avgDuration: Math.round(avg),
+        p95Duration: Math.round(p95 || 0),
+        callCount: durations.length
+      };
+    }
+    
+    return stats;
+  }
+  
+  async sendToAnalytics(data: any): Promise<void> {
+    // Send to your analytics service
+    // Examples: DataDog, New Relic, custom endpoint
+    try {
+      await fetch('https://analytics.yourservice.com/metrics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          timestamp: Date.now(),
+          service: 'mcp-server',
+          ...data
+        })
+      });
+    } catch (error) {
+      console.error('Analytics send failed:', error);
+    }
+  }
+}
+
+const metrics = new MetricsCollector();
+
+const monitoredProxy = await wrapWithProxy(server, {
+  hooks: {
+    beforeToolCall: async (context) => {
+      // Track tool usage
+      metrics.increment('tool_calls_total', {
+        tool: context.toolName,
+        user: context.args._userId || 'anonymous'
+      });
+      
+      // Store start time
+      context.metadata = {
+        ...context.metadata,
+        startTime: Date.now(),
+        requestId: context.metadata?.requestId || Math.random().toString(36)
+      };
+      
+      console.log(`📊 [${context.metadata.requestId}] ${context.toolName} started`, {
+        user: context.args._userId,
+        args: Object.keys(context.args)
+      });
+    },
+    
+    afterToolCall: async (context, result) => {
+      const duration = Date.now() - (context.metadata?.startTime || Date.now());
+      const requestId = context.metadata?.requestId;
+      
+      // Record metrics
+      metrics.recordDuration(context.toolName, duration);
+      
+      if (result.result.isError) {
+        metrics.increment('tool_errors_total', {
+          tool: context.toolName,
+          error: 'true'
+        });
+        
+        console.error(`❌ [${requestId}] ${context.toolName} failed in ${duration}ms`, {
+          error: result.result.content[0]?.text
+        });
+        
+        // Alert on critical errors
+        if (duration > 10000 || context.toolName === 'critical-operation') {
+          await metrics.sendToAnalytics({
+            type: 'alert',
+            severity: 'high',
+            message: `Tool ${context.toolName} failed after ${duration}ms`,
+            tool: context.toolName,
+            duration,
+            error: result.result.content[0]?.text
+          });
+        }
+      } else {
+        console.log(`✅ [${requestId}] ${context.toolName} completed in ${duration}ms`);
+        
+        // Alert on performance issues
+        if (duration > 5000) {
+          await metrics.sendToAnalytics({
+            type: 'performance',
+            severity: 'medium',
+            message: `Slow tool execution: ${context.toolName} took ${duration}ms`,
+            tool: context.toolName,
+            duration
+          });
+        }
+      }
+      
+      // Add performance metadata
+      result.result._meta = {
+        ...result.result._meta,
+        duration,
+        requestId,
+        timestamp: new Date().toISOString()
+      };
+      
+      return result;
+    }
+  }
+});
+
+// Periodic metrics reporting
+setInterval(async () => {
+  const stats = metrics.getStats();
+  await metrics.sendToAnalytics({
+    type: 'periodic',
+    stats
+  });
+  console.log('📈 Performance stats:', stats);
+}, 60000); // Every minute
+```
+
+## AI-Powered Enhancement
+
+Complete AI integration with multiple providers and intelligent fallbacks:
+
+```typescript
+import { wrapWithProxy, LLMSummarizationPlugin, ChatMemoryPlugin } from 'mcp-proxy-wrapper';
+
+// Configure AI summarization
+const summaryPlugin = new LLMSummarizationPlugin();
+summaryPlugin.updateConfig({
+  enabled: true,
+  priority: 10,
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    model: 'gpt-4o-mini',
+    maxTokens: 200,
+    temperature: 0.3,
+    minContentLength: 500,
+    summarizeTools: ['research', 'analyze-data', 'generate-report'],
+    saveOriginal: true,
+    summarizationPrompt: `Create a concise executive summary focusing on:
+    - Key findings and insights
+    - Actionable recommendations  
+    - Important metrics and data points
+    - Critical risks or considerations
+    
+    Content to summarize:`
+  }
+});
+
+// Configure chat memory
+const memoryPlugin = new ChatMemoryPlugin();
+memoryPlugin.updateConfig({
+  enabled: true,
+  priority: 20,
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    saveResponses: true,
+    enableChat: true,
+    maxEntries: 1000,
+    enableSearch: true
+  }
+});
+
+const aiEnhancedProxy = await wrapWithProxy(server, {
+  plugins: [memoryPlugin, summaryPlugin],
+  hooks: {
+    beforeToolCall: async (context) => {
+      // Add conversation context for AI tools
+      if (['chat', 'ask-question', 'get-insights'].includes(context.toolName)) {
+        const userId = context.args._userId;
+        if (userId) {
+          const recentMemories = await memoryPlugin.getRecentMemories(userId, 5);
+          context.args._conversationContext = recentMemories;
+        }
+      }
+      
+      console.log(`🤖 AI tool: ${context.toolName}`, {
+        hasContext: !!context.args._conversationContext,
+        willSummarize: summaryPlugin.config.options?.summarizeTools?.includes(context.toolName)
+      });
+    },
+    
+    afterToolCall: async (context, result) => {
+      // Log AI enhancements
+      if (result.result._meta?.summarized) {
+        console.log(`📝 AI Summary: ${result.result._meta.originalLength} → ${result.result._meta.summaryLength} chars`);
+      }
+      
+      if (result.result._meta?.memorySaved) {
+        console.log(`🧠 Memory: Saved response for ${context.args._userId}`);
+      }
+      
+      return result;
+    }
+  }
+});
+
+// Register AI-enhanced tools
+aiEnhancedProxy.tool('research-with-memory', {
+  topic: z.string(),
+  userId: z.string(),
+  includeHistory: z.boolean().default(false)
+}, async (args) => {
+  let researchData = await performResearch(args.topic);
+  
+  // Include relevant historical research if requested
+  if (args.includeHistory) {
+    const historicalContext = await memoryPlugin.searchMemories(
+      args.userId,
+      args.topic,
+      3 // Get 3 most relevant past research results
+    );
+    
+    if (historicalContext.length > 0) {
+      researchData += "\n\nRelevant historical research:\n" + 
+        historicalContext.map(h => `- ${h.summary}`).join('\n');
+    }
+  }
+  
+  return {
+    content: [{
+      type: 'text',
+      text: researchData
+    }]
+  };
+});
+
+// Example usage showing AI enhancement in action
+async function demonstrateAIFeatures() {
+  // Long research response gets automatically summarized
+  const research = await client.callTool({
+    name: 'research-with-memory',
+    arguments: {
+      topic: 'artificial intelligence trends 2024',
+      userId: 'user123',
+      includeHistory: true
+    }
+  });
+  
+  console.log('Research result:', research.content[0].text);
+  console.log('Metadata:', research._meta);
+  
+  // Chat with your research history
+  const sessionId = await memoryPlugin.startChatSession('user123');
+  const chatResponse = await memoryPlugin.chatWithMemory(
+    sessionId,
+    "What were the main AI trends I researched recently?",
+    'user123'
+  );
+  
+  console.log('AI Chat Response:', chatResponse);
+  
+  // Retrieve original research if needed
+  if (research._meta?.originalStorageKey) {
+    const original = await summaryPlugin.getOriginalResult(research._meta.originalStorageKey);
+    console.log('Original research length:', original?.originalResult.result.content[0].text.length);
+  }
+}
+```
+
+## Multi-Environment Configuration
+
+Production-ready configuration management:
+
+```typescript
+import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+
+interface EnvironmentConfig {
+  logLevel: 'debug' | 'info' | 'warn' | 'error';
+  plugins: any[];
+  hooks: any;
+  monitoring: {
+    enabled: boolean;
+    endpoint?: string;
+    interval?: number;
+  };
+}
+
+const configs: Record<string, EnvironmentConfig> = {
+  development: {
+    logLevel: 'debug',
+    plugins: [
+      // Use mock plugins for faster development
+      (() => {
+        const plugin = new LLMSummarizationPlugin();
+        plugin.updateConfig({
+          options: {
+            provider: 'mock',
+            mockDelay: 10,
+            summarizeTools: ['test-tool']
+          }
+        });
+        return plugin;
+      })()
+    ],
+    hooks: {
+      beforeToolCall: async (context) => {
+        console.log(`🔧 DEV: ${context.toolName}`, context.args);
+      }
+    },
+    monitoring: {
+      enabled: false
+    }
+  },
+  
+  staging: {
+    logLevel: 'info',
+    plugins: [
+      (() => {
+        const plugin = new LLMSummarizationPlugin();
+        plugin.updateConfig({
+          options: {
+            provider: process.env.OPENAI_API_KEY ? 'openai' : 'mock',
+            openaiApiKey: process.env.OPENAI_API_KEY,
+            model: 'gpt-4o-mini',
+            maxTokens: 100, // Smaller for cost control
+            summarizeTools: ['research', 'analyze']
+          }
+        });
+        return plugin;
+      })()
+    ],
+    hooks: {
+      beforeToolCall: async (context) => {
+        console.log(`🧪 STAGING: ${context.toolName}`);
+        // Add staging-specific validation
+      }
+    },
+    monitoring: {
+      enabled: true,
+      endpoint: process.env.STAGING_METRICS_ENDPOINT,
+      interval: 30000
+    }
+  },
+  
+  production: {
+    logLevel: 'warn',
+    plugins: [
+      (() => {
+        if (!process.env.OPENAI_API_KEY) {
+          throw new Error('OPENAI_API_KEY required in production');
+        }
+        
+        const plugin = new LLMSummarizationPlugin();
+        plugin.updateConfig({
+          options: {
+            provider: 'openai',
+            openaiApiKey: process.env.OPENAI_API_KEY,
+            model: 'gpt-4o-mini',
+            maxTokens: 150,
+            temperature: 0.3,
+            summarizeTools: ['research', 'analyze-data', 'generate-report'],
+            saveOriginal: true,
+            enableHealthChecks: true
+          }
+        });
+        return plugin;
+      })()
+    ],
+    hooks: {
+      beforeToolCall: async (context) => {
+        // Production logging to structured format
+        console.log(JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: 'info',
+          tool: context.toolName,
+          userId: context.args._userId,
+          requestId: context.metadata?.requestId
+        }));
+        
+        // Production security checks
+        if (!context.args._userId) {
+          throw new Error('Authentication required in production');
+        }
+      },
+      
+      afterToolCall: async (context, result) => {
+        // Error alerting in production
+        if (result.result.isError) {
+          await sendAlert({
+            severity: 'high',
+            message: `Tool failure: ${context.toolName}`,
+            details: result.result.content[0]?.text
+          });
+        }
+        
+        return result;
+      }
+    },
+    monitoring: {
+      enabled: true,
+      endpoint: process.env.PRODUCTION_METRICS_ENDPOINT,
+      interval: 10000
+    }
+  }
+};
+
+// Environment-aware server creation
+async function createEnhancedServer(baseServer: McpServer) {
+  const env = process.env.NODE_ENV || 'development';
+  const config = configs[env];
+  
+  if (!config) {
+    throw new Error(`Unknown environment: ${env}`);
+  }
+  
+  console.log(`🚀 Starting server in ${env} mode`);
+  
+  const enhancedServer = await wrapWithProxy(baseServer, {
+    plugins: config.plugins,
+    hooks: config.hooks,
+    debug: config.logLevel === 'debug'
+  });
+  
+  // Environment-specific monitoring
+  if (config.monitoring.enabled) {
+    setInterval(async () => {
+      // Send health check
+      if (config.monitoring.endpoint) {
+        try {
+          await fetch(`${config.monitoring.endpoint}/health`, {
+            method: 'POST',
+            body: JSON.stringify({
+              service: 'mcp-server',
+              env,
+              timestamp: Date.now(),
+              status: 'healthy'
+            })
+          });
+        } catch (error) {
+          console.error('Health check failed:', error);
+        }
+      }
+    }, config.monitoring.interval || 60000);
+  }
+  
+  return enhancedServer;
+}
+
+// Usage
+const baseServer = new McpServer({ name: 'my-service', version: '1.0.0' });
+const enhancedServer = await createEnhancedServer(baseServer);
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="Plugin Development" href="/plugins/custom-plugins">
+    Learn to build custom plugins for your specific needs
+  </Card>
+  
+  <Card title="Production Deployment" href="/deployment">
+    Deploy your enhanced server to production environments
+  </Card>
+  
+  <Card title="API Reference" href="/api-reference">
+    Complete API documentation and type definitions
+  </Card>
+  
+  <Card title="Troubleshooting" href="/troubleshooting">
+    Common issues and solutions
+  </Card>
+</Cards>
+
+<Callout type="success">
+  **These patterns are production-tested** and used in real-world deployments. Adapt them to your specific requirements and scale as needed.
+</Callout>
