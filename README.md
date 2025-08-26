@@ -14,9 +14,97 @@ A proxy wrapper that adds hooks, plugins, and custom logic to existing MCP serve
 
 ## 🚀 Quick Start
 
+### Installation
+
 ```bash
 npm install mcp-proxy-wrapper
 ```
+
+### For Claude Code & Claude Desktop
+
+#### Option 1: Direct Server Configuration
+Create a wrapped MCP server and configure it in Claude:
+
+```typescript
+// server.js
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+
+const server = new McpServer({ name: 'Enhanced Server', version: '1.0.0' });
+
+// Add your tools
+server.tool('getData', schema, getData);
+
+// Add proxy wrapper with plugins
+const plugin = new LLMSummarizationPlugin();
+plugin.updateConfig({
+  options: {
+    provider: 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY
+  }
+});
+
+const enhanced = await wrapWithProxy(server, {
+  plugins: [plugin],
+  hooks: {
+    beforeToolCall: async (context) => {
+      console.log(`🔧 ${context.toolName}`);
+    }
+  }
+});
+
+// Start the server
+enhanced.start(process.stdin, process.stdout);
+```
+
+Then add to Claude Code:
+
+```bash
+# Add to local project
+claude mcp add enhanced-server node /path/to/server.js
+
+# Add to all projects (user scope)  
+claude mcp add enhanced-server --scope user node /path/to/server.js
+
+# Add to team projects (project scope)
+claude mcp add enhanced-server --scope project node /path/to/server.js
+```
+
+#### Option 2: Proxy Existing Servers
+Enhance existing MCP servers without modification:
+
+```typescript
+// proxy-server.js
+import { createStdioServerProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
+
+const plugin = new LLMSummarizationPlugin();
+plugin.updateConfig({
+  options: { openaiApiKey: process.env.OPENAI_API_KEY }
+});
+
+// Proxy an existing server and add features
+const proxy = await createStdioServerProxy({
+  command: 'npx',
+  args: ['@modelcontextprotocol/server-filesystem', '/tmp'],
+  plugins: [plugin],
+  hooks: {
+    beforeToolCall: async (context) => {
+      // Add authentication, logging, etc.
+      console.log(`Tool called: ${context.toolName}`);
+    }
+  }
+});
+
+proxy.start(process.stdin, process.stdout);
+```
+
+Configure in Claude Code:
+
+```bash
+claude mcp add filesystem-enhanced node /path/to/proxy-server.js
+```
+
+### Basic Usage
 
 ```typescript
 import { wrapWithProxy, LLMSummarizationPlugin } from 'mcp-proxy-wrapper';
@@ -54,8 +142,8 @@ const enhanced = await wrapWithProxy(server, {
 - **🪝 Hook System** - beforeToolCall/afterToolCall with full control
 - **🔌 Plugin Architecture** - Reusable, composable functionality
 - **🌐 Remote Servers** - Proxy external MCP servers over HTTP/WebSocket
-- **🛡️ Enterprise Ready** - Auth, rate limiting, caching patterns
-- **📊 Production Tested** - 273 tests with real MCP protocol validation
+- **🛡️ Authentication & Security** - Auth, rate limiting, access control patterns
+- **📊 Comprehensive Tests** - 273 tests covering MCP protocol compatibility
 
 ## 📖 Examples
 
@@ -105,23 +193,23 @@ const proxy = await createHttpServerProxy('https://api.example.com/mcp', {
 });
 ```
 
-## 🧪 Proven & Tested
+## 🧪 Technical Details
 
 - **273 passing tests** with real MCP client-server communication
-- **Production-ready** with comprehensive error handling
-- **TypeScript native** with full type safety
-- **MCP SDK v1.6.0+** compatible
+- **Comprehensive error handling** with fallbacks and proper error propagation
+- **TypeScript native** with full type safety and IntelliSense
+- **MCP SDK v1.6.0+** compatible with any existing server
 
 ## 📚 Documentation
 
 **[📖 Complete Documentation →](https://mcp-plugins.github.io/mcp-proxy-wrapper)**
 
-- **[🚀 Getting Started](https://mcp-plugins.github.io/mcp-proxy-wrapper/getting-started)** - 5-minute setup guide
+- **[🚀 Getting Started](https://mcp-plugins.github.io/mcp-proxy-wrapper/getting-started)** - Step-by-step setup guide
 - **[🔧 How It Works](https://mcp-plugins.github.io/mcp-proxy-wrapper/how-it-works)** - Understanding the proxy
 - **[🔌 Plugin System](https://mcp-plugins.github.io/mcp-proxy-wrapper/plugins)** - Build and use plugins  
 - **[📚 API Reference](https://mcp-plugins.github.io/mcp-proxy-wrapper/api-reference)** - Complete API docs
 - **[🏗️ Examples](https://mcp-plugins.github.io/mcp-proxy-wrapper/examples)** - Real-world examples
-- **[🚀 Deployment](https://mcp-plugins.github.io/mcp-proxy-wrapper/deployment)** - Production guide
+- **[🚀 Deployment](https://mcp-plugins.github.io/mcp-proxy-wrapper/deployment)** - Deployment guide
 
 ## 🤝 Contributing
 
